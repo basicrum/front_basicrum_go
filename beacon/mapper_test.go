@@ -14,6 +14,7 @@ func TestBasic(t *testing.T) {
 		U:          "https//:www.example.com/url",
 		Nt_Con_End: "1653989622106",
 		Nt_Con_St:  "1653989622032",
+		UserAgent:  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.82 Safari/537.36",
 	}
 
 	// We need to ge the Regexes from here: https://github.com/ua-parser/uap-core/blob/master/regexes.yaml
@@ -28,7 +29,7 @@ func TestBasic(t *testing.T) {
 		t.Errorf("Error")
 	}
 
-	//	fmt.Println(rE)
+	fmt.Println(rE)
 
 	fmt.Println(rE.Cumulative_Layout_Shift)
 

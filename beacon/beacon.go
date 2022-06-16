@@ -1,6 +1,7 @@
 package beacon
 
 import (
+	"net/http"
 	"net/url"
 	"strconv"
 	"time"
@@ -54,22 +55,23 @@ type Beacon struct {
 	Rt_Sl      string
 
 	// Misc
-	U         string
-	T_Resp    string
-	T_Page    string
-	T_Done    string
-	T_Other   string
-	UserAgent string
-	V         string
-	Restiming string
-	CreatedAt string
-	Sv        string
-	Sm        string
-	Vis_St    string
-	Ua_Plt    string
-	Ua_Vnd    string
-	Pid       string
-	N         string
+	U              string
+	T_Resp         string
+	T_Page         string
+	T_Done         string
+	T_Other        string
+	UserAgent      string
+	V              string
+	Restiming      string
+	CreatedAt      string
+	Sv             string
+	Sm             string
+	Vis_St         string
+	Ua_Plt         string
+	Ua_Vnd         string
+	Pid            string
+	N              string
+	H_CF_IPCountry string
 
 	// Navigation Timing
 	Nt_Nav_St            string
@@ -126,7 +128,7 @@ type Beacon struct {
 	Sb             string
 }
 
-func FromRequestParams(values *url.Values) Beacon {
+func FromRequestParams(values *url.Values, uaString string, h http.Header) Beacon {
 	b := Beacon{
 		CreatedAt: time.Now().Format("2006-01-02 15:04:05"),
 
@@ -157,20 +159,22 @@ func FromRequestParams(values *url.Values) Beacon {
 		Et_E:   values.Get("et.e"),
 
 		// Misc
-		U:         values.Get("u"),
-		Restiming: values.Get("restiming"),
-		T_Resp:    values.Get("t_resp"),
-		T_Page:    values.Get("t_page"),
-		T_Done:    values.Get("t_done"),
-		T_Other:   values.Get("t_other"),
-		V:         values.Get("v"),
-		Sv:        values.Get("sv"),
-		Sm:        values.Get("sm"),
-		Vis_St:    values.Get("vis.st"),
-		Ua_Plt:    values.Get("ua.plt"),
-		Ua_Vnd:    values.Get("ua.vnd"),
-		Pid:       values.Get("pid"),
-		N:         values.Get("n"),
+		U:              values.Get("u"),
+		Restiming:      values.Get("restiming"),
+		T_Resp:         values.Get("t_resp"),
+		T_Page:         values.Get("t_page"),
+		T_Done:         values.Get("t_done"),
+		T_Other:        values.Get("t_other"),
+		V:              values.Get("v"),
+		Sv:             values.Get("sv"),
+		Sm:             values.Get("sm"),
+		Vis_St:         values.Get("vis.st"),
+		Ua_Plt:         values.Get("ua.plt"),
+		Ua_Vnd:         values.Get("ua.vnd"),
+		Pid:            values.Get("pid"),
+		N:              values.Get("n"),
+		UserAgent:      uaString,
+		H_CF_IPCountry: h.Get("CF-IPCountry"),
 
 		// Navigation Timing
 		Nt_Nav_St:            values.Get("nt_nav_st"),
@@ -243,25 +247,10 @@ func FromRequestParams(values *url.Values) Beacon {
 }
 
 func ConvertToRumEvent(b Beacon, uaP *uaparser.Parser) RumEvent {
-	uagent := "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.82 Safari/537.36"
 
-	uaPres := uaP.Parse(uagent)
-	mileusnaUaRes := ua.Parse(uagent)
+	uaPres := uaP.Parse(b.UserAgent)
 
-	dT := "unknown"
-
-	if mileusnaUaRes.Mobile {
-		dT = "mobile"
-	}
-	if mileusnaUaRes.Tablet {
-		dT = "tablet"
-	}
-	if mileusnaUaRes.Desktop {
-		dT = "desktop"
-	}
-	if mileusnaUaRes.Bot {
-		dT = "bot"
-	}
+	dT := getDeviceType(b.UserAgent)
 
 	re := RumEvent{
 		Created_At:               b.CreatedAt,
@@ -273,18 +262,19 @@ func ConvertToRumEvent(b Beacon, uaP *uaparser.Parser) RumEvent {
 		Browser_Name:             uaPres.UserAgent.Family,
 		Browser_Version:          uaPres.UserAgent.ToVersionString(),
 		Connect_Duration:         calculateDelta(b.Nt_Con_St, b.Nt_Con_End),
-		Dns_Duration:             "0",          // @todo: Calculate later
-		First_Byte_Duration:      "0",          // @todo: Calculate later
-		Redirect_Duration:        "0",          // @todo: Calculate later
-		Redirects_Count:          "0",          // @todo: Calculate later
-		First_Contentful_Paint:   "0",          // @todo: Calculate later
-		First_Paint:              "0",          // @todo: Calculate later
-		First_Input_Delay:        "0",          // @todo: Calculate later
-		Largest_Contentful_Paint: "0",          // @todo: Calculate later
-		Request_Type:             "page_visit", // @todo: Calculate later
+		Dns_Duration:             calculateDelta(b.Nt_Dns_St, b.Nt_Dns_End),
+		First_Byte_Duration:      calculateDelta(b.Nt_Dns_St, b.Nt_Dns_End), // @todo: Calculate later
+		Redirect_Duration:        "0",                                       // @todo: Calculate later
+		Redirects_Count:          "0",                                       // @todo: Calculate later
+		First_Contentful_Paint:   "0",                                       // @todo: Calculate later
+		First_Paint:              "0",                                       // @todo: Calculate later
+		First_Input_Delay:        "0",                                       // @todo: Calculate later
+		Largest_Contentful_Paint: "0",                                       // @todo: Calculate later
+		Request_Type:             "page_visit",                              // @todo: Calculate later
 		Session_Id:               b.Rt_Si,
-		Session_Length:           "0",  // @todo: Calculate later
-		Country_Code:             "DE", // @todo: Calculate later
+		Session_Length:           "0",                              // @todo: Calculate later
+		Country_Code:             getCountryCode(b.H_CF_IPCountry), // @todo: Calculate later
+		User_Agent:               b.UserAgent,
 	}
 
 	return re
@@ -310,4 +300,29 @@ func calculateDelta(p1 string, p2 string) string {
 	}
 
 	return strconv.Itoa(v)
+}
+
+func getDeviceType(uagent string) string {
+	mileusnaUaRes := ua.Parse(uagent)
+
+	dT := "unknown"
+
+	if mileusnaUaRes.Mobile {
+		dT = "mobile"
+	}
+	if mileusnaUaRes.Tablet {
+		dT = "tablet"
+	}
+	if mileusnaUaRes.Desktop {
+		dT = "desktop"
+	}
+	if mileusnaUaRes.Bot {
+		dT = "bot"
+	}
+
+	return dT
+}
+
+func getCountryCode(CF_IPCountry string) string {
+	return CF_IPCountry
 }

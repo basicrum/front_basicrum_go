@@ -1,28 +1,29 @@
 package beacon
 
 type RumEvent struct {
-	Created_At               string
-	Url                      string
-	Cumulative_Layout_Shift  string
-	Country_Code             string
-	Device_Type              string
-	Device_Manufacturer      string
-	T_Resp                   string
-	T_Page                   string
-	T_Done                   string
-	Connect_Duration         string
-	Dns_Duration             string
-	First_Byte_Duration      string
-	Session_Id               string
-	Session_Length           string
-	Operating_System         string
-	Browser_Name             string
-	Browser_Version          string
-	Request_Type             string
-	Redirect_Duration        string
-	Redirects_Count          string
-	First_Contentful_Paint   string
-	First_Paint              string
-	First_Input_Delay        string
-	Largest_Contentful_Paint string
+	Created_At               string `json:"created_at"`
+	Url                      string `json:"url"`
+	Cumulative_Layout_Shift  string `json:"cumulative_layout_shift"`
+	Country_Code             string `json:"country_code"`
+	Device_Type              string `json:"device_type"`
+	Device_Manufacturer      string `json:"device_manufacturer"`
+	T_Resp                   string `json:"t_resp"`
+	T_Page                   string `json:"t_page"`
+	T_Done                   string `json:"t_done"`
+	Connect_Duration         string `json:"connect_duration"`
+	Dns_Duration             string `json:"dns_duration"`
+	First_Byte_Duration      string `json:"first_byte_duration"`
+	Session_Id               string `json:"session_id"`
+	Session_Length           string `json:"session_length"`
+	Operating_System         string `json:"operating_system"`
+	Browser_Name             string `json:"browser_name"`
+	Browser_Version          string `json:"browser_version"`
+	Request_Type             string `json:"request_type"`
+	Redirect_Duration        string `json:"redirect_duration"`
+	Redirects_Count          string `json:"redirects_count"`
+	First_Contentful_Paint   string `json:"first_contentful_paint"`
+	First_Paint              string `json:"first_paint"`
+	First_Input_Delay        string `json:"first_input_delay"`
+	Largest_Contentful_Paint string `json:"largest_contentful_paint"`
+	User_Agent               string `json:"user_agent"`
 }

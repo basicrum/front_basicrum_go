@@ -59,7 +59,8 @@ func main() {
 	r.HandleFunc("/beacon/catcher", func(w http.ResponseWriter, r *http.Request) {
 		r.ParseForm()
 
-		b := beacon.FromRequestParams(&r.Form)
+		b := beacon.FromRequestParams(&r.Form, r.UserAgent(), r.Header)
+
 		re := beacon.ConvertToRumEvent(b, uaP)
 
 		jsonValue, _ := json.Marshal(re)
