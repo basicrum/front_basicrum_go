@@ -23,7 +23,7 @@ var (
 	domain string
 )
 
-var initAddress = ":4443"
+// var initAddress = ":4443"
 
 func getSelfSignedOrLetsEncryptCert(certManager *autocert.Manager) func(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 	return func(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
@@ -65,7 +65,7 @@ func main() {
 
 		jsonValue, _ := json.Marshal(re)
 
-		resp, err := http.Post("http://benthos_app:4195/post", "application/json", bytes.NewBuffer(jsonValue))
+		resp, err := http.Post("http://localhost:4195/post", "application/json", bytes.NewBuffer(jsonValue))
 
 		// resp, err := http.PostForm(, urlParams)
 
@@ -82,24 +82,32 @@ func main() {
 		fmt.Fprint(w, urlParams)
 	}).Methods("POST", "GET")
 
-	fmt.Println("TLS domain", domain)
-	certManager := autocert.Manager{
-		Prompt:     autocert.AcceptTOS,
-		HostPolicy: autocert.HostWhitelist(domain),
-		Cache:      autocert.DirCache("certs"),
-	}
+	// fmt.Println("TLS domain", domain)
+	// certManager := autocert.Manager{
+	// 	Prompt:     autocert.AcceptTOS,
+	// 	HostPolicy: autocert.HostWhitelist(domain),
+	// 	Cache:      autocert.DirCache("certs"),
+	// }
 
-	tlsConfig := certManager.TLSConfig()
-	tlsConfig.GetCertificate = getSelfSignedOrLetsEncryptCert(&certManager)
-	server := http.Server{
-		Addr:      initAddress,
-		Handler:   r,
-		TLSConfig: tlsConfig,
-	}
+	// tlsConfig := certManager.TLSConfig()
+	// tlsConfig.GetCertificate = getSelfSignedOrLetsEncryptCert(&certManager)
 
-	go http.ListenAndServe(":80", certManager.HTTPHandler(nil))
-	fmt.Println("Server listening on", server.Addr)
-	if err := server.ListenAndServeTLS("", ""); err != nil {
+	// server := http.Server{
+	// 	Addr:    initAddress,
+	// 	Handler: r,
+	// 	// TLSConfig: tlsConfig,
+	// }
+
+	// go http.ListenAndServe(":80", certManager.HTTPHandler(nil))
+
+	errdd := http.ListenAndServe(":8087", r)
+
+	if errdd != nil {
 		fmt.Println(err)
 	}
+
+	// fmt.Println("Server listening on", server.Addr)
+	// if err := server.ListenAndServeTLS("", ""); err != nil {
+	// 	fmt.Println(err)
+	// }
 }

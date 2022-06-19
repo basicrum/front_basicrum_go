@@ -11,6 +11,8 @@ type RumEvent struct {
 	T_Page                   string `json:"t_page"`
 	T_Done                   string `json:"t_done"`
 	Connect_Duration         string `json:"connect_duration"`
+	Ssl_Negotiation_Duration string `json:"ssl_negotiation_duration"`
+	Next_Hop_Protocol        string `json:"next_hop_protocol"`
 	Dns_Duration             string `json:"dns_duration"`
 	First_Byte_Duration      string `json:"first_byte_duration"`
 	Session_Id               string `json:"session_id"`
@@ -18,7 +20,7 @@ type RumEvent struct {
 	Operating_System         string `json:"operating_system"`
 	Browser_Name             string `json:"browser_name"`
 	Browser_Version          string `json:"browser_version"`
-	Request_Type             string `json:"request_type"`
+	Event_Type               string `json:"event_type"`
 	Redirect_Duration        string `json:"redirect_duration"`
 	Redirects_Count          string `json:"redirects_count"`
 	First_Contentful_Paint   string `json:"first_contentful_paint"`
@@ -26,4 +28,5 @@ type RumEvent struct {
 	First_Input_Delay        string `json:"first_input_delay"`
 	Largest_Contentful_Paint string `json:"largest_contentful_paint"`
 	User_Agent               string `json:"user_agent"`
+	Visibility_State         string `json:"visibility_state"`
 }

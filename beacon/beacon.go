@@ -53,6 +53,7 @@ type Beacon struct {
 	Rt_Si      string
 	Rt_Ss      string
 	Rt_Sl      string
+	Rt_Quit    bool
 
 	// Misc
 	U              string
@@ -129,8 +130,14 @@ type Beacon struct {
 }
 
 func FromRequestParams(values *url.Values, uaString string, h http.Header) Beacon {
+	created := values.Get("created_at")
+
+	if created == "" {
+		created = time.Now().Format("2006-01-02 15:04:05")
+	}
+
 	b := Beacon{
-		CreatedAt: time.Now().Format("2006-01-02 15:04:05"),
+		CreatedAt: created,
 
 		// Mobile
 		Mob_Etype: values.Get("mob.etype"),
@@ -215,6 +222,7 @@ func FromRequestParams(values *url.Values, uaString string, h http.Header) Beaco
 		Rt_Si:      values.Get("rt.si"),
 		Rt_Ss:      values.Get("rt.ss"),
 		Rt_Sl:      values.Get("rt.sl"),
+		Rt_Quit:    values.Has("rt.quit"),
 
 		// Memory
 		Dom_Res:        values.Get("dom.res"),
@@ -263,19 +271,23 @@ func ConvertToRumEvent(b Beacon, uaP *uaparser.Parser) RumEvent {
 		Browser_Version:          uaPres.UserAgent.ToVersionString(),
 		Connect_Duration:         calculateDelta(b.Nt_Con_St, b.Nt_Con_End),
 		Dns_Duration:             calculateDelta(b.Nt_Dns_St, b.Nt_Dns_End),
-		First_Byte_Duration:      calculateDelta(b.Nt_Dns_St, b.Nt_Dns_End), // @todo: Calculate later
-		Redirect_Duration:        "0",                                       // @todo: Calculate later
-		Redirects_Count:          "0",                                       // @todo: Calculate later
-		First_Contentful_Paint:   "0",                                       // @todo: Calculate later
-		First_Paint:              "0",                                       // @todo: Calculate later
-		First_Input_Delay:        "0",                                       // @todo: Calculate later
-		Largest_Contentful_Paint: "0",                                       // @todo: Calculate later
-		Request_Type:             "page_visit",                              // @todo: Calculate later
+		First_Byte_Duration:      calculateDelta(b.Nt_Nav_St, b.Nt_Res_St),
+		Redirect_Duration:        "0", // @todo: Calculate later
+		Redirects_Count:          "0", // @todo: Calculate later
+		First_Contentful_Paint:   b.Pt_Fcp,
+		First_Paint:              b.Pt_Fp,
+		First_Input_Delay:        b.Et_Fid,
+		Largest_Contentful_Paint: b.Pt_Lcp,
+		Event_Type:               getEventType(b.Rt_Quit),
 		Session_Id:               b.Rt_Si,
-		Session_Length:           "0",                              // @todo: Calculate later
-		Country_Code:             getCountryCode(b.H_CF_IPCountry), // @todo: Calculate later
+		Session_Length:           b.Rt_Sl,
+		Country_Code:             getCountryCode(b.H_CF_IPCountry),
+		Next_Hop_Protocol:        b.Nt_Protocol,
 		User_Agent:               b.UserAgent,
+		Visibility_State:         b.Vis_St,
 	}
+
+	// fmt.Println(re)
 
 	return re
 }
@@ -325,4 +337,12 @@ func getDeviceType(uagent string) string {
 
 func getCountryCode(CF_IPCountry string) string {
 	return CF_IPCountry
+}
+
+func getEventType(isQuit bool) string {
+	if isQuit {
+		return "quit_page"
+	}
+
+	return "visit_page"
 }
