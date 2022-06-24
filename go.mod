@@ -10,7 +10,14 @@ require (
 )
 
 require (
+	github.com/ClickHouse/clickhouse-go/v2 v2.1.0 // indirect
+	github.com/google/uuid v1.3.0 // indirect
+	github.com/paulmach/orb v0.7.1 // indirect
+	github.com/pierrec/lz4/v4 v4.1.15 // indirect
+	github.com/shopspring/decimal v1.3.1 // indirect
+	go.opentelemetry.io/otel v1.7.0 // indirect
+	go.opentelemetry.io/otel/trace v1.7.0 // indirect
 	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
 	golang.org/x/text v0.3.6 // indirect
-	gopkg.in/yaml.v2 v2.2.1 // indirect
+	gopkg.in/yaml.v2 v2.2.2 // indirect
 )
