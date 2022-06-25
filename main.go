@@ -49,19 +49,38 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/beacon/catcher", func(w http.ResponseWriter, r *http.Request) {
-		r.ParseForm()
+		// @todo: Check if we need to add more response headers
+		// access-control-allow-credentials: true
+		// access-control-allow-origin: *
+		// cache-control: no-cache, no-store, must-revalidate
+		// content-length: 0
+		// content-type: text/plain
+		// cross-origin-resource-policy: cross-origin
+		// date: Sat, 25 Jun 2022 10:40:18 GMT
+		// expires: Fri, 01 Jan 1990 00:00:00 GMT
+		// pragma: no-cache
 
-		b := beacon.FromRequestParams(&r.Form, r.UserAgent(), r.Header)
+		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+		w.Header().Set("Pragma", "no-cache")
+		w.Header().Set("Expires", "Fri, 01 Jan 1990 00:00:00 GMT")
 
-		re := beacon.ConvertToRumEvent(b, uaP)
+		w.WriteHeader(http.StatusNoContent)
 
-		jsonValue, _ := json.Marshal(re)
+		defer func(req *http.Request) {
+			req.ParseForm()
 
-		persistence.SaveInClickHouse(ctx, chConn, TABLENAME, string(jsonValue))
+			b := beacon.FromRequestParams(&req.Form, r.UserAgent(), req.Header)
 
-		if err != nil {
-			fmt.Fprint(w, err)
-		}
+			re := beacon.ConvertToRumEvent(b, uaP)
+
+			jsonValue, _ := json.Marshal(re)
+
+			persistence.SaveInClickHouse(ctx, chConn, TABLENAME, string(jsonValue))
+
+			if err != nil {
+				fmt.Fprint(w, err)
+			}
+		}(r)
 	})
 
 	// fmt.Println("TLS domain", domain)
