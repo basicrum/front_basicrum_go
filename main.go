@@ -11,10 +11,10 @@ import (
 	"net/http"
 
 	"github.com/basicrum/catcher_go/beacon"
+	"github.com/rs/cors"
 
 	"github.com/basicrum/catcher_go/persistence"
 
-	"github.com/gorilla/mux"
 	"github.com/ua-parser/uap-go/uaparser"
 )
 
@@ -26,7 +26,7 @@ const DBNAME = "default"
 const DBADDR = "localhost:9000"
 const DBAUSERNAME = "default"
 const DBPASSWORD = ""
-const TABLENAME = "webperf_rum_events"
+const TABLENAME = "webperf_rum_events_dummy"
 
 func main() {
 	flag.StringVar(&domain, "domain", "", "domain name to request your certificate")
@@ -46,9 +46,9 @@ func main() {
 		panic(err)
 	}
 
-	r := mux.NewRouter()
+	mux := http.NewServeMux()
 
-	r.HandleFunc("/beacon/catcher", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/beacon/catcher", func(w http.ResponseWriter, r *http.Request) {
 		r.ParseForm()
 
 		b := beacon.FromRequestParams(&r.Form, r.UserAgent(), r.Header)
@@ -62,7 +62,7 @@ func main() {
 		if err != nil {
 			fmt.Fprint(w, err)
 		}
-	}).Methods("POST", "GET")
+	})
 
 	// fmt.Println("TLS domain", domain)
 	// certManager := autocert.Manager{
@@ -82,7 +82,8 @@ func main() {
 
 	// go http.ListenAndServe(":80", certManager.HTTPHandler(nil))
 
-	errdd := http.ListenAndServe(":8087", r)
+	handler := cors.Default().Handler(mux)
+	errdd := http.ListenAndServe(":8087", handler)
 
 	if errdd != nil {
 		fmt.Println(err)
