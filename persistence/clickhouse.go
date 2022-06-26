@@ -10,7 +10,9 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 )
 
-func ConnectClickHouse(addr string, dbName string, userName string, password string) (error, driver.Conn) {
+func ConnectClickHouse(host string, port string, dbName string, userName string, password string) (error, driver.Conn) {
+	addr := host + ":" + port
+
 	conn, err := clickhouse.Open(&clickhouse.Options{
 		Addr: []string{addr},
 		Auth: clickhouse.Auth{

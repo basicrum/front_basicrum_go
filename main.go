@@ -10,10 +10,11 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/basicrum/catcher_go/beacon"
+	"github.com/basicrum/front_basicrum_go/beacon"
 	"github.com/rs/cors"
 
-	"github.com/basicrum/catcher_go/persistence"
+	"github.com/basicrum/front_basicrum_go/config"
+	"github.com/basicrum/front_basicrum_go/persistence"
 
 	"github.com/ua-parser/uap-go/uaparser"
 )
@@ -22,13 +23,12 @@ var (
 	domain string
 )
 
-const DBNAME = "default"
-const DBADDR = "localhost:9000"
-const DBAUSERNAME = "default"
-const DBPASSWORD = ""
 const TABLENAME = "webperf_rum_events_dummy"
 
 func main() {
+
+	sConf := config.GetStartupConfig()
+
 	flag.StringVar(&domain, "domain", "", "domain name to request your certificate")
 	flag.Parse()
 
@@ -38,13 +38,14 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Setup the db
+	// Start: Setup the db
 	ctx := context.Background()
 
-	err, chConn := persistence.ConnectClickHouse(DBADDR, DBNAME, DBAUSERNAME, DBPASSWORD)
+	err, chConn := persistence.ConnectClickHouse(sConf.Database.Host, sConf.Database.Port, sConf.Database.DatabaseName, sConf.Database.Username, sConf.Database.Password)
 	if err != nil {
 		panic(err)
 	}
+	// End: Setup the db
 
 	mux := http.NewServeMux()
 

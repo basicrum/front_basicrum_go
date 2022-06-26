@@ -1,4 +1,4 @@
-module github.com/basicrum/catcher_go
+module github.com/basicrum/front_basicrum_go
 
 go 1.18
 
