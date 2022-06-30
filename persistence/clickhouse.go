@@ -20,12 +20,13 @@ func ConnectClickHouse(host string, port string, dbName string, userName string,
 			Username: userName,
 			Password: password,
 		},
-		// Debug:           true,
+		Debug:           true,
 		DialTimeout:     time.Second,
 		MaxOpenConns:    10,
 		MaxIdleConns:    5,
 		ConnMaxLifetime: time.Hour,
 	})
+
 	return err, conn
 }
 
@@ -33,9 +34,7 @@ func SaveInClickHouse(ctx context.Context, conn driver.Conn, table string, rumEv
 
 	inertQuery := fmt.Sprintf(
 		`INSERT INTO %s SETTINGS input_format_skip_unknown_fields = true FORMAT JSONEachRow
-			%s`,
-		table,
-		rumEvent)
+			%s`, table, rumEvent)
 
 	insErr := conn.AsyncInsert(ctx, inertQuery, false)
 

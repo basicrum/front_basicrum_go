@@ -1,0 +1,14 @@
+server:
+  host: "localhost"
+  port: 8087
+
+database:
+  host: "dev_clickhouse_server"
+  port: 9000
+  database_name: "default"
+  username: "default"
+  password: ""
+
+persistance:
+  database_strategy: all_in_one_db
+  table_strategy: all_in_one_table

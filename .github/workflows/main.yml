@@ -26,6 +26,23 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Test
-      working-directory: ./beacon
+    - name: Copying startup_config.yaml
+      uses: canastro/copy-file-action@master
+      with:
+        source: "it/config/startup_config.yaml"
+        target: "startup_config.yaml"
+
+    - name: Start services
+      run: make up
+
+    - name: Unit Test
+      working-directory: ~/beacon
       run: go test
+
+    - name: Integration test
+      working-directory: ~/it
+      run: go test
+
+    
+    - name: Stop services
+      run: make down
