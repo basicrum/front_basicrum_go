@@ -6,8 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/basicrum/front_basicrum_go/it"
-
 	"github.com/labstack/echo"
 	"github.com/stretchr/testify/suite"
 )
@@ -47,7 +45,7 @@ func TestE2ETestSuite(t *testing.T) {
 // }
 
 func (s *e2eTestSuite) Test_EndToEnd_CreateArticle() {
-	it.SendBeacons()
+	// it.SendBeacons()
 
 	reqStr := `{"title":"e2eTitle", "content": "e2eContent", "author":"e2eauthor"}`
 	req, err := http.NewRequest(echo.POST, "http://127.0.0.1:8087/beacon/catcher", strings.NewReader(reqStr))
