@@ -36,11 +36,11 @@ jobs:
       run: make up
 
     - name: Unit Test
-      working-directory: $HOME/beacon
+      working-directory: /home/runner/work/front_basicrum_go/front_basicrum_go/beacon
       run: go test
 
     - name: Integration test
-      working-directory: $HOME/it
+      working-directory: /home/runner/work/front_basicrum_go/front_basicrum_go/it
       run: go test
 
     
