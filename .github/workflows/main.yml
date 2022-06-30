@@ -36,11 +36,11 @@ jobs:
       run: make up
 
     - name: Unit Test
-      working-directory: ~/beacon
+      working-directory: $HOME/beacon
       run: go test
 
     - name: Integration test
-      working-directory: ~/it
+      working-directory: $HOME/it
       run: go test
 
     
