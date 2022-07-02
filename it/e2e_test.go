@@ -2,22 +2,17 @@ package it_test
 
 import (
 	"context"
-	"io/ioutil"
-	"net/http"
-	"strings"
 	"testing"
+	"time"
 
+	"github.com/basicrum/front_basicrum_go/it"
 	"github.com/basicrum/front_basicrum_go/persistence"
-	"github.com/labstack/echo"
 	"github.com/stretchr/testify/suite"
 )
 
 // Inspired by https://www.gojek.io/blog/golang-integration-testing-made-easy
-
 type e2eTestSuite struct {
 	suite.Suite
-	dbConnectionStr string
-	port            int
 }
 
 func TestE2ETestSuite(t *testing.T) {
@@ -47,7 +42,6 @@ func TestE2ETestSuite(t *testing.T) {
 // }
 
 func (s *e2eTestSuite) Test_EndToEnd_CreateArticle() {
-	// it.SendBeacons()
 	// Start: Setup the db
 	ctx := context.Background()
 
@@ -64,20 +58,10 @@ func (s *e2eTestSuite) Test_EndToEnd_CreateArticle() {
 	persistence.RecycleTables(ctx, chConn)
 	// End: Setup the db
 
-	reqStr := `{"title":"e2eTitle", "content": "e2eContent", "author":"e2eauthor"}`
-	req, err := http.NewRequest(echo.POST, "http://localhost:8087/beacon/catcher", strings.NewReader(reqStr))
+	it.SendBeacons()
 	s.NoError(err)
 
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+	time.Sleep(2 * time.Second)
 
-	client := http.Client{}
-	response, err := client.Do(req)
-	s.NoError(err)
-	s.Equal(http.StatusNoContent, response.StatusCode)
-
-	byteBody, err := ioutil.ReadAll(response.Body)
-	s.NoError(err)
-
-	s.Equal("", strings.Trim(string(byteBody), "\n"))
-	response.Body.Close()
+	persistence.CountRecords(ctx, chConn)
 }

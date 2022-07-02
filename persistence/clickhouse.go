@@ -94,5 +94,21 @@ func RecycleTables(ctx context.Context, conn driver.Conn) {
 	if createErr != nil {
 		log.Fatal(createErr)
 	}
+}
 
+func CountRecords(ctx context.Context, conn driver.Conn) {
+	rows, err := conn.Query(ctx, "SELECT count(*) FROM integration_test_webperf_rum_events")
+	if err != nil {
+		log.Fatal(err)
+	}
+	for rows.Next() {
+		var (
+			col1 uint64
+		)
+		if err := rows.Scan(&col1); err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("row: Count=%d\n", col1)
+	}
+	rows.Close()
 }

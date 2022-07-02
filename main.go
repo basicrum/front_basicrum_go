@@ -102,11 +102,13 @@ func main() {
 
 	// go http.ListenAndServe(":80", certManager.HTTPHandler(nil))
 
+	fmt.Println("Starting the server on port: " + sConf.Server.Port)
+
 	handler := cors.Default().Handler(mux)
-	errdd := http.ListenAndServe(":8087", handler)
+	errdd := http.ListenAndServe(":"+sConf.Server.Port, handler)
 
 	if errdd != nil {
-		fmt.Println(err)
+		fmt.Println(errdd)
 	}
 
 	// fmt.Println("Server listening on", server.Addr)
