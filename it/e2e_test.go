@@ -1,11 +1,13 @@
 package it_test
 
 import (
+	"context"
 	"io/ioutil"
 	"net/http"
 	"strings"
 	"testing"
 
+	"github.com/basicrum/front_basicrum_go/persistence"
 	"github.com/labstack/echo"
 	"github.com/stretchr/testify/suite"
 )
@@ -46,6 +48,21 @@ func TestE2ETestSuite(t *testing.T) {
 
 func (s *e2eTestSuite) Test_EndToEnd_CreateArticle() {
 	// it.SendBeacons()
+	// Start: Setup the db
+	ctx := context.Background()
+
+	err, chConn := persistence.ConnectClickHouse(
+		"dev_clickhouse_server",
+		"9000",
+		"default",
+		"default",
+		"")
+	if err != nil {
+		panic(err)
+	}
+
+	persistence.RecycleTables(ctx, chConn)
+	// End: Setup the db
 
 	reqStr := `{"title":"e2eTitle", "content": "e2eContent", "author":"e2eauthor"}`
 	req, err := http.NewRequest(echo.POST, "http://127.0.0.1:8087/beacon/catcher", strings.NewReader(reqStr))

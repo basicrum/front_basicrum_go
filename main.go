@@ -23,7 +23,7 @@ var (
 	domain string
 )
 
-const TABLENAME = "webperf_rum_events_dummy"
+const TABLENAME = "integration_test_webperf_rum_events"
 
 func main() {
 
