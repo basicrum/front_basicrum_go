@@ -36,7 +36,7 @@ jobs:
       run: make up
 
     - name: Start Front Basic RUM
-      run: go run main
+      run: go run main.go
 
     - name: Unit Test
       working-directory: /home/runner/work/front_basicrum_go/front_basicrum_go/beacon
