@@ -12,9 +12,9 @@ services:
   dev_front_basicrum_go:
     image: golang:1.18
     volumes:
-      - ./:/go/src/github.com/basicrum/front_basicrum_go/beacon
+      - ./:/go/src/github.com/basicrum/front_basicrum_go
       - ./certs:/certs
-    working_dir: /go/src/github.com/basicrum/front_basicrum_go/beacon
+    working_dir: /go/src/github.com/basicrum/front_basicrum_go
     ports:
       - 8087:8087
     command: >

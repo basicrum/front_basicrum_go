@@ -1,0 +1,1 @@
+DROP TABLE IF EXISTS integration_test_webperf_rum_events

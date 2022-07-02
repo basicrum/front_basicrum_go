@@ -35,6 +35,9 @@ jobs:
     - name: Start services
       run: make up
 
+    - name: Recreating the ClickHouse tables
+      run: recycle_tables
+
     - name: Unit Test
       working-directory: /home/runner/work/front_basicrum_go/front_basicrum_go/beacon
       run: go test
@@ -42,7 +45,6 @@ jobs:
     - name: Integration test
       working-directory: /home/runner/work/front_basicrum_go/front_basicrum_go/it
       run: go test
-
     
     - name: Stop services
       run: make down
