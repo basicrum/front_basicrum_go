@@ -3,7 +3,7 @@ server:
   port: 8087
 
 database:
-  host: "dev_clickhouse_server"
+  host: "localhost"
   port: 9000
   database_name: "default"
   username: "default"

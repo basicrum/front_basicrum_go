@@ -52,7 +52,7 @@ func (s *e2eTestSuite) Test_EndToEnd_CreateArticle() {
 	ctx := context.Background()
 
 	err, chConn := persistence.ConnectClickHouse(
-		"dev_clickhouse_server",
+		"localhost",
 		"9000",
 		"default",
 		"default",
@@ -65,7 +65,7 @@ func (s *e2eTestSuite) Test_EndToEnd_CreateArticle() {
 	// End: Setup the db
 
 	reqStr := `{"title":"e2eTitle", "content": "e2eContent", "author":"e2eauthor"}`
-	req, err := http.NewRequest(echo.POST, "http://127.0.0.1:8087/beacon/catcher", strings.NewReader(reqStr))
+	req, err := http.NewRequest(echo.POST, "http://localhost:8087/beacon/catcher", strings.NewReader(reqStr))
 	s.NoError(err)
 
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
