@@ -45,6 +45,6 @@ run_integration_tests: ## Run Integration Tests
 	docker-compose -f ${dc_path} exec -w /go/src/github.com/basicrum/front_basicrum_go/it ${dev_front_basicrum_go_container} go test
 
 recycle_tables: ## Recreating the ClickHouse tables
-	docker-compose -f ${dc_path} exec -T ${dev_clickhouse_server_container} clickhouse-client -q "${dropSql}"
-	docker-compose -f ${dc_path} exec -T ${dev_clickhouse_server_container} clickhouse-client -q "${createSql}"
+	docker-compose -f ${dc_path} exec -T ${dev_clickhouse_server_container} clickhouse-client --host 127.0.0.1 -q "${dropSql}"
+	docker-compose -f ${dc_path} exec -T ${dev_clickhouse_server_container} clickhouse-client --host 127.0.0.1 -q "${createSql}"
 
