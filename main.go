@@ -3,15 +3,13 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
-	"log"
-	"net/http"
-
 	"github.com/basicrum/front_basicrum_go/beacon"
 	"github.com/rs/cors"
+	"log"
+	"net/http"
 
 	"github.com/basicrum/front_basicrum_go/config"
 	"github.com/basicrum/front_basicrum_go/persistence"
@@ -19,11 +17,11 @@ import (
 	"github.com/ua-parser/uap-go/uaparser"
 )
 
+const TABLENAME = "integration_test_webperf_rum_events" // TODO
+
 var (
 	domain string
 )
-
-const TABLENAME = "integration_test_webperf_rum_events"
 
 func main() {
 
@@ -38,14 +36,13 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Start: Setup the db
-	ctx := context.Background()
-
-	err, chConn := persistence.ConnectClickHouse(sConf.Database.Host, sConf.Database.Port, sConf.Database.DatabaseName, sConf.Database.Username, sConf.Database.Password)
+	p, err := persistence.New(
+		persistence.Server(sConf.Database.Host, sConf.Database.Port, sConf.Database.DatabaseName),
+		persistence.Auth(sConf.Database.Username, sConf.Database.Password),
+	)
 	if err != nil {
-		panic(err)
+		log.Fatalf("ERROR: %+v", err)
 	}
-	// End: Setup the db
 
 	mux := http.NewServeMux()
 
@@ -71,15 +68,13 @@ func main() {
 			req.ParseForm()
 
 			b := beacon.FromRequestParams(&req.Form, r.UserAgent(), req.Header)
-
 			re := beacon.ConvertToRumEvent(b, uaP)
 
-			jsonValue, _ := json.Marshal(re)
-
-			persistence.SaveInClickHouse(ctx, chConn, TABLENAME, string(jsonValue))
-
+			jsonValue, err := json.Marshal(re)
 			if err != nil {
-				fmt.Fprint(w, err)
+				log.Fatalf("json parsing error: %+v", err)
+			} else {
+				p.Save(jsonValue, TABLENAME)
 			}
 		}(r)
 	})
