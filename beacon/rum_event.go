@@ -29,4 +29,6 @@ type RumEvent struct {
 	Largest_Contentful_Paint string `json:"largest_contentful_paint"`
 	User_Agent               string `json:"user_agent"`
 	Visibility_State         string `json:"visibility_state"`
+	Screen_Width             string `json:"screen_width"`
+	Screen_Height            string `json:"screen_height"`
 }
