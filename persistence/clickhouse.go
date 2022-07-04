@@ -3,45 +3,52 @@ package persistence
 import (
 	"context"
 	"fmt"
-	"log"
-	"time"
-
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+	"log"
+	"strconv"
+	"time"
 )
 
-func ConnectClickHouse(host string, port string, dbName string, userName string, password string) (error, driver.Conn) {
-	addr := host + ":" + port
-
-	conn, err := clickhouse.Open(&clickhouse.Options{
-		Addr: []string{addr},
-		Auth: clickhouse.Auth{
-			Database: dbName,
-			Username: userName,
-			Password: password,
-		},
-		Debug:           true,
-		DialTimeout:     time.Second,
-		MaxOpenConns:    10,
-		MaxIdleConns:    5,
-		ConnMaxLifetime: time.Hour,
-	})
-
-	return err, conn
+type connection struct {
+	inner *driver.Conn
+	auth  auth
 }
 
-func SaveInClickHouse(ctx context.Context, conn driver.Conn, table string, rumEvent string) {
+func (s *server) addr() string {
+	return s.host + ":" + strconv.FormatInt(int64(s.port), 10)
+}
 
-	inertQuery := fmt.Sprintf(
-		`INSERT INTO %s SETTINGS input_format_skip_unknown_fields = true FORMAT JSONEachRow
-			%s`, table, rumEvent)
-
-	insErr := conn.AsyncInsert(ctx, inertQuery, false)
-
-	if insErr != nil {
-		log.Fatal(insErr)
+func (s *server) options(a *auth) *clickhouse.Options {
+	return &clickhouse.Options{
+		Addr: []string{s.addr()},
+		Auth: clickhouse.Auth{
+			Database: s.db,
+			Username: a.user,
+			Password: a.pwd,
+		},
+		Debug:           true,
+		ConnMaxLifetime: time.Hour,
 	}
+}
 
+func (s *server) open(a *auth) *driver.Conn {
+	conn, err := clickhouse.Open(s.options(a))
+	if err != nil {
+		log.Printf("clickhouse connection failed: %s", err)
+		return nil
+	}
+	return &conn
+}
+
+func (s *server) save(conn *connection, data string, name string) {
+	query := fmt.Sprintf(
+		`INSERT INTO %s SETTINGS input_format_skip_unknown_fields = true FORMAT JSONEachRow
+			%s`, name, data)
+	err := (*conn.inner).AsyncInsert(s.ctx, query, false)
+	if err != nil {
+		log.Fatalf("clickhouse insert failed: %+v", err)
+	}
 }
 
 func RecycleTables(ctx context.Context, conn driver.Conn) {
