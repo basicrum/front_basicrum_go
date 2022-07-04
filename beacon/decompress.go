@@ -33,8 +33,6 @@ func DecompressBucketLog(data string) []uint64 {
 
 	logDataLen := len(logData)
 
-	// fmt.Println(logDataLen)
-
 	i := 0
 
 	for i < logDataLen {
@@ -42,21 +40,18 @@ func DecompressBucketLog(data string) []uint64 {
 		if string(logData[i]) == "*" {
 			// this is a repeating number
 
-			// move past the "*"
-			// i++
-
 			// up to the next * is the repeating count (base 36)
 			endChar = strings.Index(logData[i+1:], "*")
 
-			// fmt.Println(logData[i+1:])
-			// fmt.Println(endChar)
+			if endChar == -1 {
+				i++
+				continue
+			}
 
-			// fmt.Println(logData[i : i+endChar])
-
-			repeat = base36.Decode(logData[i : i+endChar])
+			repeat = base36.Decode(logData[i+1 : i+endChar+1])
 
 			// after is the number
-			i = i + endChar
+			i = i + endChar + 1
 			continue
 		} else if string(logData[i]) == LARGE_NUMBER_WRAP {
 			// this is a number larger than 63
@@ -116,7 +111,6 @@ func DecompressBucketLog(data string) []uint64 {
 		j := uint64(1)
 
 		for j < repeat {
-			fmt.Println("In repeat")
 			out = append(out, num)
 			j++
 		}
