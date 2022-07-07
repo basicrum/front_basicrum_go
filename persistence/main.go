@@ -40,3 +40,16 @@ func Auth(user string, pwd string) auth {
 func (p *persistence) Save(data []byte, name string) {
 	p.server.save(&p.conn, string(data), name)
 }
+
+// START - Used for integration tests. Keeping ti dirty for now.
+// @todo: Refactor or move big part of this to testing utility class.
+
+func (p *persistence) RecycleTables() {
+	p.server.RecycleTables(&p.conn)
+}
+
+func (p *persistence) CountRecords() {
+	p.server.countRecords(&p.conn)
+}
+
+// END - Used for integration tests.

@@ -1,13 +1,13 @@
 package persistence
 
 import (
-	"context"
 	"fmt"
-	"github.com/ClickHouse/clickhouse-go/v2"
-	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"log"
 	"strconv"
 	"time"
+
+	"github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 )
 
 type connection struct {
@@ -51,11 +51,11 @@ func (s *server) save(conn *connection, data string, name string) {
 	}
 }
 
-func RecycleTables(ctx context.Context, conn driver.Conn) {
+func (s *server) RecycleTables(conn *connection) {
 
 	dropQuery := `DROP TABLE IF EXISTS integration_test_webperf_rum_events`
 
-	dropErr := conn.Exec(ctx, dropQuery)
+	dropErr := (*conn.inner).Exec(s.ctx, dropQuery)
 
 	if dropErr != nil {
 		log.Fatal(dropErr)
@@ -96,15 +96,15 @@ func RecycleTables(ctx context.Context, conn driver.Conn) {
 		ORDER BY (device_type, event_date)
 		SETTINGS index_granularity = 8192`
 
-	createErr := conn.Exec(ctx, createQuery)
+	createErr := (*conn.inner).Exec(s.ctx, createQuery)
 
 	if createErr != nil {
 		log.Fatal(createErr)
 	}
 }
 
-func CountRecords(ctx context.Context, conn driver.Conn) {
-	rows, err := conn.Query(ctx, "SELECT count(*) FROM integration_test_webperf_rum_events")
+func (s *server) countRecords(conn *connection) {
+	rows, err := (*conn.inner).Query(s.ctx, "SELECT count(*) FROM integration_test_webperf_rum_events")
 	if err != nil {
 		log.Fatal(err)
 	}
