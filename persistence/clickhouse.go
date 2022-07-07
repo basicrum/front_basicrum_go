@@ -96,7 +96,16 @@ func (s *server) RecycleTables(conn *connection) {
 
 		boomerang_version               LowCardinality(String),
 		screen_width                    Nullable(UInt16),
-		screen_height                   Nullable(UInt16)
+		screen_height                   Nullable(UInt16),
+
+		dom_res                         Nullable(UInt16),
+		dom_doms                        Nullable(UInt16),
+		mem_total                       Nullable(UInt32),
+		mem_limit                       Nullable(UInt32),
+		mem_used                        Nullable(UInt32),
+		mem_lsln                        Nullable(UInt32),
+		mem_ssln                        Nullable(UInt32),
+		mem_lssz                        Nullable(UInt32)
 	)
 		ENGINE = MergeTree()
 		PARTITION BY toYYYYMMDD(event_date)

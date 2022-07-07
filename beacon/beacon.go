@@ -291,6 +291,14 @@ func ConvertToRumEvent(b Beacon, uaP *uaparser.Parser) RumEvent {
 		Boomerang_Version:        b.V,
 		Screen_Width:             sWidth,
 		Screen_Height:            sHeight,
+		Dom_Res:                  b.Dom_Res,
+		Dom_Doms:                 b.Dom_Doms,
+		Mem_Total:                b.Mem_Total,
+		Mem_Limit:                b.Mem_Limit,
+		Mem_Used:                 b.Mem_Used,
+		Mem_Lsln:                 b.Mem_Lsln,
+		Mem_Ssln:                 b.Mem_Ssln,
+		Mem_Lssz:                 b.Mem_Lssz,
 	}
 
 	// fmt.Println(re)
@@ -348,7 +356,11 @@ func getCountryCode(CF_IPCountry string) string {
 func getScreenSize(scr_X_Y string) (string, string) {
 	s := strings.Split(scr_X_Y, "x")
 
-	return string(s[0]), s[1]
+	if len(s) == 2 {
+		return string(s[0]), s[1]
+	}
+
+	return "", ""
 }
 
 func getEventType(isQuit bool) string {

@@ -32,4 +32,12 @@ type RumEvent struct {
 	Boomerang_Version        string `json:"boomerang_version"`
 	Screen_Width             string `json:"screen_width"`
 	Screen_Height            string `json:"screen_height"`
+	Dom_Res                  string `json:"dom_res"`
+	Dom_Doms                 string `json:"dom_doms"`
+	Mem_Total                string `json:"mem_total"`
+	Mem_Limit                string `json:"mem_limit"`
+	Mem_Used                 string `json:"mem_used"`
+	Mem_Lsln                 string `json:"mem_lsln"`
+	Mem_Ssln                 string `json:"mem_ssln"`
+	Mem_Lssz                 string `json:"mem_lssz"`
 }
