@@ -51,6 +51,9 @@ func (s *server) save(conn *connection, data string, name string) {
 	}
 }
 
+// START - Used for integration tests. Keeping ti dirty for now.
+// @todo: Refactor or move big part of this to testing utility class.
+
 func (s *server) RecycleTables(conn *connection) {
 
 	dropQuery := `DROP TABLE IF EXISTS integration_test_webperf_rum_events`
@@ -89,7 +92,11 @@ func (s *server) RecycleTables(conn *connection) {
 		first_input_delay               Nullable(UInt16),
 		largest_contentful_paint        Nullable(UInt16),
 	
-		country_code                    FixedString(2)
+		country_code                    FixedString(2),
+
+		boomerang_version               LowCardinality(String),
+		screen_width                    Nullable(UInt16),
+		screen_height                   Nullable(UInt16)
 	)
 		ENGINE = MergeTree()
 		PARTITION BY toYYYYMMDD(event_date)
@@ -119,3 +126,5 @@ func (s *server) countRecords(conn *connection) {
 	}
 	rows.Close()
 }
+
+// END - Used for integration tests.

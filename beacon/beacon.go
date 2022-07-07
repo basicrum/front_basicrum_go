@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	ua "github.com/mileusna/useragent"
@@ -260,6 +261,8 @@ func ConvertToRumEvent(b Beacon, uaP *uaparser.Parser) RumEvent {
 
 	dT := getDeviceType(b.UserAgent)
 
+	sWidth, sHeight := getScreenSize(b.Scr_Xy)
+
 	re := RumEvent{
 		Created_At:               b.CreatedAt,
 		Url:                      b.U,
@@ -285,6 +288,9 @@ func ConvertToRumEvent(b Beacon, uaP *uaparser.Parser) RumEvent {
 		Next_Hop_Protocol:        b.Nt_Protocol,
 		User_Agent:               b.UserAgent,
 		Visibility_State:         b.Vis_St,
+		Boomerang_Version:        b.V,
+		Screen_Width:             sWidth,
+		Screen_Height:            sHeight,
 	}
 
 	// fmt.Println(re)
@@ -337,6 +343,12 @@ func getDeviceType(uagent string) string {
 
 func getCountryCode(CF_IPCountry string) string {
 	return CF_IPCountry
+}
+
+func getScreenSize(scr_X_Y string) (string, string) {
+	s := strings.Split(scr_X_Y, "x")
+
+	return string(s[0]), s[1]
 }
 
 func getEventType(isQuit bool) string {
