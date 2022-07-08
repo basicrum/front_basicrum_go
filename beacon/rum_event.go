@@ -40,4 +40,9 @@ type RumEvent struct {
 	Mem_Lsln                 string `json:"mem_lsln"`
 	Mem_Ssln                 string `json:"mem_ssln"`
 	Mem_Lssz                 string `json:"mem_lssz"`
+	Scr_Bpp                  string `json:"scr_bpp"`
+	Scr_Orn                  string `json:"scr_orn"`
+	Cpu_Cnc                  string `json:"cpu_cnc"`
+	Dom_Ln                   string `json:"dom_ln"`
+	Dom_Sz                   string `json:"dom_sz"`
 }

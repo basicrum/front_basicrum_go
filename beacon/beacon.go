@@ -299,6 +299,11 @@ func ConvertToRumEvent(b Beacon, uaP *uaparser.Parser) RumEvent {
 		Mem_Lsln:                 b.Mem_Lsln,
 		Mem_Ssln:                 b.Mem_Ssln,
 		Mem_Lssz:                 b.Mem_Lssz,
+		Scr_Bpp:                  b.Scr_Bpp,
+		Scr_Orn:                  b.Scr_Orn,
+		Cpu_Cnc:                  b.Cpu_Cnc,
+		Dom_Ln:                   b.Dom_Ln,
+		Dom_Sz:                   b.Dom_Sz,
 	}
 
 	// fmt.Println(re)

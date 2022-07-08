@@ -105,7 +105,12 @@ func (s *server) RecycleTables(conn *connection) {
 		mem_used                        Nullable(UInt32),
 		mem_lsln                        Nullable(UInt32),
 		mem_ssln                        Nullable(UInt32),
-		mem_lssz                        Nullable(UInt32)
+		mem_lssz                        Nullable(UInt32),
+		scr_bpp                         Nullable(String),
+		scr_orn                         Nullable(String),
+		cpu_cnc                         Nullable(UInt8),
+		dom_ln                          Nullable(UInt16),
+		dom_sz                          Nullable(UInt16)
 	)
 		ENGINE = MergeTree()
 		PARTITION BY toYYYYMMDD(event_date)
