@@ -71,6 +71,8 @@ func (s *server) RecycleTables(conn *connection) {
 		browser_name                    LowCardinality(String),
 		browser_version                 String,
 		device_manufacturer             LowCardinality(String),
+		ua_vnd                          LowCardinality(String),
+		ua_plt                          LowCardinality(String),
 		device_type                     LowCardinality(String),
 		user_agent                      String,
 		next_hop_protocol               LowCardinality(String),
@@ -93,6 +95,9 @@ func (s *server) RecycleTables(conn *connection) {
 		largest_contentful_paint        Nullable(UInt16),
 	
 		country_code                    FixedString(2),
+		page_id                         FixedString(8),
+
+		data_saver_on                   Nullable(UInt8),
 
 		boomerang_version               LowCardinality(String),
 		screen_width                    Nullable(UInt16),
@@ -110,7 +115,14 @@ func (s *server) RecycleTables(conn *connection) {
 		scr_orn                         Nullable(String),
 		cpu_cnc                         Nullable(UInt8),
 		dom_ln                          Nullable(UInt16),
-		dom_sz                          Nullable(UInt16)
+		dom_sz                          Nullable(UInt16),
+		dom_ck                          Nullable(UInt16),
+		dom_img                         Nullable(UInt16),
+		dom_img_uniq                    Nullable(UInt16),
+		dom_script                      Nullable(UInt16),
+		dom_iframe                      Nullable(UInt16),
+		dom_link                        Nullable(UInt16),
+		dom_link_css                    Nullable(UInt16)
 	)
 		ENGINE = MergeTree()
 		PARTITION BY toYYYYMMDD(event_date)
