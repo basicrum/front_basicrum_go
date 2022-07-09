@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	ua "github.com/mileusna/useragent"
@@ -126,6 +127,7 @@ type Beacon struct {
 	Dom_Iframe     string
 	Dom_Link       string
 	Dom_Link_Css   string
+	Net_Sd         string
 	Sb             string
 }
 
@@ -248,6 +250,7 @@ func FromRequestParams(values *url.Values, uaString string, h http.Header) Beaco
 		Dom_Iframe:     values.Get("dom.iframe"),
 		Dom_Link:       values.Get("dom.link"),
 		Dom_Link_Css:   values.Get("dom.link.css"),
+		Net_Sd:         values.Get("net.sd"),
 		Sb:             values.Get("sb"),
 	}
 
@@ -259,6 +262,8 @@ func ConvertToRumEvent(b Beacon, uaP *uaparser.Parser) RumEvent {
 	uaPres := uaP.Parse(b.UserAgent)
 
 	dT := getDeviceType(b.UserAgent)
+
+	sWidth, sHeight := getScreenSize(b.Scr_Xy)
 
 	re := RumEvent{
 		Created_At:               b.CreatedAt,
@@ -285,6 +290,34 @@ func ConvertToRumEvent(b Beacon, uaP *uaparser.Parser) RumEvent {
 		Next_Hop_Protocol:        b.Nt_Protocol,
 		User_Agent:               b.UserAgent,
 		Visibility_State:         b.Vis_St,
+		Boomerang_Version:        b.V,
+		Screen_Width:             sWidth,
+		Screen_Height:            sHeight,
+		Dom_Res:                  b.Dom_Res,
+		Dom_Doms:                 b.Dom_Doms,
+		Mem_Total:                b.Mem_Total,
+		Mem_Limit:                b.Mem_Limit,
+		Mem_Used:                 b.Mem_Used,
+		Mem_Lsln:                 b.Mem_Lsln,
+		Mem_Ssln:                 b.Mem_Ssln,
+		Mem_Lssz:                 b.Mem_Lssz,
+		Scr_Bpp:                  b.Scr_Bpp,
+		Scr_Orn:                  b.Scr_Orn,
+		Cpu_Cnc:                  b.Cpu_Cnc,
+		Dom_Ln:                   b.Dom_Ln,
+		Dom_Sz:                   b.Dom_Sz,
+		Dom_Ck:                   b.Dom_Ck,
+		Dom_Img:                  b.Dom_Img,
+		Dom_Img_Uniq:             b.Dom_Img_Uniq,
+		Dom_Script:               b.Dom_Script,
+		Dom_Script_Ext:           b.Dom_Script_Ext,
+		Dom_Iframe:               b.Dom_Iframe,
+		Dom_Link:                 b.Dom_Link,
+		Dom_Link_Css:             b.Dom_Link_Css,
+		Page_Id:                  b.Pid,
+		Ua_Vnd:                   b.Ua_Vnd,
+		Ua_Plt:                   b.Ua_Plt,
+		Data_Saver_On:            b.Net_Sd,
 	}
 
 	// fmt.Println(re)
@@ -337,6 +370,16 @@ func getDeviceType(uagent string) string {
 
 func getCountryCode(CF_IPCountry string) string {
 	return CF_IPCountry
+}
+
+func getScreenSize(scr_X_Y string) (string, string) {
+	s := strings.Split(scr_X_Y, "x")
+
+	if len(s) == 2 {
+		return string(s[0]), string(s[1])
+	}
+
+	return "", ""
 }
 
 func getEventType(isQuit bool) string {

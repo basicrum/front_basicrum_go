@@ -51,6 +51,9 @@ func (s *server) save(conn *connection, data string, name string) {
 	}
 }
 
+// START - Used for integration tests. Keeping ti dirty for now.
+// @todo: Refactor or move big part of this to testing utility class.
+
 func (s *server) RecycleTables(conn *connection) {
 
 	dropQuery := `DROP TABLE IF EXISTS integration_test_webperf_rum_events`
@@ -68,6 +71,8 @@ func (s *server) RecycleTables(conn *connection) {
 		browser_name                    LowCardinality(String),
 		browser_version                 String,
 		device_manufacturer             LowCardinality(String),
+		ua_vnd                          LowCardinality(String),
+		ua_plt                          LowCardinality(String),
 		device_type                     LowCardinality(String),
 		user_agent                      String,
 		next_hop_protocol               LowCardinality(String),
@@ -89,7 +94,35 @@ func (s *server) RecycleTables(conn *connection) {
 		first_input_delay               Nullable(UInt16),
 		largest_contentful_paint        Nullable(UInt16),
 	
-		country_code                    FixedString(2)
+		country_code                    FixedString(2),
+		page_id                         FixedString(8),
+
+		data_saver_on                   Nullable(UInt8),
+
+		boomerang_version               LowCardinality(String),
+		screen_width                    Nullable(UInt16),
+		screen_height                   Nullable(UInt16),
+
+		dom_res                         Nullable(UInt16),
+		dom_doms                        Nullable(UInt16),
+		mem_total                       Nullable(UInt32),
+		mem_limit                       Nullable(UInt32),
+		mem_used                        Nullable(UInt32),
+		mem_lsln                        Nullable(UInt32),
+		mem_ssln                        Nullable(UInt32),
+		mem_lssz                        Nullable(UInt32),
+		scr_bpp                         Nullable(String),
+		scr_orn                         Nullable(String),
+		cpu_cnc                         Nullable(UInt8),
+		dom_ln                          Nullable(UInt16),
+		dom_sz                          Nullable(UInt16),
+		dom_ck                          Nullable(UInt16),
+		dom_img                         Nullable(UInt16),
+		dom_img_uniq                    Nullable(UInt16),
+		dom_script                      Nullable(UInt16),
+		dom_iframe                      Nullable(UInt16),
+		dom_link                        Nullable(UInt16),
+		dom_link_css                    Nullable(UInt16)
 	)
 		ENGINE = MergeTree()
 		PARTITION BY toYYYYMMDD(event_date)
@@ -119,3 +152,5 @@ func (s *server) countRecords(conn *connection) {
 	}
 	rows.Close()
 }
+
+// END - Used for integration tests.
