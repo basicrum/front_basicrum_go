@@ -1,3 +1,4 @@
 /startup_config.yaml
 /runtime_config.yaml
 /dev/clickhouse
+/dev/grafana

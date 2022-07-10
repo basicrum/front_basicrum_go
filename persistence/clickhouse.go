@@ -66,7 +66,8 @@ func (s *server) RecycleTables(conn *connection) {
 
 	createQuery := `CREATE TABLE IF NOT EXISTS integration_test_webperf_rum_events (
 		event_date Date DEFAULT toDate(created_at),
-		created_at DateTime,
+		hostname                        LowCardinality(String),
+		created_at                      DateTime,
 		event_type                      LowCardinality(String),
 		browser_name                    LowCardinality(String),
 		browser_version                 String,

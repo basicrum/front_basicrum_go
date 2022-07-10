@@ -6,10 +6,11 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/basicrum/front_basicrum_go/beacon"
-	"github.com/rs/cors"
 	"log"
 	"net/http"
+
+	"github.com/basicrum/front_basicrum_go/beacon"
+	"github.com/rs/cors"
 
 	"github.com/basicrum/front_basicrum_go/config"
 	"github.com/basicrum/front_basicrum_go/persistence"
@@ -17,7 +18,7 @@ import (
 	"github.com/ua-parser/uap-go/uaparser"
 )
 
-const TABLENAME = "integration_test_webperf_rum_events" // TODO
+const TABLENAME = "progress_test_webperf_rum_events" // TODO
 
 var (
 	domain string
