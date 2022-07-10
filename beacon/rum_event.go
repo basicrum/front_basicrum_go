@@ -2,6 +2,7 @@ package beacon
 
 type RumEvent struct {
 	Created_At               string `json:"created_at"`
+	Hostname                 string `json:"hostname"`
 	Url                      string `json:"url"`
 	Cumulative_Layout_Shift  string `json:"cumulative_layout_shift"`
 	Country_Code             string `json:"country_code"`

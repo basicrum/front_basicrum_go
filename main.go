@@ -6,10 +6,11 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/basicrum/front_basicrum_go/beacon"
-	"github.com/rs/cors"
 	"log"
 	"net/http"
+
+	"github.com/basicrum/front_basicrum_go/beacon"
+	"github.com/rs/cors"
 
 	"github.com/basicrum/front_basicrum_go/config"
 	"github.com/basicrum/front_basicrum_go/persistence"

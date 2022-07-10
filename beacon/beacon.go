@@ -1,6 +1,7 @@
 package beacon
 
 import (
+	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -74,6 +75,7 @@ type Beacon struct {
 	Pid            string
 	N              string
 	H_CF_IPCountry string
+	Http_Initiator string
 
 	// Navigation Timing
 	Nt_Nav_St            string
@@ -184,6 +186,7 @@ func FromRequestParams(values *url.Values, uaString string, h http.Header) Beaco
 		N:              values.Get("n"),
 		UserAgent:      uaString,
 		H_CF_IPCountry: h.Get("CF-IPCountry"),
+		Http_Initiator: values.Get("http_initiator"),
 
 		// Navigation Timing
 		Nt_Nav_St:            values.Get("nt_nav_st"),
@@ -265,8 +268,16 @@ func ConvertToRumEvent(b Beacon, uaP *uaparser.Parser) RumEvent {
 
 	sWidth, sHeight := getScreenSize(b.Scr_Xy)
 
+	url, err := url.Parse(b.U)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	hostname := url.Hostname()
+
 	re := RumEvent{
 		Created_At:               b.CreatedAt,
+		Hostname:                 hostname,
 		Url:                      b.U,
 		Cumulative_Layout_Shift:  b.C_Cls,
 		Device_Type:              dT,
@@ -283,7 +294,7 @@ func ConvertToRumEvent(b Beacon, uaP *uaparser.Parser) RumEvent {
 		First_Paint:              b.Pt_Fp,
 		First_Input_Delay:        b.Et_Fid,
 		Largest_Contentful_Paint: b.Pt_Lcp,
-		Event_Type:               getEventType(b.Rt_Quit),
+		Event_Type:               getEventType(b.Rt_Quit, b.Http_Initiator),
 		Session_Id:               b.Rt_Si,
 		Session_Length:           b.Rt_Sl,
 		Country_Code:             getCountryCode(b.H_CF_IPCountry),
@@ -382,7 +393,11 @@ func getScreenSize(scr_X_Y string) (string, string) {
 	return "", ""
 }
 
-func getEventType(isQuit bool) string {
+func getEventType(isQuit bool, httpInitiator string) string {
+	if len(httpInitiator) > 0 {
+		return httpInitiator
+	}
+
 	if isQuit {
 		return "quit_page"
 	}

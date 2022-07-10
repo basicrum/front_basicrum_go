@@ -1,0 +1,31 @@
+version: "3.7"
+
+services:
+
+  dev_grafana:
+    # We need this in order to make the grafana container happy when we have volumes.
+    # If we don't set the user then we get:
+    # --------------------------------------------------------------------------------------------------------
+    # dev_grafana_1            | GF_PATHS_DATA='/var/lib/grafana' is not writable.
+    # dev_grafana_1            | You may have issues with file permissions, more information here: http://docs.grafana.org/installation/docker/#migrate-to-v51-or-later
+    # dev_grafana_1            | mkdir: cannot create directory '/var/lib/grafana/plugins': Permission denied
+    # front_basicrum_go_dev_grafana_1 exited with code 1
+    # --------------------------------------------------------------------------------------------------------
+    # 
+    # $UID is passed by the host: 
+    #
+    # 1.| UID := $(shell id -u)
+    # 2.| env UID=${UID} docker-compose -f ${dc_path} up -d
+    # 
+    user: "$UID"
+    build:
+      context: ./dev/docker_build/grafana
+    ports:
+      - 3900:3000
+    volumes:
+      # Persist user created stuff
+      - ./dev/grafana:/var/lib/grafana
+      # Mount provisioning related stuff
+      # - ./dev/grafana/provisioning:/etc/grafana/provisioning
+      # - ./dev/grafana/grafana.ini:/etc/grafana/grafana.ini
+      # - ./grafana/dashboards:/etc/grafana/dashboards
