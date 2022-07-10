@@ -18,7 +18,7 @@ import (
 	"github.com/ua-parser/uap-go/uaparser"
 )
 
-const TABLENAME = "progress_test_webperf_rum_events" // TODO
+const TABLENAME = "integration_test_webperf_rum_events" // TODO
 
 var (
 	domain string

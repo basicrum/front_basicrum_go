@@ -78,6 +78,8 @@ func (s *e2eTestSuite) Test_EndToEnd_CreateArticle() {
 	p.RecycleTables()
 	// End: Setup the db
 
+	time.Sleep(10 * time.Second)
+
 	it.SendBeacons()
 	s.NoError(err)
 
