@@ -42,12 +42,16 @@ func (s *server) open(a *auth) *driver.Conn {
 }
 
 func (s *server) save(conn *connection, data string, name string) {
-	query := fmt.Sprintf(
-		`INSERT INTO %s SETTINGS input_format_skip_unknown_fields = true FORMAT JSONEachRow
-			%s`, name, data)
-	err := (*conn.inner).AsyncInsert(s.ctx, query, false)
-	if err != nil {
-		log.Fatalf("clickhouse insert failed: %+v", err)
+	if data != "" && name != "" {
+		query := fmt.Sprintf(
+			`INSERT INTO %s SETTINGS input_format_skip_unknown_fields = true FORMAT JSONEachRow
+				%s`, name, data)
+		err := (*conn.inner).AsyncInsert(s.ctx, query, false)
+		if err != nil {
+			log.Fatalf("clickhouse insert failed: %+v", err)
+		}
+	} else {
+		log.Printf("clickhouse invalid data for table %s: %s", name, data)
 	}
 }
 
