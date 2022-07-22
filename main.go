@@ -3,22 +3,15 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
 
-	"github.com/basicrum/front_basicrum_go/beacon"
-	"github.com/rs/cors"
-
 	"github.com/basicrum/front_basicrum_go/config"
 	"github.com/basicrum/front_basicrum_go/persistence"
-
-	"github.com/ua-parser/uap-go/uaparser"
+	"github.com/rs/cors"
 )
-
-const TABLENAME = "integration_test_webperf_rum_events" // TODO
 
 var (
 	domain string
@@ -31,12 +24,6 @@ func main() {
 	flag.StringVar(&domain, "domain", "", "domain name to request your certificate")
 	flag.Parse()
 
-	// We need to ge the Regexes from here: https://github.com/ua-parser/uap-core/blob/master/regexes.yaml
-	uaP, err := uaparser.New("./assets/uaparser_regexes.yaml")
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	p, err := persistence.New(
 		persistence.Server(sConf.Database.Host, sConf.Database.Port, sConf.Database.DatabaseName),
 		persistence.Auth(sConf.Database.Username, sConf.Database.Password),
@@ -44,6 +31,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("ERROR: %+v", err)
 	}
+	go p.Run()
 
 	mux := http.NewServeMux()
 
@@ -62,22 +50,8 @@ func main() {
 		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 		w.Header().Set("Pragma", "no-cache")
 		w.Header().Set("Expires", "Fri, 01 Jan 1990 00:00:00 GMT")
-
 		w.WriteHeader(http.StatusNoContent)
-
-		defer func(req *http.Request) {
-			req.ParseForm()
-
-			b := beacon.FromRequestParams(&req.Form, r.UserAgent(), req.Header)
-			re := beacon.ConvertToRumEvent(b, uaP)
-
-			jsonValue, err := json.Marshal(re)
-			if err != nil {
-				log.Fatalf("json parsing error: %+v", err)
-			} else {
-				p.Save(jsonValue, TABLENAME)
-			}
-		}(r)
+		go func() { p.Events <- p.Event(r) }()
 	})
 
 	// fmt.Println("TLS domain", domain)
