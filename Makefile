@@ -17,6 +17,7 @@ up: ## Starts the environment
 up_with_grafana: ## Starts the environment with Grafana
 	make up
 	mkdir -p dev/grafana
+	docker-compose -f ${dc_grafana_path} build
 	env UID=${UID} docker-compose -f ${dc_grafana_path} up
 
 down: ## Stops the environment
