@@ -70,6 +70,7 @@ func (s *e2eTestSuite) Test_EndToEnd_CreateArticle() {
 	p, err := persistence.New(
 		persistence.Server(sConf.Database.Host, sConf.Database.Port, sConf.Database.DatabaseName),
 		persistence.Auth(sConf.Database.Username, sConf.Database.Password),
+		persistence.Opts("integration_test"),
 	)
 	if err != nil {
 		log.Fatalf("ERROR: %+v", err)

@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -16,15 +17,22 @@ type event struct {
 
 func (p *persistence) Event(r *http.Request) *event {
 	if err := r.ParseForm(); err != nil {
+		log.Fatal(err)
 		return nil
 	}
-	return &event{"webperf_rum_events", r}
+
+	name := "webperf_rum_events"
+	if p.opts != nil {
+		name = fmt.Sprintf("%s_%s", p.opts.prefix, name)
+	}
+
+	return &event{name, r}
 }
 
 // TODO !!! beacon logic must reside in beacon pkg, for now it is just a copy-paste from main
 func (e *event) payload() string {
 	// We need to ge the Regexes from here: https://github.com/ua-parser/uap-core/blob/master/regexes.yaml
-	uaP, err := uaparser.New("../assets/uaparser_regexes.yaml")
+	uaP, err := uaparser.New("./assets/uaparser_regexes.yaml")
 	if err != nil {
 		log.Fatal(err)
 	}
