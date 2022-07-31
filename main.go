@@ -27,7 +27,7 @@ func main() {
 	p, err := persistence.New(
 		persistence.Server(sConf.Database.Host, sConf.Database.Port, sConf.Database.DatabaseName),
 		persistence.Auth(sConf.Database.Username, sConf.Database.Password),
-		persistence.Opts("integration_test"), // TODO temp fix to make e2e test pass
+		persistence.Opts(sConf.Database.TablePrefix),
 	)
 	if err != nil {
 		log.Fatalf("ERROR: %+v", err)
