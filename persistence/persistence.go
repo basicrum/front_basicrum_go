@@ -17,15 +17,20 @@ type server struct {
 	ctx  context.Context
 }
 
+type opts struct {
+	prefix string
+}
+
 type persistence struct {
 	server server
 	conn   connection
 	Events chan *event
+	opts   *opts
 }
 
-func New(s server, a auth) (*persistence, error) {
+func New(s server, a auth, opts *opts) (*persistence, error) {
 	if conn := s.open(&a); conn != nil {
-		return &persistence{s, connection{conn, a}, make(chan *event)}, nil
+		return &persistence{s, connection{conn, a}, make(chan *event), opts}, nil
 	}
 	return nil, errors.New("connection to the server failed")
 }
@@ -36,6 +41,10 @@ func Server(host string, port int16, db string) server {
 
 func Auth(user string, pwd string) auth {
 	return auth{user, pwd}
+}
+
+func Opts(prefix string) *opts {
+	return &opts{prefix}
 }
 
 func (p *persistence) Run() {

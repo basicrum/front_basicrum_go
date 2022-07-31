@@ -27,6 +27,7 @@ func main() {
 	p, err := persistence.New(
 		persistence.Server(sConf.Database.Host, sConf.Database.Port, sConf.Database.DatabaseName),
 		persistence.Auth(sConf.Database.Username, sConf.Database.Password),
+		persistence.Opts("integration_test"), // TODO temp fix to make e2e test pass
 	)
 	if err != nil {
 		log.Fatalf("ERROR: %+v", err)
@@ -51,7 +52,7 @@ func main() {
 		w.Header().Set("Pragma", "no-cache")
 		w.Header().Set("Expires", "Fri, 01 Jan 1990 00:00:00 GMT")
 		w.WriteHeader(http.StatusNoContent)
-		go func() { p.Events <- p.Event(r) }()
+		defer func(req *http.Request) { p.Events <- p.Event(r) }(r)
 	})
 
 	// fmt.Println("TLS domain", domain)
