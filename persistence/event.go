@@ -22,7 +22,7 @@ func (p *persistence) Event(r *http.Request) *event {
 	}
 
 	name := "webperf_rum_events"
-	if p.opts != nil {
+	if p.opts != nil && p.opts.prefix != "" {
 		name = fmt.Sprintf("%s_%s", p.opts.prefix, name)
 	}
 

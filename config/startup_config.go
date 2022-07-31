@@ -11,6 +11,7 @@ type StartupConfig struct {
 		DatabaseName string `yaml:"database_name"`
 		Host         string `yaml:"host"`
 		Port         int16  `yaml:"port"`
+		TablePrefix  string `yaml:"table_prefix"`
 	} `yaml:"database"`
 	Persistance struct {
 		DatabaseStrategy string `yaml:"database_strategy"`

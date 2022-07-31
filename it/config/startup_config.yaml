@@ -8,6 +8,7 @@ database:
   database_name: "default"
   username: "default"
   password: ""
+  table_prefix: "integration_test"
 
 persistance:
   database_strategy: all_in_one_db
