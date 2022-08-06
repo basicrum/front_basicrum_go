@@ -65,8 +65,8 @@ func (p *persistence) RecycleTables() {
 	p.server.RecycleTables(&p.conn)
 }
 
-func (p *persistence) CountRecords() {
-	p.server.countRecords(&p.conn)
+func (p *persistence) CountRecords() uint64 {
+	return p.server.countRecords(&p.conn)
 }
 
 // END - Used for integration tests.

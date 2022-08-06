@@ -141,21 +141,28 @@ func (s *server) RecycleTables(conn *connection) {
 	}
 }
 
-func (s *server) countRecords(conn *connection) {
+func (s *server) countRecords(conn *connection) uint64 {
 	rows, err := (*conn.inner).Query(s.ctx, "SELECT count(*) FROM integration_test_webperf_rum_events")
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	var cnt uint64 = 0
+
 	for rows.Next() {
 		var (
 			col1 uint64
 		)
+
 		if err := rows.Scan(&col1); err != nil {
 			log.Fatal(err)
 		}
-		fmt.Printf("row: Count=%d\n", col1)
+
+		cnt = col1
 	}
 	rows.Close()
+
+	return cnt
 }
 
 // END - Used for integration tests.
