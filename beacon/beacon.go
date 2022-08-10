@@ -1,6 +1,7 @@
 package beacon
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"net/url"
@@ -328,7 +329,7 @@ func ConvertToRumEvent(b Beacon, uaP *uaparser.Parser) RumEvent {
 		Page_Id:                  b.Pid,
 		Ua_Vnd:                   b.Ua_Vnd,
 		Ua_Plt:                   b.Ua_Plt,
-		Data_Saver_On:            b.Net_Sd,
+		Data_Saver_On:            json.Number(b.Net_Sd),
 	}
 
 	// fmt.Println(re)

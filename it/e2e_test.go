@@ -44,7 +44,7 @@ func TestE2ETestSuite(t *testing.T) {
 // 	s.NoError(s.dbMigration.Down())
 // }
 
-func (s *e2eTestSuite) Test_EndToEnd_CreateArticle() {
+func (s *e2eTestSuite) Test_EndToEnd_CountRecords() {
 	// Start: Setup the db
 	path, err := os.Getwd()
 	if err != nil {
@@ -86,5 +86,7 @@ func (s *e2eTestSuite) Test_EndToEnd_CreateArticle() {
 
 	time.Sleep(2 * time.Second)
 
-	p.CountRecords()
+	var cntExpect uint64 = 14
+
+	s.Assert().Exactly(cntExpect, p.CountRecords())
 }
