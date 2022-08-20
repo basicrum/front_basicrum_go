@@ -27,7 +27,7 @@ func (s *server) options(a *auth) *clickhouse.Options {
 			Username: a.user,
 			Password: a.pwd,
 		},
-		Debug:           true,
+		Debug:           false,
 		ConnMaxLifetime: time.Hour,
 	}
 }

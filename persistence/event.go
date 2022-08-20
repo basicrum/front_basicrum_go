@@ -16,11 +16,6 @@ type event struct {
 }
 
 func (p *persistence) Event(r *http.Request) *event {
-	if err := r.ParseForm(); err != nil {
-		log.Fatal(err)
-		return nil
-	}
-
 	name := "webperf_rum_events"
 	if p.opts != nil && p.opts.prefix != "" {
 		name = fmt.Sprintf("%s_%s", p.opts.prefix, name)

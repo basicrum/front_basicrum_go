@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"time"
 
 	ua "github.com/mileusna/useragent"
 	"github.com/ua-parser/uap-go/uaparser"
@@ -135,14 +134,10 @@ type Beacon struct {
 }
 
 func FromRequestParams(values *url.Values, uaString string, h http.Header) Beacon {
-	created := values.Get("created_at")
-
-	if created == "" {
-		created = time.Now().Format("2006-01-02 15:04:05")
-	}
 
 	b := Beacon{
-		CreatedAt: created,
+		// Used constructing event date
+		CreatedAt: values.Get("created_at"),
 
 		// Mobile
 		Mob_Etype: values.Get("mob.etype"),
