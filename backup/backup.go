@@ -36,13 +36,13 @@ func Do(params []interface{}, backupRootDir string) {
 		dataJson, reqDataErr := json.Marshal(flatten)
 
 		if reqDataErr != nil {
-			log.Fatal(reqDataErr)
+			log.Print(reqDataErr)
 		}
 
 		url, parseErr := url.Parse(v.Get("u"))
 
 		if parseErr != nil {
-			log.Fatal(parseErr)
+			log.Print(parseErr)
 		}
 
 		hostNormalized := strings.ReplaceAll(url.Hostname(), ".", "_")
@@ -64,13 +64,13 @@ func Do(params []interface{}, backupRootDir string) {
 		f, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, os.ModePerm)
 
 		if err != nil {
-			log.Fatal(err)
+			log.Print(err)
 		}
 
 		defer f.Close()
 
 		if _, err = f.WriteString(data); err != nil {
-			log.Fatal(err)
+			log.Print(err)
 		}
 	}
 }

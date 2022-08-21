@@ -266,7 +266,7 @@ func ConvertToRumEvent(b Beacon, uaP *uaparser.Parser) RumEvent {
 
 	url, err := url.Parse(b.U)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	hostname := url.Hostname()

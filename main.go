@@ -5,7 +5,6 @@ package main
 import (
 	"encoding/json"
 	"flag"
-	"fmt"
 	"log"
 	"net/http"
 	"time"
@@ -42,10 +41,10 @@ func main() {
 		persistence.Auth(sConf.Database.Username, sConf.Database.Password),
 		persistence.Opts(sConf.Database.TablePrefix),
 	)
+
 	if err != nil {
 		log.Fatalf("ERROR: %+v", err)
 	}
-	go p.Run()
 
 	mux := http.NewServeMux()
 
@@ -67,7 +66,7 @@ func main() {
 
 		defer func(req *http.Request) {
 			if parseErr := r.ParseForm(); err != nil {
-				log.Fatal(parseErr)
+				log.Println(parseErr)
 			}
 
 			// We need this in case we would like to re-import beacons
@@ -77,7 +76,7 @@ func main() {
 			}
 
 			// Persist Event in ClickHouse
-			p.Events <- p.Event(r)
+			p.Save(req, "webperf_rum_events")
 
 			// Archiving logic
 			if sConf.Backup.Enabled {
@@ -87,7 +86,7 @@ func main() {
 				h, hErr := json.Marshal(r.Header)
 
 				if hErr != nil {
-					log.Fatal(hErr)
+					log.Println(hErr)
 				}
 
 				forArchiving.Add("request_headers", string(h))
@@ -97,7 +96,7 @@ func main() {
 		}(r)
 	})
 
-	// fmt.Println("TLS domain", domain)
+	// log.Println("TLS domain", domain)
 	// certManager := autocert.Manager{
 	// 	Prompt:     autocert.AcceptTOS,
 	// 	HostPolicy: autocert.HostWhitelist(domain),
@@ -115,18 +114,18 @@ func main() {
 
 	// go http.ListenAndServe(":80", certManager.HTTPHandler(nil))
 
-	fmt.Println("Starting the server on port: " + sConf.Server.Port)
+	log.Println("Starting the server on port: " + sConf.Server.Port)
 
 	handler := cors.Default().Handler(mux)
 	errdd := http.ListenAndServe(":"+sConf.Server.Port, handler)
 
 	if errdd != nil {
-		fmt.Println(errdd)
+		log.Println(errdd)
 	}
 
-	// fmt.Println("Server listening on", server.Addr)
+	// log.Println("Server listening on", server.Addr)
 	// if err := server.ListenAndServeTLS("", ""); err != nil {
-	// 	fmt.Println(err)
+	// 	log.Println(err)
 	// }
 }
 
@@ -141,10 +140,10 @@ func main() {
 // 		crtFile := filepath.Join(string(dirCache), hello.ServerName+".crt")
 // 		certificate, err := tls.LoadX509KeyPair(crtFile, keyFile)
 // 		if err != nil {
-// 			fmt.Printf("%s\nFalling back to Letsencrypt\n", err)
+// 			log.Printf("%s\nFalling back to Letsencrypt\n", err)
 // 			return certManager.GetCertificate(hello)
 // 		}
-// 		fmt.Println("Loaded selfsigned certificate.")
+// 		log.Println("Loaded selfsigned certificate.")
 // 		return &certificate, err
 // 	}
 // }

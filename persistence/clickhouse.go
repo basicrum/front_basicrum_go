@@ -41,17 +41,17 @@ func (s *server) open(a *auth) *driver.Conn {
 	return &conn
 }
 
-func (s *server) save(conn *connection, data string, name string) {
-	if data != "" && name != "" {
+func (s *server) save(conn *connection, data string, table string) {
+	if data != "" && table != "" {
 		query := fmt.Sprintf(
 			`INSERT INTO %s SETTINGS input_format_skip_unknown_fields = true FORMAT JSONEachRow
-				%s`, name, data)
+				%s`, table, data)
 		err := (*conn.inner).AsyncInsert(s.ctx, query, false)
 		if err != nil {
-			log.Fatalf("clickhouse insert failed: %+v", err)
+			log.Printf("clickhouse insert failed: %+v", err)
 		}
 	} else {
-		log.Printf("clickhouse invalid data for table %s: %s", name, data)
+		log.Printf("clickhouse invalid data for table %s: %s", table, data)
 	}
 }
 
@@ -65,7 +65,7 @@ func (s *server) RecycleTables(conn *connection) {
 	dropErr := (*conn.inner).Exec(s.ctx, dropQuery)
 
 	if dropErr != nil {
-		log.Fatal(dropErr)
+		log.Print(dropErr)
 	}
 
 	createQuery := `CREATE TABLE IF NOT EXISTS integration_test_webperf_rum_events (
@@ -137,7 +137,7 @@ func (s *server) RecycleTables(conn *connection) {
 	createErr := (*conn.inner).Exec(s.ctx, createQuery)
 
 	if createErr != nil {
-		log.Fatal(createErr)
+		log.Print(createErr)
 	}
 }
 
