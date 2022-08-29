@@ -14,6 +14,7 @@ import (
 	"github.com/basicrum/front_basicrum_go/persistence"
 	"github.com/eapache/go-resiliency/batcher"
 	"github.com/rs/cors"
+	"github.com/ua-parser/uap-go/uaparser"
 )
 
 var (
@@ -26,6 +27,13 @@ func main() {
 
 	flag.StringVar(&domain, "domain", "", "domain name to request your certificate")
 	flag.Parse()
+
+	// @TODO: Move uaP dependency outside the persistance
+	// We need to ge the Regexes from here: https://github.com/ua-parser/uap-core/blob/master/regexes.yaml
+	uaP, err := uaparser.New("./assets/uaparser_regexes.yaml")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	backupInterval := time.Duration(sConf.Backup.IntervalSeconds) * time.Second
 
@@ -40,6 +48,7 @@ func main() {
 		persistence.Server(sConf.Database.Host, sConf.Database.Port, sConf.Database.DatabaseName),
 		persistence.Auth(sConf.Database.Username, sConf.Database.Password),
 		persistence.Opts(sConf.Database.TablePrefix),
+		uaP,
 	)
 
 	if err != nil {

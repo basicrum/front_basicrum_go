@@ -1,0 +1,12 @@
+<clickhouse>
+    <users>
+      <tsvetan>
+          <profile>default</profile>
+            <networks>
+                  <ip>::/0</ip>
+            </networks>
+          <password>testpass</password>
+          <quota>default</quota>
+      </tsvetan>
+    </users>
+</clickhouse>
