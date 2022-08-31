@@ -32,14 +32,17 @@ func SendBeacons() {
 			return http.ErrUseLastResponse
 		}}
 
-	// getRealBeaconsNewStyle()
-
 	valuesSrcOld := getRealBeaconsOldStyle()
 
 	for i, v := range valuesSrcOld {
 		httpPostFormOldStyle(v, client, i)
 	}
 
+	valuesSrcNew := getRealBeaconsNewStyle()
+
+	for i, v := range valuesSrcNew {
+		httpPostFormNewStyle(v, client, i)
+	}
 }
 
 func httpPostFormOldStyle(params url.Values, client *http.Client, cnt int) {
@@ -56,6 +59,51 @@ func httpPostFormOldStyle(params url.Values, client *http.Client, cnt int) {
 	req, _ := http.NewRequest("POST", "http://localhost:8087/beacon/catcher", strings.NewReader(params.Encode()))
 	req.Header.Add("User-Agent", uaStr)
 	req.Header.Add("CF-IPCountry", countryCode)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := client.Do(req)
+
+	if err != nil {
+		fmt.Println("Client err")
+		fmt.Printf("%s", err)
+	}
+
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+
+	if err != nil {
+		fmt.Println("Body read err")
+		fmt.Printf("%s", err)
+	}
+
+	fmt.Println(string(body))
+}
+
+func httpPostFormNewStyle(params url.Values, client *http.Client, cnt int) {
+	// fmt.Println(params.Get("request_headers"))
+
+	var headers map[string][]string
+
+	unmrErr := json.Unmarshal([]byte(params.Get("request_headers")), &headers)
+
+	if unmrErr != nil {
+		fmt.Println("Bad headers JSON")
+		fmt.Println(unmrErr)
+	}
+
+	uaStr := headers["User-Agent"][0]
+
+	countryCode := headers["Cf-Ipcountry"][0]
+	cityName := headers["Cf-Ipcity"][0]
+
+	fmt.Println(strings.NewReader(params.Encode()))
+
+	req, _ := http.NewRequest("POST", "http://localhost:8087/beacon/catcher", strings.NewReader(params.Encode()))
+
+	req.Header.Add("User-Agent", uaStr)
+	req.Header.Add("Cf-Ipcountry", countryCode)
+	req.Header.Add("Cf-Ipcity", cityName)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, err := client.Do(req)

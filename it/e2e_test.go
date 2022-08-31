@@ -86,7 +86,7 @@ func (s *e2eTestSuite) Test_EndToEnd_CountRecords() {
 
 	time.Sleep(2 * time.Second)
 
-	var cntExpect uint64 = 14
+	var cntExpect uint64 = 25
 
 	s.Assert().Exactly(cntExpect, p.CountRecords())
 }
