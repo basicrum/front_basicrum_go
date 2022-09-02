@@ -13,3 +13,8 @@ database:
 persistance:
   database_strategy: all_in_one_db
   table_strategy: all_in_one_table
+
+backup:
+  enabled: false
+  directory: "/home/basicrum_archive"
+  interval_seconds: 5

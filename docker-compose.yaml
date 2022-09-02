@@ -3,9 +3,16 @@ version: "3.7"
 services:
 
   dev_clickhouse_server:
-    image: clickhouse/clickhouse-server:22.6
+    image: clickhouse/clickhouse-server:22.8
     ports:
       - 8143:8123
       - 9000:9000
     volumes:
       - ./dev/clickhouse:/var/lib/clickhouse
+      - ./dev/clickhouse-users/:/etc/clickhouse-server/users.d/
+
+    ulimits:
+      nproc: 65535
+      nofile:
+       soft: 262144
+       hard: 262144

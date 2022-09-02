@@ -1,11 +1,8 @@
-package persistence
+package it
 
 import (
 	"context"
 	"errors"
-	"net/http"
-
-	"github.com/ua-parser/uap-go/uaparser"
 )
 
 type auth struct {
@@ -27,13 +24,12 @@ type opts struct {
 type persistence struct {
 	server server
 	conn   connection
-	uaP    *uaparser.Parser
 	opts   *opts
 }
 
-func New(s server, a auth, opts *opts, uaP *uaparser.Parser) (*persistence, error) {
+func New(s server, a auth, opts *opts) (*persistence, error) {
 	if conn := s.open(&a); conn != nil {
-		return &persistence{s, connection{conn, a}, uaP, opts}, nil
+		return &persistence{s, connection{conn, a}, opts}, nil
 	}
 
 	return nil, errors.New("connection to the server failed")
@@ -51,12 +47,10 @@ func Opts(prefix string) *opts {
 	return &opts{prefix}
 }
 
-func (p *persistence) Save(req *http.Request, table string) {
-	tPrefix := &p.opts.prefix
+func (p *persistence) RecycleTables() {
+	p.server.RecycleTables(&p.conn)
+}
 
-	if table != "" {
-		table = *tPrefix + "_" + table
-	}
-
-	p.server.save(&p.conn, eventPayload(req, p.uaP), table)
+func (p *persistence) CountRecords() uint64 {
+	return p.server.countRecords(&p.conn)
 }

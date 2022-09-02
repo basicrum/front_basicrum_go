@@ -8,7 +8,6 @@ import (
 
 	"github.com/basicrum/front_basicrum_go/config"
 	"github.com/basicrum/front_basicrum_go/it"
-	"github.com/basicrum/front_basicrum_go/persistence"
 	"github.com/stretchr/testify/suite"
 	"gopkg.in/yaml.v2"
 )
@@ -67,11 +66,12 @@ func (s *e2eTestSuite) Test_EndToEnd_CountRecords() {
 		log.Println(err)
 	}
 
-	p, err := persistence.New(
-		persistence.Server(sConf.Database.Host, sConf.Database.Port, sConf.Database.DatabaseName),
-		persistence.Auth(sConf.Database.Username, sConf.Database.Password),
-		persistence.Opts(sConf.Database.TablePrefix),
+	p, err := it.New(
+		it.Server(sConf.Database.Host, sConf.Database.Port, sConf.Database.DatabaseName),
+		it.Auth(sConf.Database.Username, sConf.Database.Password),
+		it.Opts(sConf.Database.TablePrefix),
 	)
+
 	if err != nil {
 		log.Fatalf("ERROR: %+v", err)
 	}
@@ -86,7 +86,7 @@ func (s *e2eTestSuite) Test_EndToEnd_CountRecords() {
 
 	time.Sleep(2 * time.Second)
 
-	var cntExpect uint64 = 14
+	var cntExpect uint64 = 25
 
 	s.Assert().Exactly(cntExpect, p.CountRecords())
 }

@@ -3,14 +3,18 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
-	"fmt"
 	"log"
 	"net/http"
+	"time"
 
+	"github.com/basicrum/front_basicrum_go/backup"
 	"github.com/basicrum/front_basicrum_go/config"
 	"github.com/basicrum/front_basicrum_go/persistence"
+	"github.com/eapache/go-resiliency/batcher"
 	"github.com/rs/cors"
+	"github.com/ua-parser/uap-go/uaparser"
 )
 
 var (
@@ -24,15 +28,32 @@ func main() {
 	flag.StringVar(&domain, "domain", "", "domain name to request your certificate")
 	flag.Parse()
 
+	// @TODO: Move uaP dependency outside the persistance
+	// We need to ge the Regexes from here: https://github.com/ua-parser/uap-core/blob/master/regexes.yaml
+	uaP, err := uaparser.New("./assets/uaparser_regexes.yaml")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	backupInterval := time.Duration(sConf.Backup.IntervalSeconds) * time.Second
+
+	b := batcher.New(backupInterval, func(params []interface{}) error {
+		if sConf.Backup.Enabled {
+			backup.Do(params, sConf.Backup.Directory)
+		}
+		return nil
+	})
+
 	p, err := persistence.New(
 		persistence.Server(sConf.Database.Host, sConf.Database.Port, sConf.Database.DatabaseName),
 		persistence.Auth(sConf.Database.Username, sConf.Database.Password),
 		persistence.Opts(sConf.Database.TablePrefix),
+		uaP,
 	)
+
 	if err != nil {
 		log.Fatalf("ERROR: %+v", err)
 	}
-	go p.Run()
 
 	mux := http.NewServeMux()
 
@@ -47,15 +68,44 @@ func main() {
 		// date: Sat, 25 Jun 2022 10:40:18 GMT
 		// expires: Fri, 01 Jan 1990 00:00:00 GMT
 		// pragma: no-cache
-
 		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
 		w.Header().Set("Pragma", "no-cache")
 		w.Header().Set("Expires", "Fri, 01 Jan 1990 00:00:00 GMT")
 		w.WriteHeader(http.StatusNoContent)
-		defer func(req *http.Request) { p.Events <- p.Event(r) }(r)
+
+		defer func(req *http.Request) {
+			if parseErr := r.ParseForm(); err != nil {
+				log.Println(parseErr)
+			}
+
+			// We need this in case we would like to re-import beacons
+			// Also created_at is used for event date when we persist data in the DB
+			if !r.Form.Has("created_at") {
+				r.Form.Set("created_at", time.Now().UTC().Format("2006-01-02 15:04:05"))
+			}
+
+			// Persist Event in ClickHouse
+			p.Save(req, "webperf_rum_events")
+
+			// Archiving logic
+			if sConf.Backup.Enabled {
+				forArchiving := r.Form
+
+				// Flatten headers later
+				h, hErr := json.Marshal(r.Header)
+
+				if hErr != nil {
+					log.Println(hErr)
+				}
+
+				forArchiving.Add("request_headers", string(h))
+
+				go b.Run(forArchiving)
+			}
+		}(r)
 	})
 
-	// fmt.Println("TLS domain", domain)
+	// log.Println("TLS domain", domain)
 	// certManager := autocert.Manager{
 	// 	Prompt:     autocert.AcceptTOS,
 	// 	HostPolicy: autocert.HostWhitelist(domain),
@@ -73,18 +123,18 @@ func main() {
 
 	// go http.ListenAndServe(":80", certManager.HTTPHandler(nil))
 
-	fmt.Println("Starting the server on port: " + sConf.Server.Port)
+	log.Println("Starting the server on port: " + sConf.Server.Port)
 
 	handler := cors.Default().Handler(mux)
 	errdd := http.ListenAndServe(":"+sConf.Server.Port, handler)
 
 	if errdd != nil {
-		fmt.Println(errdd)
+		log.Println(errdd)
 	}
 
-	// fmt.Println("Server listening on", server.Addr)
+	// log.Println("Server listening on", server.Addr)
 	// if err := server.ListenAndServeTLS("", ""); err != nil {
-	// 	fmt.Println(err)
+	// 	log.Println(err)
 	// }
 }
 
@@ -99,10 +149,10 @@ func main() {
 // 		crtFile := filepath.Join(string(dirCache), hello.ServerName+".crt")
 // 		certificate, err := tls.LoadX509KeyPair(crtFile, keyFile)
 // 		if err != nil {
-// 			fmt.Printf("%s\nFalling back to Letsencrypt\n", err)
+// 			log.Printf("%s\nFalling back to Letsencrypt\n", err)
 // 			return certManager.GetCertificate(hello)
 // 		}
-// 		fmt.Println("Loaded selfsigned certificate.")
+// 		log.Println("Loaded selfsigned certificate.")
 // 		return &certificate, err
 // 	}
 // }

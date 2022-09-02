@@ -1,6 +1,7 @@
 package it
 
 import (
+	"bufio"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -9,14 +10,13 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
 )
 
 func SendBeacons() {
-
-	valuesSlc := GetRealBeacons()
 
 	cookieJar, _ := cookiejar.New(nil)
 	tr := &http.Transport{
@@ -32,15 +32,21 @@ func SendBeacons() {
 			return http.ErrUseLastResponse
 		}}
 
-	for i, v := range valuesSlc {
-		httpPostForm(v, client, i)
-		fmt.Println("Count:")
-		fmt.Println(i)
+	valuesSrcOld := getRealBeaconsOldStyle()
+
+	for i, v := range valuesSrcOld {
+		httpPostFormOldStyle(v, client, i)
+	}
+
+	valuesSrcNew := getRealBeaconsNewStyle()
+
+	for i, v := range valuesSrcNew {
+		httpPostFormNewStyle(v, client, i)
 	}
 }
 
-func httpPostForm(parm url.Values, client *http.Client, cnt int) {
-	uaStr := parm.Get("user.agent")
+func httpPostFormOldStyle(params url.Values, client *http.Client, cnt int) {
+	uaStr := params.Get("user.agent")
 
 	if len(uaStr) == 0 {
 		uaStr = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36"
@@ -48,8 +54,9 @@ func httpPostForm(parm url.Values, client *http.Client, cnt int) {
 
 	countryCode := "DE"
 
-	fmt.Println(strings.NewReader(parm.Encode()))
-	req, _ := http.NewRequest("POST", "http://localhost:8087/beacon/catcher", strings.NewReader(parm.Encode()))
+	fmt.Println(strings.NewReader(params.Encode()))
+
+	req, _ := http.NewRequest("POST", "http://localhost:8087/beacon/catcher", strings.NewReader(params.Encode()))
 	req.Header.Add("User-Agent", uaStr)
 	req.Header.Add("CF-IPCountry", countryCode)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -73,16 +80,57 @@ func httpPostForm(parm url.Values, client *http.Client, cnt int) {
 	fmt.Println(string(body))
 }
 
-func GetRealBeacons() []url.Values {
-	files, _ := filepath.Glob("./data/**/*.json")
+func httpPostFormNewStyle(params url.Values, client *http.Client, cnt int) {
+	// fmt.Println(params.Get("request_headers"))
+
+	var headers map[string][]string
+
+	unmrErr := json.Unmarshal([]byte(params.Get("request_headers")), &headers)
+
+	if unmrErr != nil {
+		fmt.Println("Bad headers JSON")
+		fmt.Println(unmrErr)
+	}
+
+	uaStr := headers["User-Agent"][0]
+
+	countryCode := headers["Cf-Ipcountry"][0]
+	cityName := headers["Cf-Ipcity"][0]
+
+	fmt.Println(strings.NewReader(params.Encode()))
+
+	req, _ := http.NewRequest("POST", "http://localhost:8087/beacon/catcher", strings.NewReader(params.Encode()))
+
+	req.Header.Add("User-Agent", uaStr)
+	req.Header.Add("Cf-Ipcountry", countryCode)
+	req.Header.Add("Cf-Ipcity", cityName)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := client.Do(req)
+
+	if err != nil {
+		fmt.Println("Client err")
+		fmt.Printf("%s", err)
+	}
+
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+
+	if err != nil {
+		fmt.Println("Body read err")
+		fmt.Printf("%s", err)
+	}
+
+	fmt.Println(string(body))
+}
+
+func getRealBeaconsOldStyle() []url.Values {
+	files, _ := filepath.Glob("./data/old_style/*.json")
 
 	valuesSlc := []url.Values{}
 
 	for i, s := range files {
-		if i > 20 {
-			break
-		}
-
 		fmt.Println(i, s)
 
 		fContent, err := ioutil.ReadFile(s)
@@ -133,6 +181,54 @@ func GetRealBeacons() []url.Values {
 			}
 
 			valuesSlc = append(valuesSlc, reqD)
+		}
+	}
+
+	return valuesSlc
+}
+
+func getRealBeaconsNewStyle() []url.Values {
+	files, _ := filepath.Glob("./data/new_style/*.json.lines")
+
+	valuesSlc := []url.Values{}
+
+	for i, s := range files {
+		fmt.Println(i, s)
+
+		file, err := os.Open(s)
+		if err != nil {
+			log.Fatalf("unable to read file: %v", err)
+		}
+
+		defer file.Close()
+
+		scanner := bufio.NewScanner(file)
+
+		for scanner.Scan() {
+
+			var b interface{}
+
+			unmrErr := json.Unmarshal([]byte(scanner.Text()), &b)
+
+			if unmrErr != nil {
+				log.Printf("Bad beacon_data in file: %v", unmrErr)
+				continue
+			}
+
+			beaconData := b.(map[string]interface{})
+
+			reqD := make(url.Values)
+
+			for bK, bV := range beaconData {
+				// Umarshal later request_headers
+				reqD.Set(bK, bV.(string))
+			}
+
+			valuesSlc = append(valuesSlc, reqD)
+		}
+
+		if err := scanner.Err(); err != nil {
+			log.Fatal(err)
 		}
 	}
 

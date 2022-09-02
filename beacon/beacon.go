@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"time"
 
 	ua "github.com/mileusna/useragent"
 	"github.com/ua-parser/uap-go/uaparser"
@@ -76,6 +75,7 @@ type Beacon struct {
 	Pid            string
 	N              string
 	H_CF_IPCountry string
+	H_CF_IPCity    string
 	Http_Initiator string
 
 	// Navigation Timing
@@ -135,14 +135,10 @@ type Beacon struct {
 }
 
 func FromRequestParams(values *url.Values, uaString string, h http.Header) Beacon {
-	created := values.Get("created_at")
-
-	if created == "" {
-		created = time.Now().Format("2006-01-02 15:04:05")
-	}
 
 	b := Beacon{
-		CreatedAt: created,
+		// Used constructing event date
+		CreatedAt: values.Get("created_at"),
 
 		// Mobile
 		Mob_Etype: values.Get("mob.etype"),
@@ -186,7 +182,8 @@ func FromRequestParams(values *url.Values, uaString string, h http.Header) Beaco
 		Pid:            values.Get("pid"),
 		N:              values.Get("n"),
 		UserAgent:      uaString,
-		H_CF_IPCountry: h.Get("CF-IPCountry"),
+		H_CF_IPCountry: cleanupHeaderValue(h.Get("CF-IPCountry")),
+		H_CF_IPCity:    cleanupHeaderValue(h.Get("CF-IPCity")),
 		Http_Initiator: values.Get("http_initiator"),
 
 		// Navigation Timing
@@ -271,7 +268,7 @@ func ConvertToRumEvent(b Beacon, uaP *uaparser.Parser) RumEvent {
 
 	url, err := url.Parse(b.U)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	hostname := url.Hostname()
@@ -298,7 +295,8 @@ func ConvertToRumEvent(b Beacon, uaP *uaparser.Parser) RumEvent {
 		Event_Type:               getEventType(b.Rt_Quit, b.Http_Initiator),
 		Session_Id:               b.Rt_Si,
 		Session_Length:           b.Rt_Sl,
-		Country_Code:             getCountryCode(b.H_CF_IPCountry),
+		Geo_Country_Code:         getCountryCode(b.H_CF_IPCountry),
+		Geo_City_Name:            getCountryCode(b.H_CF_IPCity),
 		Next_Hop_Protocol:        b.Nt_Protocol,
 		User_Agent:               b.UserAgent,
 		Visibility_State:         b.Vis_St,
@@ -378,6 +376,24 @@ func getDeviceType(uagent string) string {
 	}
 
 	return dT
+}
+
+func cleanupHeaderValue(hVal string) string {
+	hVal = strings.TrimSpace(hVal)
+
+	// Remove leading white space
+	if len(hVal) > 0 && hVal[0] == '"' {
+		hVal = hVal[1:]
+	}
+
+	// Remove trailing white space
+	if len(hVal) > 0 && hVal[len(hVal)-1] == '"' {
+		hVal = hVal[:len(hVal)-1]
+	}
+
+	hVal = strings.TrimSpace(hVal)
+
+	return hVal
 }
 
 func getCountryCode(CF_IPCountry string) string {

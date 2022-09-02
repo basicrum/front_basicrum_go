@@ -17,4 +17,9 @@ type StartupConfig struct {
 		DatabaseStrategy string `yaml:"database_strategy"`
 		TableStrategy    string `yaml:"table_strategy"`
 	} `yaml:"persistance"`
+	Backup struct {
+		Enabled         bool   `yaml:"enabled"`
+		Directory       string `yaml:"directory"`
+		IntervalSeconds uint32 `yaml:"interval_seconds"`
+	} `yaml:"backup"`
 }

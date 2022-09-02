@@ -22,7 +22,7 @@ up_with_grafana: ## Starts the environment with Grafana
 
 down: ## Stops the environment
 	docker-compose -f ${dc_path} down
-	docker-compose -f ${dc_grafana_path} down
+	env UID=${UID} docker-compose -f ${dc_grafana_path} down
 
 restart: down up # Restart the environment
 

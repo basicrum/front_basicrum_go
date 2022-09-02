@@ -7,7 +7,8 @@ type RumEvent struct {
 	Hostname                 string      `json:"hostname"`
 	Url                      string      `json:"url"`
 	Cumulative_Layout_Shift  string      `json:"cumulative_layout_shift"`
-	Country_Code             string      `json:"country_code"`
+	Geo_Country_Code         string      `json:"geo_country_code"`
+	Geo_City_Name            string      `json:"geo_city_name"`
 	Device_Type              string      `json:"device_type"`
 	Device_Manufacturer      string      `json:"device_manufacturer"`
 	T_Resp                   string      `json:"t_resp"`
