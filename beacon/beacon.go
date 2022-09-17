@@ -134,7 +134,7 @@ type Beacon struct {
 	Sb             string
 }
 
-func FromRequestParams(values *url.Values, uaString string, h http.Header) Beacon {
+func FromRequestParams(values *url.Values, uaString string, h *http.Header) Beacon {
 
 	b := Beacon{
 		// Used constructing event date
