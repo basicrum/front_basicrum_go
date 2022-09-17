@@ -55,6 +55,8 @@ func main() {
 		log.Fatalf("ERROR: %+v", err)
 	}
 
+	go p.Run()
+
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/beacon/catcher", func(w http.ResponseWriter, r *http.Request) {
@@ -73,26 +75,32 @@ func main() {
 		w.Header().Set("Expires", "Fri, 01 Jan 1990 00:00:00 GMT")
 		w.WriteHeader(http.StatusNoContent)
 
-		defer func(req *http.Request) {
-			if parseErr := r.ParseForm(); err != nil {
-				log.Println(parseErr)
-			}
+		// Prep for Async work
+		parseErr := r.ParseForm()
+
+		if parseErr != nil {
+			log.Println(parseErr)
+		}
+
+		if parseErr == nil {
+			f := r.Form
+			h := r.Header
 
 			// We need this in case we would like to re-import beacons
 			// Also created_at is used for event date when we persist data in the DB
-			if !r.Form.Has("created_at") {
-				r.Form.Set("created_at", time.Now().UTC().Format("2006-01-02 15:04:05"))
+			if !f.Has("created_at") {
+				f.Set("created_at", time.Now().UTC().Format("2006-01-02 15:04:05"))
 			}
 
 			// Persist Event in ClickHouse
-			p.Save(req, "webperf_rum_events")
+			go func() { p.Events <- p.Event(&f, &h) }()
 
 			// Archiving logic
 			if sConf.Backup.Enabled {
-				forArchiving := r.Form
+				forArchiving := f
 
 				// Flatten headers later
-				h, hErr := json.Marshal(r.Header)
+				h, hErr := json.Marshal(h)
 
 				if hErr != nil {
 					log.Println(hErr)
@@ -102,7 +110,8 @@ func main() {
 
 				go b.Run(forArchiving)
 			}
-		}(r)
+		}
+
 	})
 
 	// log.Println("TLS domain", domain)
