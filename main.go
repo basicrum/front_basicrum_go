@@ -111,9 +111,16 @@ func main() {
 				go b.Run(forArchiving)
 			}
 		}
-
 	})
 
+	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+		w.Header().Set("Pragma", "no-cache")
+		w.Header().Set("Expires", "Fri, 01 Jan 1990 00:00:00 GMT")
+		w.WriteHeader(http.StatusOK)
+
+		_, _ = w.Write([]byte("ok"))
+	})
 	// log.Println("TLS domain", domain)
 	// certManager := autocert.Manager{
 	// 	Prompt:     autocert.AcceptTOS,
