@@ -1,8 +1,13 @@
 package it_test
 
 import (
+	"crypto/tls"
+	"io/ioutil"
 	"log"
+	"net/http"
+	"net/http/cookiejar"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -251,4 +256,41 @@ func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsMissing() {
 
 	s.Assert().Exactly(cntExpect, p.CountRecords("where cumulative_layout_shift IS NULL"))
 	s.Assert().Exactly(cntExpect, p.CountRecords("where first_input_delay IS NULL"))
+}
+
+func (s *e2eTestSuite) Test_EndToEnd_HealthCheck() {
+	cookieJar, _ := cookiejar.New(nil)
+	tr := &http.Transport{
+		TLSClientConfig:    &tls.Config{InsecureSkipVerify: true},
+		MaxIdleConns:       100,
+		IdleConnTimeout:    10 * time.Second,
+		DisableCompression: true,
+	}
+
+	client := &http.Client{Transport: tr,
+		Jar: cookieJar,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		}}
+
+	req, _ := http.NewRequest("GET", "http://localhost:8087/health", strings.NewReader(""))
+
+	resp, err := client.Do(req)
+
+	if err != nil {
+		log.Println("Client err")
+		log.Printf("%s", err)
+	}
+
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+
+	if err != nil {
+		log.Println("Body read err")
+		log.Printf("%s", err)
+	}
+
+	s.Assert().Exactly(200, resp.StatusCode)
+	s.Assert().Exactly("ok", string(body))
 }
