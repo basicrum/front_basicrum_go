@@ -3,6 +3,7 @@
 package main
 
 import (
+	_ "embed"
 	"encoding/json"
 	"flag"
 	"log"
@@ -21,6 +22,9 @@ var (
 	domain string
 )
 
+//go:embed assets/uaparser_regexes.yaml
+var uaRegexes []byte
+
 func main() {
 
 	sConf := config.GetStartupConfig()
@@ -30,7 +34,7 @@ func main() {
 
 	// @TODO: Move uaP dependency outside the persistance
 	// We need to get the Regexes from here: https://github.com/ua-parser/uap-core/blob/master/regexes.yaml
-	uaP, err := uaparser.New("./assets/uaparser_regexes.yaml")
+	uaP, err := uaparser.NewFromBytes(uaRegexes)
 	if err != nil {
 		log.Fatal(err)
 	}
