@@ -158,3 +158,16 @@ Run the follwoing query:
 ```sql
 SELECT * from integration_test_webperf_rum_events
 ```
+
+
+### 6. Start on production
+
+```
+./main > app.log 2>&1 &
+```
+
+Periodically check the app.log file for any interesting messages
+
+netstat -ltnp | grep -w ':8087'
+
+kill -9 $(lsof -i:8087 -t)

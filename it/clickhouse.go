@@ -14,6 +14,11 @@ type connection struct {
 	auth  auth
 }
 
+type RumEventRow struct {
+	Url                     string `ch:"url"`
+	Cumulative_Layout_Shift string `ch:"cumulative_layout_shift"`
+}
+
 func (s *server) addr() string {
 	return s.host + ":" + strconv.FormatInt(int64(s.port), 10)
 }
@@ -51,7 +56,7 @@ func (s *server) RecycleTables(conn *connection) {
 	}
 
 	createQuery := `CREATE TABLE IF NOT EXISTS integration_test_webperf_rum_events (
-		event_date Date DEFAULT toDate(created_at),
+		event_date                      Date DEFAULT toDate(created_at),
 		hostname                        LowCardinality(String),
 		created_at                      DateTime,
 		event_type                      LowCardinality(String),
@@ -124,8 +129,9 @@ func (s *server) RecycleTables(conn *connection) {
 	}
 }
 
-func (s *server) countRecords(conn *connection) uint64 {
-	rows, err := (*conn.inner).Query(s.ctx, "SELECT count(*) FROM integration_test_webperf_rum_events")
+func (s *server) countRecords(conn *connection, criteria string) uint64 {
+	query := "SELECT count(*) FROM integration_test_webperf_rum_events " + criteria
+	rows, err := (*conn.inner).Query(s.ctx, query)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -146,4 +152,17 @@ func (s *server) countRecords(conn *connection) uint64 {
 	rows.Close()
 
 	return cnt
+}
+
+func (s *server) getFirstRow(conn *connection) RumEventRow {
+
+	result := []RumEventRow{}
+
+	err := (*conn.inner).Select(s.ctx, &result, "SELECT url, cumulative_layout_shift FROM integration_test_webperf_rum_events")
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return result[0]
 }

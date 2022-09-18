@@ -29,7 +29,7 @@ func main() {
 	flag.Parse()
 
 	// @TODO: Move uaP dependency outside the persistance
-	// We need to ge the Regexes from here: https://github.com/ua-parser/uap-core/blob/master/regexes.yaml
+	// We need to get the Regexes from here: https://github.com/ua-parser/uap-core/blob/master/regexes.yaml
 	uaP, err := uaparser.New("./assets/uaparser_regexes.yaml")
 	if err != nil {
 		log.Fatal(err)
