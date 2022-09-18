@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-func SendBeacons() {
+func SendBeacons(oldStylePath string, newStylePath string) {
 
 	cookieJar, _ := cookiejar.New(nil)
 	tr := &http.Transport{
@@ -32,16 +32,20 @@ func SendBeacons() {
 			return http.ErrUseLastResponse
 		}}
 
-	valuesSrcOld := getRealBeaconsOldStyle()
+	if oldStylePath != "" {
+		valuesSrcOld := getRealBeaconsOldStyle(oldStylePath)
 
-	for i, v := range valuesSrcOld {
-		httpPostFormOldStyle(v, client, i)
+		for i, v := range valuesSrcOld {
+			httpPostFormOldStyle(v, client, i)
+		}
 	}
 
-	valuesSrcNew := getRealBeaconsNewStyle()
+	if newStylePath != "" {
+		valuesSrcNew := getRealBeaconsNewStyle(newStylePath)
 
-	for i, v := range valuesSrcNew {
-		httpPostFormNewStyle(v, client, i)
+		for i, v := range valuesSrcNew {
+			httpPostFormNewStyle(v, client, i)
+		}
 	}
 }
 
@@ -125,8 +129,8 @@ func httpPostFormNewStyle(params url.Values, client *http.Client, cnt int) {
 	fmt.Println(string(body))
 }
 
-func getRealBeaconsOldStyle() []url.Values {
-	files, _ := filepath.Glob("./data/old_style/*.json")
+func getRealBeaconsOldStyle(path string) []url.Values {
+	files, _ := filepath.Glob(path)
 
 	valuesSlc := []url.Values{}
 
@@ -187,8 +191,8 @@ func getRealBeaconsOldStyle() []url.Values {
 	return valuesSlc
 }
 
-func getRealBeaconsNewStyle() []url.Values {
-	files, _ := filepath.Glob("./data/new_style/*.json.lines")
+func getRealBeaconsNewStyle(path string) []url.Values {
+	files, _ := filepath.Glob(path)
 
 	valuesSlc := []url.Values{}
 

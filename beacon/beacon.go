@@ -161,6 +161,7 @@ func FromRequestParams(values *url.Values, uaString string, h *http.Header) Beac
 		C_F_M:    values.Get("c.f.m"),
 		C_F_S:    values.Get("c.f.s"),
 		C_Fid:    values.Get("c.fid"),
+		C_Cls:    values.Get("c.cls"),
 
 		// Event Timing
 		Et_Fid: values.Get("et.fid"),
@@ -277,7 +278,7 @@ func ConvertToRumEvent(b Beacon, uaP *uaparser.Parser) RumEvent {
 		Created_At:               b.CreatedAt,
 		Hostname:                 hostname,
 		Url:                      b.U,
-		Cumulative_Layout_Shift:  b.C_Cls,
+		Cumulative_Layout_Shift:  json.Number(b.C_Cls),
 		Device_Type:              dT,
 		Device_Manufacturer:      uaPres.Device.Brand,
 		Operating_System:         uaPres.Os.Family,
@@ -290,7 +291,7 @@ func ConvertToRumEvent(b Beacon, uaP *uaparser.Parser) RumEvent {
 		Redirects_Count:          "0", // @todo: Calculate later
 		First_Contentful_Paint:   b.Pt_Fcp,
 		First_Paint:              b.Pt_Fp,
-		First_Input_Delay:        b.Et_Fid,
+		First_Input_Delay:        json.Number(b.Et_Fid),
 		Largest_Contentful_Paint: b.Pt_Lcp,
 		Event_Type:               getEventType(b.Rt_Quit, b.Http_Initiator),
 		Session_Id:               b.Rt_Si,
@@ -329,8 +330,6 @@ func ConvertToRumEvent(b Beacon, uaP *uaparser.Parser) RumEvent {
 		Ua_Plt:                   b.Ua_Plt,
 		Data_Saver_On:            json.Number(b.Net_Sd),
 	}
-
-	// fmt.Println(re)
 
 	return re
 }

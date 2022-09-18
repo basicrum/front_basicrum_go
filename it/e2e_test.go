@@ -81,12 +81,174 @@ func (s *e2eTestSuite) Test_EndToEnd_CountRecords() {
 
 	time.Sleep(10 * time.Second)
 
-	it.SendBeacons()
+	it.SendBeacons("./data/old_style/*.json", "./data/new_style/*.json.lines")
 	s.NoError(err)
 
 	time.Sleep(2 * time.Second)
 
 	var cntExpect uint64 = 25
 
-	s.Assert().Exactly(cntExpect, p.CountRecords())
+	s.Assert().Exactly(cntExpect, p.CountRecords(""))
+}
+
+func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsPersisted() {
+	// Start: Setup the db
+	path, err := os.Getwd()
+	if err != nil {
+		log.Println(err)
+	}
+
+	confPath := path + "/config/startup_config.yaml"
+
+	f, err := os.Open(confPath)
+	if err != nil {
+		log.Println(err)
+	}
+	defer f.Close()
+
+	var sConf config.StartupConfig
+	decoder := yaml.NewDecoder(f)
+	err = decoder.Decode(&sConf)
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	p, err := it.New(
+		it.Server(sConf.Database.Host, sConf.Database.Port, sConf.Database.DatabaseName),
+		it.Auth(sConf.Database.Username, sConf.Database.Password),
+		it.Opts(sConf.Database.TablePrefix),
+	)
+
+	if err != nil {
+		log.Fatalf("ERROR: %+v", err)
+	}
+
+	p.RecycleTables()
+	// End: Setup the db
+
+	time.Sleep(10 * time.Second)
+
+	it.SendBeacons("", "./data/misc/all-fields.json.lines")
+	s.NoError(err)
+
+	time.Sleep(2 * time.Second)
+
+	var cntExpect uint64 = 1
+
+	s.Assert().Exactly(cntExpect, p.CountRecords(""))
+
+	// Set expectations
+	cntExpect = 1
+
+	s.Assert().Exactly(cntExpect, p.CountRecords("where cumulative_layout_shift > 0.095"))
+	// s.Assert().Exactly(cntExpect, p.CountRecords("where first_input_delay = 1"))
+}
+
+func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsEmpty() {
+	// Start: Setup the db
+	path, err := os.Getwd()
+	if err != nil {
+		log.Println(err)
+	}
+
+	confPath := path + "/config/startup_config.yaml"
+
+	f, err := os.Open(confPath)
+	if err != nil {
+		log.Println(err)
+	}
+	defer f.Close()
+
+	var sConf config.StartupConfig
+	decoder := yaml.NewDecoder(f)
+	err = decoder.Decode(&sConf)
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	p, err := it.New(
+		it.Server(sConf.Database.Host, sConf.Database.Port, sConf.Database.DatabaseName),
+		it.Auth(sConf.Database.Username, sConf.Database.Password),
+		it.Opts(sConf.Database.TablePrefix),
+	)
+
+	if err != nil {
+		log.Fatalf("ERROR: %+v", err)
+	}
+
+	p.RecycleTables()
+	// End: Setup the db
+
+	time.Sleep(10 * time.Second)
+
+	it.SendBeacons("", "./data/misc/empty-fields.json.lines")
+	s.NoError(err)
+
+	time.Sleep(2 * time.Second)
+
+	var cntExpect uint64 = 1
+
+	s.Assert().Exactly(cntExpect, p.CountRecords(""))
+
+	// Set expectations
+	cntExpect = 1
+
+	s.Assert().Exactly(cntExpect, p.CountRecords("where cumulative_layout_shift IS NULL"))
+	// s.Assert().Exactly(cntExpect, p.CountRecords("where first_input_delay IS NULL"))
+}
+
+func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsMissing() {
+	// Start: Setup the db
+	path, err := os.Getwd()
+	if err != nil {
+		log.Println(err)
+	}
+
+	confPath := path + "/config/startup_config.yaml"
+
+	f, err := os.Open(confPath)
+	if err != nil {
+		log.Println(err)
+	}
+	defer f.Close()
+
+	var sConf config.StartupConfig
+	decoder := yaml.NewDecoder(f)
+	err = decoder.Decode(&sConf)
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	p, err := it.New(
+		it.Server(sConf.Database.Host, sConf.Database.Port, sConf.Database.DatabaseName),
+		it.Auth(sConf.Database.Username, sConf.Database.Password),
+		it.Opts(sConf.Database.TablePrefix),
+	)
+
+	if err != nil {
+		log.Fatalf("ERROR: %+v", err)
+	}
+
+	p.RecycleTables()
+	// End: Setup the db
+
+	time.Sleep(10 * time.Second)
+
+	it.SendBeacons("", "./data/misc/missing-fields.json.lines")
+	s.NoError(err)
+
+	time.Sleep(2 * time.Second)
+
+	var cntExpect uint64 = 1
+
+	s.Assert().Exactly(cntExpect, p.CountRecords(""))
+
+	// Set expectations
+	cntExpect = 1
+
+	s.Assert().Exactly(cntExpect, p.CountRecords("where cumulative_layout_shift IS NULL"))
+	// s.Assert().Exactly(cntExpect, p.CountRecords("where first_input_delay IS NULL"))
 }

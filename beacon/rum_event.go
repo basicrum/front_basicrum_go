@@ -6,7 +6,7 @@ type RumEvent struct {
 	Created_At               string      `json:"created_at"`
 	Hostname                 string      `json:"hostname"`
 	Url                      string      `json:"url"`
-	Cumulative_Layout_Shift  string      `json:"cumulative_layout_shift"`
+	Cumulative_Layout_Shift  json.Number `json:"cumulative_layout_shift,omitempty"`
 	Geo_Country_Code         string      `json:"geo_country_code"`
 	Geo_City_Name            string      `json:"geo_city_name"`
 	Device_Type              string      `json:"device_type"`
@@ -29,7 +29,7 @@ type RumEvent struct {
 	Redirects_Count          string      `json:"redirects_count"`
 	First_Contentful_Paint   string      `json:"first_contentful_paint"`
 	First_Paint              string      `json:"first_paint"`
-	First_Input_Delay        string      `json:"first_input_delay"`
+	First_Input_Delay        json.Number `json:"first_input_delay,omitempty"`
 	Largest_Contentful_Paint string      `json:"largest_contentful_paint"`
 	User_Agent               string      `json:"user_agent"`
 	Visibility_State         string      `json:"visibility_state"`
