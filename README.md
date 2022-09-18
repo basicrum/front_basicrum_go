@@ -1,5 +1,7 @@
 # Front Basic RUM GO
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 ## Introduction
 
 This is a simple application server written on Golang. The server receives payloads (beacons) sent from visitors who are browsing websites. The payload data that is being sent is collected and packaged by a JavaScript library called Boomerang JS. The main purpose of Boomerang JS is to collect performance related data from web pages.
@@ -159,15 +161,21 @@ Run the follwoing query:
 SELECT * from integration_test_webperf_rum_events
 ```
 
+### 6. Running the server
 
-### 6. Start on production
-
+Start:
 ```
 ./main > app.log 2>&1 &
 ```
 
 Periodically check the app.log file for any interesting messages
 
+Check if the server is running:
+```
 netstat -ltnp | grep -w ':8087'
+```
 
+Stop the server:
+```
 kill -9 $(lsof -i:8087 -t)
+```
