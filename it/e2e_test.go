@@ -142,7 +142,7 @@ func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsPersisted() {
 	cntExpect = 1
 
 	s.Assert().Exactly(cntExpect, p.CountRecords("where cumulative_layout_shift > 0.095"))
-	// s.Assert().Exactly(cntExpect, p.CountRecords("where first_input_delay = 1"))
+	s.Assert().Exactly(cntExpect, p.CountRecords("where first_input_delay = 1"))
 }
 
 func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsEmpty() {
@@ -196,7 +196,7 @@ func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsEmpty() {
 	cntExpect = 1
 
 	s.Assert().Exactly(cntExpect, p.CountRecords("where cumulative_layout_shift IS NULL"))
-	// s.Assert().Exactly(cntExpect, p.CountRecords("where first_input_delay IS NULL"))
+	s.Assert().Exactly(cntExpect, p.CountRecords("where first_input_delay IS NULL"))
 }
 
 func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsMissing() {
@@ -250,5 +250,5 @@ func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsMissing() {
 	cntExpect = 1
 
 	s.Assert().Exactly(cntExpect, p.CountRecords("where cumulative_layout_shift IS NULL"))
-	// s.Assert().Exactly(cntExpect, p.CountRecords("where first_input_delay IS NULL"))
+	s.Assert().Exactly(cntExpect, p.CountRecords("where first_input_delay IS NULL"))
 }
