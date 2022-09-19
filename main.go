@@ -89,6 +89,7 @@ func main() {
 		if parseErr == nil {
 			f := r.Form
 			h := r.Header
+			uaStr := r.UserAgent()
 
 			// We need this in case we would like to re-import beacons
 			// Also created_at is used for event date when we persist data in the DB
@@ -97,7 +98,7 @@ func main() {
 			}
 
 			// Persist Event in ClickHouse
-			go func() { p.Events <- p.Event(&f, &h) }()
+			go func() { p.Events <- p.Event(&f, &h, uaStr) }()
 
 			// Archiving logic
 			if sConf.Backup.Enabled {
