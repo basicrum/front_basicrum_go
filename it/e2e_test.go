@@ -148,6 +148,12 @@ func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsPersisted() {
 
 	s.Assert().Exactly(cntExpect, p.CountRecords("where cumulative_layout_shift > 0.095"))
 	s.Assert().Exactly(cntExpect, p.CountRecords("where first_input_delay = 1"))
+	s.Assert().Exactly(cntExpect, p.CountRecords("where user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.5112.102 Safari/537.36'"))
+	s.Assert().Exactly(cntExpect, p.CountRecords("where device_type = 'desktop'"))
+	s.Assert().Exactly(cntExpect, p.CountRecords("where browser_version = '104.0.5112'"))
+	s.Assert().Exactly(cntExpect, p.CountRecords("where browser_name = 'Chrome'"))
+	s.Assert().Exactly(cntExpect, p.CountRecords("where ua_vnd = 'Google Inc.'"))
+	s.Assert().Exactly(cntExpect, p.CountRecords("where ua_plt = 'Win32'"))
 }
 
 func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsEmpty() {
@@ -202,6 +208,12 @@ func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsEmpty() {
 
 	s.Assert().Exactly(cntExpect, p.CountRecords("where cumulative_layout_shift IS NULL"))
 	s.Assert().Exactly(cntExpect, p.CountRecords("where first_input_delay IS NULL"))
+	s.Assert().Exactly(cntExpect, p.CountRecords("where user_agent IS NULL"))
+	s.Assert().Exactly(cntExpect, p.CountRecords("where device_type = 'unknown'"))
+	s.Assert().Exactly(cntExpect, p.CountRecords("where browser_version IS NULL"))
+	s.Assert().Exactly(cntExpect, p.CountRecords("where browser_name = 'Other'"))
+	s.Assert().Exactly(cntExpect, p.CountRecords("where ua_vnd IS NULL"))
+	s.Assert().Exactly(cntExpect, p.CountRecords("where ua_plt IS NULL"))
 }
 
 func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsMissing() {
@@ -256,6 +268,12 @@ func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsMissing() {
 
 	s.Assert().Exactly(cntExpect, p.CountRecords("where cumulative_layout_shift IS NULL"))
 	s.Assert().Exactly(cntExpect, p.CountRecords("where first_input_delay IS NULL"))
+	s.Assert().Exactly(cntExpect, p.CountRecords("where user_agent IS NULL"))
+	s.Assert().Exactly(cntExpect, p.CountRecords("where device_type = 'unknown'"))
+	s.Assert().Exactly(cntExpect, p.CountRecords("where browser_version IS NULL"))
+	s.Assert().Exactly(cntExpect, p.CountRecords("where browser_name = 'Other'"))
+	s.Assert().Exactly(cntExpect, p.CountRecords("where ua_vnd IS NULL"))
+	s.Assert().Exactly(cntExpect, p.CountRecords("where ua_plt IS NULL"))
 }
 
 func (s *e2eTestSuite) Test_EndToEnd_HealthCheck() {

@@ -96,8 +96,6 @@ func httpPostFormNewStyle(params url.Values, client *http.Client, cnt int) {
 		fmt.Println(unmrErr)
 	}
 
-	uaStr := headers["User-Agent"][0]
-
 	countryCode := headers["Cf-Ipcountry"][0]
 	cityName := headers["Cf-Ipcity"][0]
 
@@ -105,7 +103,12 @@ func httpPostFormNewStyle(params url.Values, client *http.Client, cnt int) {
 
 	req, _ := http.NewRequest("POST", "http://localhost:8087/beacon/catcher", strings.NewReader(params.Encode()))
 
-	req.Header.Add("User-Agent", uaStr)
+	if uaStr, ok := headers["User-Agent"]; ok {
+		req.Header.Add("User-Agent", uaStr[0])
+	} else {
+		req.Header.Add("User-Agent", "")
+	}
+
 	req.Header.Add("Cf-Ipcountry", countryCode)
 	req.Header.Add("Cf-Ipcity", cityName)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")

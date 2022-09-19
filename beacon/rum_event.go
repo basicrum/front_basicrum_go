@@ -23,7 +23,7 @@ type RumEvent struct {
 	Session_Length           string      `json:"session_length"`
 	Operating_System         string      `json:"operating_system"`
 	Browser_Name             string      `json:"browser_name"`
-	Browser_Version          string      `json:"browser_version"`
+	Browser_Version          string      `json:"browser_version,omitempty"`
 	Event_Type               string      `json:"event_type"`
 	Redirect_Duration        string      `json:"redirect_duration"`
 	Redirects_Count          string      `json:"redirects_count"`
@@ -31,7 +31,7 @@ type RumEvent struct {
 	First_Paint              string      `json:"first_paint"`
 	First_Input_Delay        json.Number `json:"first_input_delay,omitempty"`
 	Largest_Contentful_Paint string      `json:"largest_contentful_paint"`
-	User_Agent               string      `json:"user_agent"`
+	User_Agent               string      `json:"user_agent,omitempty"`
 	Visibility_State         string      `json:"visibility_state"`
 	Boomerang_Version        string      `json:"boomerang_version"`
 	Screen_Width             string      `json:"screen_width"`
@@ -58,7 +58,7 @@ type RumEvent struct {
 	Dom_Link                 string      `json:"dom_link"`
 	Dom_Link_Css             string      `json:"dom_link_css"`
 	Page_Id                  string      `json:"page_id"`
-	Ua_Vnd                   string      `json:"ua_vnd"`
-	Ua_Plt                   string      `json:"ua_plt"`
+	Ua_Vnd                   string      `json:"ua_vnd,omitempty"`
+	Ua_Plt                   string      `json:"ua_plt,omitempty"`
 	Data_Saver_On            json.Number `json:"data_saver_on,omitempty"`
 }
