@@ -8,8 +8,8 @@ services:
       - 8143:8123
       - 9000:9000
     volumes:
-      - ./dev/clickhouse:/var/lib/clickhouse
-      - ./dev/clickhouse-users/:/etc/clickhouse-server/users.d/
+      - ./_dev/clickhouse:/var/lib/clickhouse
+      - ./_dev/clickhouse-users/:/etc/clickhouse-server/users.d/
 
     ulimits:
       nproc: 65535

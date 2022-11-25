@@ -19,12 +19,12 @@ services:
     # 
     user: "$UID"
     build:
-      context: ./dev/docker_build/grafana
+      context: ./_dev/docker_build/grafana
     ports:
       - 3900:3000
     volumes:
       # Persist user created stuff
-      - ./dev/grafana:/var/lib/grafana
+      - ./_dev/grafana:/var/lib/grafana
       # Mount provisioning related stuff
       # - ./dev/grafana/provisioning:/etc/grafana/provisioning
       # - ./dev/grafana/grafana.ini:/etc/grafana/grafana.ini
