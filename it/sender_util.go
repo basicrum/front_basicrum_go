@@ -5,7 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/http/cookiejar"
@@ -74,7 +74,7 @@ func httpPostFormOldStyle(params url.Values, client *http.Client, cnt int) {
 
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 
 	if err != nil {
 		fmt.Println("Body read err")
@@ -122,7 +122,7 @@ func httpPostFormNewStyle(params url.Values, client *http.Client, cnt int) {
 
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 
 	if err != nil {
 		fmt.Println("Body read err")
@@ -140,7 +140,7 @@ func getRealBeaconsOldStyle(path string) []url.Values {
 	for i, s := range files {
 		fmt.Println(i, s)
 
-		fContent, err := ioutil.ReadFile(s)
+		fContent, err := os.ReadFile(s)
 		if err != nil {
 			log.Fatalf("unable to read file: %v", err)
 		}

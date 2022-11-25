@@ -282,6 +282,7 @@ func ConvertToRumEvent(b Beacon, uaP *uaparser.Parser) RumEvent {
 		Device_Type:              dT,
 		Device_Manufacturer:      uaPres.Device.Brand,
 		Operating_System:         uaPres.Os.Family,
+		Operating_System_Version: uaPres.Os.ToVersionString(),
 		Browser_Name:             uaPres.UserAgent.Family,
 		Browser_Version:          uaPres.UserAgent.ToVersionString(),
 		Connect_Duration:         calculateDelta(b.Nt_Con_St, b.Nt_Con_End),
