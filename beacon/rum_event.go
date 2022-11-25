@@ -10,7 +10,7 @@ type RumEvent struct {
 	Geo_Country_Code         string      `json:"geo_country_code"`
 	Geo_City_Name            string      `json:"geo_city_name"`
 	Device_Type              string      `json:"device_type"`
-	Device_Manufacturer      string      `json:"device_manufacturer"`
+	Device_Manufacturer      string      `json:"device_manufacturer,omitempty"`
 	T_Resp                   string      `json:"t_resp"`
 	T_Page                   string      `json:"t_page"`
 	T_Done                   string      `json:"t_done"`
@@ -22,6 +22,7 @@ type RumEvent struct {
 	Session_Id               string      `json:"session_id"`
 	Session_Length           string      `json:"session_length"`
 	Operating_System         string      `json:"operating_system"`
+	Operating_System_Version string      `json:"operating_system_version,omitempty"`
 	Browser_Name             string      `json:"browser_name"`
 	Browser_Version          string      `json:"browser_version,omitempty"`
 	Event_Type               string      `json:"event_type"`

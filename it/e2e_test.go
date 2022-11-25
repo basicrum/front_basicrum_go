@@ -2,7 +2,7 @@ package it_test
 
 import (
 	"crypto/tls"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/http/cookiejar"
@@ -154,6 +154,9 @@ func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsPersisted() {
 	s.Assert().Exactly(cntExpect, p.CountRecords("where browser_name = 'Chrome'"))
 	s.Assert().Exactly(cntExpect, p.CountRecords("where ua_vnd = 'Google Inc.'"))
 	s.Assert().Exactly(cntExpect, p.CountRecords("where ua_plt = 'Win32'"))
+	s.Assert().Exactly(cntExpect, p.CountRecords("where operating_system = 'Windows'"))
+	s.Assert().Exactly(cntExpect, p.CountRecords("where operating_system_version = '10'"))
+	s.Assert().Exactly(cntExpect, p.CountRecords("where device_manufacturer is NULL"))
 }
 
 func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsEmpty() {
@@ -214,6 +217,9 @@ func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsEmpty() {
 	s.Assert().Exactly(cntExpect, p.CountRecords("where browser_name = 'Other'"))
 	s.Assert().Exactly(cntExpect, p.CountRecords("where ua_vnd IS NULL"))
 	s.Assert().Exactly(cntExpect, p.CountRecords("where ua_plt IS NULL"))
+	s.Assert().Exactly(cntExpect, p.CountRecords("where operating_system = 'Other'"))
+	s.Assert().Exactly(cntExpect, p.CountRecords("where operating_system_version is NULL"))
+	s.Assert().Exactly(cntExpect, p.CountRecords("where device_manufacturer is NULL"))
 }
 
 func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsMissing() {
@@ -274,6 +280,9 @@ func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsMissing() {
 	s.Assert().Exactly(cntExpect, p.CountRecords("where browser_name = 'Other'"))
 	s.Assert().Exactly(cntExpect, p.CountRecords("where ua_vnd IS NULL"))
 	s.Assert().Exactly(cntExpect, p.CountRecords("where ua_plt IS NULL"))
+	s.Assert().Exactly(cntExpect, p.CountRecords("where operating_system = 'Other'"))
+	s.Assert().Exactly(cntExpect, p.CountRecords("where operating_system_version is NULL"))
+	s.Assert().Exactly(cntExpect, p.CountRecords("where device_manufacturer is NULL"))
 }
 
 func (s *e2eTestSuite) Test_EndToEnd_HealthCheck() {
@@ -302,7 +311,7 @@ func (s *e2eTestSuite) Test_EndToEnd_HealthCheck() {
 
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 
 	if err != nil {
 		log.Println("Body read err")
