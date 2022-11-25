@@ -1,5 +1,5 @@
 /startup_config.yaml
 /runtime_config.yaml
-/dev/clickhouse
-/dev/grafana
+/_dev/clickhouse
+/_dev/grafana
 /data_archive
