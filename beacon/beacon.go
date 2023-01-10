@@ -12,6 +12,7 @@ import (
 	"github.com/ua-parser/uap-go/uaparser"
 )
 
+// Beacon contains the performance statistics from request
 type Beacon struct {
 	// Mobile
 	Mob_Etype string
@@ -134,8 +135,9 @@ type Beacon struct {
 	Sb             string
 }
 
+// FromRequestParams creates Beacon request from http request parameters
+// nolint: funlen
 func FromRequestParams(values *url.Values, uaString string, h *http.Header) Beacon {
-
 	b := Beacon{
 		// Used constructing event date
 		CreatedAt: values.Get("created_at"),
@@ -259,20 +261,20 @@ func FromRequestParams(values *url.Values, uaString string, h *http.Header) Beac
 	return b
 }
 
+// ConvertToRumEvent convert Beacon request to Rum Event
 func ConvertToRumEvent(b Beacon, uaP *uaparser.Parser) RumEvent {
-
 	uaPres := uaP.Parse(b.UserAgent)
 
 	dT := getDeviceType(b.UserAgent)
 
 	sWidth, sHeight := getScreenSize(b.Scr_Xy)
 
-	url, err := url.Parse(b.U)
+	urlValue, err := url.Parse(b.U)
 	if err != nil {
 		log.Println(err)
 	}
 
-	hostname := url.Hostname()
+	hostname := urlValue.Hostname()
 
 	re := RumEvent{
 		Created_At:               b.CreatedAt,
@@ -382,6 +384,7 @@ func cleanupHeaderValue(hVal string) string {
 	hVal = strings.TrimSpace(hVal)
 
 	// Remove leading white space
+	// nolint: revive
 	if len(hVal) > 0 && hVal[0] == '"' {
 		hVal = hVal[1:]
 	}
@@ -396,20 +399,22 @@ func cleanupHeaderValue(hVal string) string {
 	return hVal
 }
 
-func getCountryCode(CF_IPCountry string) string {
-	return CF_IPCountry
+func getCountryCode(cfIPCountry string) string {
+	return cfIPCountry
 }
 
+// nolint: revive
 func getScreenSize(scr_X_Y string) (string, string) {
 	s := strings.Split(scr_X_Y, "x")
 
 	if len(s) == 2 {
-		return string(s[0]), string(s[1])
+		return s[0], s[1]
 	}
 
 	return "", ""
 }
 
+// nolint: revive
 func getEventType(isQuit bool, httpInitiator string) string {
 	if len(httpInitiator) > 0 {
 		return httpInitiator

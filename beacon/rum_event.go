@@ -2,6 +2,7 @@ package beacon
 
 import "encoding/json"
 
+// RumEvent contains the Rum event data
 type RumEvent struct {
 	Created_At               string      `json:"created_at"`
 	Hostname                 string      `json:"hostname"`

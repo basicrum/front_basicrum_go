@@ -31,6 +31,8 @@ type persistence struct {
 	Events chan *event
 }
 
+// New creates persistance service
+// nolint: revive
 func New(s server, a auth, opts *opts, uaP *uaparser.Parser) (*persistence, error) {
 	if conn := s.open(&a); conn != nil {
 		return &persistence{s, connection{conn, a}, uaP, opts, make(chan *event)}, nil
@@ -39,33 +41,38 @@ func New(s server, a auth, opts *opts, uaP *uaparser.Parser) (*persistence, erro
 	return nil, errors.New("connection to the server failed")
 }
 
+// Server creates the datastore (click house) options
+// nolint: revive
 func Server(host string, port int16, db string) server {
 	return server{host, port, db, context.Background()}
 }
 
+// Auth creates the authentication options for persistance service
+// nolint: revive
 func Auth(user string, pwd string) auth {
 	return auth{user, pwd}
 }
 
+// Opts creates the options for persistance service
+// nolint: revive
 func Opts(prefix string) *opts {
 	return &opts{prefix}
 }
 
+// Run process the events from the channel and save them in datastore (click house)
 func (p *persistence) Run() {
 	for {
-		select {
-		case event := <-p.Events:
-			if event != nil {
-				tPrefix := &p.opts.prefix
-
-				table := event.name
-
-				if *tPrefix != "" {
-					table = *tPrefix + "_" + table
-				}
-
-				go p.server.save(&p.conn, event.payload(p.uaP), table)
-			}
+		event := <-p.Events
+		if event == nil {
+			continue
 		}
+		table := event.name
+
+		tPrefix := p.opts.prefix
+		if tPrefix != "" {
+			table = tPrefix + "_" + table
+		}
+
+		go p.server.save(&p.conn, event.payload(p.uaP), table)
 	}
 }

@@ -1,5 +1,6 @@
 package config
 
+// StartupConfig contains application configuration
 type StartupConfig struct {
 	Server struct {
 		Host string `yaml:"host"`

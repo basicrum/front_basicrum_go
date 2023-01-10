@@ -1,7 +1,6 @@
 package beacon
 
 import (
-	"fmt"
 	"log"
 	"testing"
 
@@ -20,7 +19,7 @@ func TestBasic(t *testing.T) {
 	// We need to ge the Regexes from here: https://github.com/ua-parser/uap-core/blob/master/regexes.yaml
 	uaP, err := uaparser.New("../assets/uaparser_regexes.yaml")
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	rE := ConvertToRumEvent(b, uaP)
@@ -29,9 +28,9 @@ func TestBasic(t *testing.T) {
 		t.Errorf("Error")
 	}
 
-	fmt.Println(rE)
+	log.Printf("rum event[%+v]", rE)
 
-	fmt.Println(rE.Cumulative_Layout_Shift)
+	log.Printf("rum event Cumulative_Layout_Shift[%v]", rE.Cumulative_Layout_Shift)
 
 	if rE.Cumulative_Layout_Shift != "" {
 		t.Errorf("Error")

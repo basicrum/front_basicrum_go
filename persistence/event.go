@@ -17,7 +17,8 @@ type event struct {
 	userAgent string
 }
 
-func (p *persistence) Event(reqParams *url.Values, headers *http.Header, userAgent string) *event {
+// Event creates event to be stored
+func (*persistence) Event(reqParams *url.Values, headers *http.Header, userAgent string) *event {
 	return &event{"webperf_rum_events", reqParams, headers, userAgent}
 }
 
