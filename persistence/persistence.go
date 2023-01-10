@@ -32,6 +32,7 @@ type persistence struct {
 }
 
 // New creates persistance service
+// nolint: revive
 func New(s server, a auth, opts *opts, uaP *uaparser.Parser) (*persistence, error) {
 	if conn := s.open(&a); conn != nil {
 		return &persistence{s, connection{conn, a}, uaP, opts, make(chan *event)}, nil
@@ -41,16 +42,19 @@ func New(s server, a auth, opts *opts, uaP *uaparser.Parser) (*persistence, erro
 }
 
 // Server creates the datastore (click house) options
+// nolint: revive
 func Server(host string, port int16, db string) server {
 	return server{host, port, db, context.Background()}
 }
 
 // Auth creates the authentication options for persistance service
+// nolint: revive
 func Auth(user string, pwd string) auth {
 	return auth{user, pwd}
 }
 
 // Opts creates the options for persistance service
+// nolint: revive
 func Opts(prefix string) *opts {
 	return &opts{prefix}
 }
