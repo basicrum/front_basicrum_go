@@ -149,7 +149,15 @@ func main() {
 	log.Println("Starting the server on port: " + sConf.Server.Port)
 
 	handler := cors.Default().Handler(mux)
-	errdd := http.ListenAndServe(":"+sConf.Server.Port, handler)
+
+	server := &http.Server{
+		Addr:    ":" + sConf.Server.Port,
+		Handler: handler,
+		// https://deepsource.io/directory/analyzers/go/issues/GO-S2114
+		ReadHeaderTimeout: 3 * time.Second,
+	}
+
+	errdd := server.ListenAndServe()
 
 	if errdd != nil {
 		log.Println(errdd)
