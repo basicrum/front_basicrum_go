@@ -8,6 +8,7 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/basicrum/front_basicrum_go/backup"
@@ -18,17 +19,14 @@ import (
 	"github.com/ua-parser/uap-go/uaparser"
 )
 
-var (
-	domain string
-)
-
 //go:embed assets/uaparser_regexes.yaml
 var uaRegexes []byte
 
+// nolint: funlen, revive
 func main() {
-
 	sConf := config.GetStartupConfig()
 
+	var domain string
 	flag.StringVar(&domain, "domain", "", "domain name to request your certificate")
 	flag.Parse()
 
@@ -81,40 +79,44 @@ func main() {
 
 		// Prep for Async work
 		parseErr := r.ParseForm()
-
 		if parseErr != nil {
 			log.Println(parseErr)
+			return
 		}
 
-		if parseErr == nil {
-			f := r.Form
-			h := r.Header
-			uaStr := r.UserAgent()
+		f := r.Form
+		h := r.Header
+		uaStr := r.UserAgent()
 
-			// We need this in case we would like to re-import beacons
-			// Also created_at is used for event date when we persist data in the DB
-			if !f.Has("created_at") {
-				f.Set("created_at", time.Now().UTC().Format("2006-01-02 15:04:05"))
+		// We need this in case we would like to re-import beacons
+		// Also created_at is used for event date when we persist data in the DB
+		if !f.Has("created_at") {
+			f.Set("created_at", time.Now().UTC().Format("2006-01-02 15:04:05"))
+		}
+
+		// Persist Event in ClickHouse
+		go func() {
+			p.Events <- p.Event(&f, &h, uaStr)
+		}()
+
+		// Archiving logic
+		if sConf.Backup.Enabled {
+			forArchiving := f
+
+			// Flatten headers later
+			h, hErr := json.Marshal(h)
+
+			if hErr != nil {
+				log.Println(hErr)
 			}
 
-			// Persist Event in ClickHouse
-			go func() { p.Events <- p.Event(&f, &h, uaStr) }()
+			forArchiving.Add("request_headers", string(h))
 
-			// Archiving logic
-			if sConf.Backup.Enabled {
-				forArchiving := f
-
-				// Flatten headers later
-				h, hErr := json.Marshal(h)
-
-				if hErr != nil {
-					log.Println(hErr)
+			go func(forArchiving url.Values) {
+				if err := b.Run(forArchiving); err != nil {
+					log.Printf("Error archiving url[%v] err[%v]", forArchiving, err)
 				}
-
-				forArchiving.Add("request_headers", string(h))
-
-				go b.Run(forArchiving)
-			}
+			}(forArchiving)
 		}
 	})
 

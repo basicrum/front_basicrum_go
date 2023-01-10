@@ -2,7 +2,6 @@ package beacon
 
 import (
 	"fmt"
-	"log"
 	"testing"
 
 	"github.com/ua-parser/uap-go/uaparser"
@@ -20,7 +19,7 @@ func TestBasic(t *testing.T) {
 	// We need to ge the Regexes from here: https://github.com/ua-parser/uap-core/blob/master/regexes.yaml
 	uaP, err := uaparser.New("../assets/uaparser_regexes.yaml")
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
 	rE := ConvertToRumEvent(b, uaP)

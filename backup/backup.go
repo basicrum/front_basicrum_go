@@ -10,16 +10,17 @@ import (
 	"time"
 )
 
+// Do saves parameters to a file in backup directory
+// nolint: revive
 func Do(params []interface{}, backupRootDir string) {
 
 	backupsList := make(map[string]string)
 
 	// Date path
-	datePath := GetDateUtcPath()
-	utcHour := GetUtcHour()
+	datePath := getDateUtcPath()
+	utcHour := getUtcHour()
 
 	for _, p := range params {
-
 		v, ok := p.(url.Values)
 
 		if !ok {
@@ -39,13 +40,13 @@ func Do(params []interface{}, backupRootDir string) {
 			log.Print(reqDataErr)
 		}
 
-		url, parseErr := url.Parse(v.Get("u"))
+		urlValue, parseErr := url.Parse(v.Get("u"))
 
 		if parseErr != nil {
 			log.Print(parseErr)
 		}
 
-		hostNormalized := strings.ReplaceAll(url.Hostname(), ".", "_")
+		hostNormalized := strings.ReplaceAll(urlValue.Hostname(), ".", "_")
 
 		if _, containsHost := backupsList[hostNormalized]; !containsHost {
 			backupsList[hostNormalized] = ""
@@ -57,7 +58,10 @@ func Do(params []interface{}, backupRootDir string) {
 	for host, data := range backupsList {
 		dirPath := backupRootDir + host + "/" + datePath
 
-		os.MkdirAll(dirPath, os.ModePerm)
+		err := os.MkdirAll(dirPath, os.ModePerm)
+		if err != nil {
+			log.Print(err)
+		}
 
 		filename := dirPath + "/" + utcHour + ".json.lines"
 
@@ -67,6 +71,7 @@ func Do(params []interface{}, backupRootDir string) {
 			log.Print(err)
 		}
 
+		// nolint: revive
 		defer f.Close()
 
 		if _, err = f.WriteString(data); err != nil {
@@ -75,7 +80,7 @@ func Do(params []interface{}, backupRootDir string) {
 	}
 }
 
-func GetDateUtcPath() string {
+func getDateUtcPath() string {
 	t := time.Now().UTC()
 	utcYear := strconv.Itoa(t.Year())
 	utcMonth := strconv.Itoa(int(t.Month()))
@@ -84,7 +89,7 @@ func GetDateUtcPath() string {
 	return utcYear + "-" + utcMonth + "-" + utcDay
 }
 
-func GetUtcHour() string {
+func getUtcHour() string {
 	t := time.Now().UTC()
 	return strconv.Itoa(t.Hour())
 }

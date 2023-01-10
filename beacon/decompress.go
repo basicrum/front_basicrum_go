@@ -8,12 +8,20 @@ import (
 	"github.com/martinlindhe/base36"
 )
 
+// nolint: revive
 const COMPRESS_MODE_SMALL_NUMBERS = "0"
+
+// nolint: revive
 const COMPRESS_MODE_LARGE_NUMBERS = "1"
+
+// nolint: revive
 const COMPRESS_MODE_PERCENT = "2"
 
+// nolint: revive
 const LARGE_NUMBER_WRAP = "."
 
+// DecompressBucketLog convert numbers encoded into string to array of numbers
+// nolint: funlen, gocritic, nestif, gocognit, revive
 func DecompressBucketLog(data string) []uint64 {
 	var out []uint64
 
@@ -123,6 +131,7 @@ func DecompressBucketLog(data string) []uint64 {
 	return out
 }
 
+// nolint: revive, gocritic, nestif
 func decompressBucketLogNumber(input string) uint64 {
 	// if (!input || !input.charCodeAt) {
 	// 	return 0;

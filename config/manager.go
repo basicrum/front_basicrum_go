@@ -7,6 +7,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// GetStartupConfig reads StartupConfig from file
 func GetStartupConfig() StartupConfig {
 	path, err := os.Getwd()
 	if err != nil {

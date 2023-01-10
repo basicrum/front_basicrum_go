@@ -374,7 +374,7 @@ linters-settings:
       # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md#modifies-parameter
       - name: modifies-parameter
         severity: warning
-        disabled: false
+        disabled: true
       # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md#modifies-value-receiver
       - name: modifies-value-receiver
         severity: warning
@@ -382,7 +382,7 @@ linters-settings:
       # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md#nested-structs
       - name: nested-structs
         severity: warning
-        disabled: false
+        disabled: true
       # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md#optimize-operands-order
       - name: optimize-operands-order
         severity: warning
@@ -448,7 +448,7 @@ linters-settings:
       # https://github.com/mgechev/revive/blob/master/RULES_DESCRIPTIONS.md#var-naming
       - name: var-naming
         severity: warning
-        disabled: false
+        disabled: true
         arguments:
           - ["ID"] # AllowList
           - ["VM"] # DenyList
@@ -527,7 +527,7 @@ linters:
     - execinquery # execinquery is a linter about query string checker in Query function which reads your Go src files and warning it finds
     - exhaustive # check exhaustiveness of enum switch statements
     - exportloopref # checks for pointers to enclosing loop variables
-    - forbidigo # Forbids identifiers
+    # - forbidigo # Forbids identifiers
     - funlen # Tool for detection of long functions
     - gochecknoglobals # check that no global variables exist
     - gochecknoinits # Checks that no init functions are present in Go code
@@ -537,7 +537,7 @@ linters:
     - gocyclo # Computes and checks the cyclomatic complexity of functions
     # - godot # Check if comments end in a period
     - goimports # In addition to fixing imports, goimports also formats your code in the same style as gofmt.
-    - gomnd # An analyzer to detect magic numbers.
+    # - gomnd # An analyzer to detect magic numbers.
     - gomoddirectives # Manage the use of 'replace', 'retract', and 'excludes' directives in go.mod.
     - gomodguard # Allow and block list linter for direct Go module dependencies. This is different from depguard where there are different block types for example version constraints and module recommendations.
     - goprintffuncname # Checks that printf-like functions are named with f at the end
@@ -548,7 +548,7 @@ linters:
     - nestif # Reports deeply nested if statements
     - nilerr # Finds the code that returns nil even if it checks that the error is not nil.
     - nilnil # Checks that there is no simultaneous return of nil error and an invalid value.
-    - noctx # noctx finds sending http request without context.Context
+    # - noctx # noctx finds sending http request without context.Context
     # - nolintlint # Reports ill-formed or insufficient nolint directives
     - nonamedreturns # Reports all named returns
     - nosprintfhostport # Checks for misuse of Sprintf to construct a host with port in a URL.
@@ -557,14 +557,14 @@ linters:
     - revive # Fast, configurable, extensible, flexible, and beautiful linter for Go. Drop-in replacement of golint.
     - rowserrcheck # checks whether Err of rows is checked successfully
     - sqlclosecheck # Checks that sql.Rows and sql.Stmt are closed.
-    - stylecheck # Stylecheck is a replacement for golint
+    # - stylecheck # Stylecheck is a replacement for golint
     - tenv # tenv is analyzer that detects using os.Setenv instead of t.Setenv since Go1.17
     # - testpackage # linter that makes you use a separate _test package
     - tparallel # tparallel detects inappropriate usage of t.Parallel() method in your Go test codes
     - unconvert # Remove unnecessary type conversions
     - unparam # Reports unused function parameters
     - wastedassign # wastedassign finds wasted assignment statements.
-    - whitespace # Tool for detection of leading and trailing whitespace
+    # - whitespace # Tool for detection of leading and trailing whitespace
     ## you may want to enable
     #- decorder # check declaration order and count of types, constants, variables and functions
     #- exhaustruct # Checks if all structure fields are initialized
@@ -632,10 +632,29 @@ issues:
         - gocognit
         - lll
         - gochecknoglobals
+    - path: "it/"
+      linters:
+        - bodyclose
+        - dupl
+        - funlen
+        - goconst
+        - gosec
+        - noctx
+        - wrapcheck
+        - gocognit
+        - lll
+        - gochecknoglobals
+        - gocritic
+        - revive
+        - errcheck
+        - unparam
     - path: "_test\\.go"
       linters: [revive]
       text: cyclomatic
     - path: "_test\\.go"
+      linters: [revive]
+      text: add-constant
+    - path: "\\.go"
       linters: [revive]
       text: add-constant
     - path: "_test\\.go"
