@@ -384,7 +384,8 @@ func cleanupHeaderValue(hVal string) string {
 	hVal = strings.TrimSpace(hVal)
 
 	// Remove leading white space
-	if hVal[0] == '"' && len(hVal) > 0 {
+	// nolint: revive
+	if len(hVal) > 0 && hVal[0] == '"' {
 		hVal = hVal[1:]
 	}
 
