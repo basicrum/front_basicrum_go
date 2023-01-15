@@ -1,5 +1,6 @@
 // https://marcofranssen.nl/build-a-go-webserver-on-http-2-using-letsencrypt
 
+// nolint: cyclop
 package main
 
 import (
@@ -24,7 +25,10 @@ var uaRegexes []byte
 
 // nolint: funlen, revive
 func main() {
-	sConf := config.GetStartupConfig()
+	sConf, err := config.GetStartupConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	var domain string
 	flag.StringVar(&domain, "domain", "", "domain name to request your certificate")

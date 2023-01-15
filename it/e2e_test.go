@@ -2,11 +2,11 @@ package it_test
 
 import (
 	"crypto/tls"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"net/http/cookiejar"
-	"os"
 	"strings"
 	"testing"
 	"time"
@@ -14,12 +14,36 @@ import (
 	"github.com/basicrum/front_basicrum_go/config"
 	"github.com/basicrum/front_basicrum_go/it"
 	"github.com/stretchr/testify/suite"
-	"gopkg.in/yaml.v2"
 )
 
 // Inspired by https://www.gojek.io/blog/golang-integration-testing-made-easy
 type e2eTestSuite struct {
 	suite.Suite
+	p     *it.Persistence
+	sConf *config.StartupConfig
+}
+
+func (s *e2eTestSuite) SetupTest() {
+	var err error
+	s.sConf, err = config.GetStartupConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
+	sConf := s.sConf
+
+	s.p, err = it.New(
+		it.Server(sConf.Database.Host, sConf.Database.Port, sConf.Database.DatabaseName),
+		it.Auth(sConf.Database.Username, sConf.Database.Password),
+		it.Opts(sConf.Database.TablePrefix),
+	)
+	if err != nil {
+		log.Fatalf("ERROR: %+v", err)
+	}
+
+	s.p.RecycleTables()
+	// End: Setup the db
+
+	time.Sleep(10 * time.Second)
 }
 
 func TestE2ETestSuite(t *testing.T) {
@@ -49,240 +73,83 @@ func TestE2ETestSuite(t *testing.T) {
 // }
 
 func (s *e2eTestSuite) Test_EndToEnd_CountRecords() {
-	// Start: Setup the db
-	path, err := os.Getwd()
-	if err != nil {
-		log.Println(err)
-	}
-
-	confPath := path + "/config/startup_config.yaml"
-
-	f, err := os.Open(confPath)
-	if err != nil {
-		log.Println(err)
-	}
-	defer f.Close()
-
-	var sConf config.StartupConfig
-	decoder := yaml.NewDecoder(f)
-	err = decoder.Decode(&sConf)
-
-	if err != nil {
-		log.Println(err)
-	}
-
-	p, err := it.New(
-		it.Server(sConf.Database.Host, sConf.Database.Port, sConf.Database.DatabaseName),
-		it.Auth(sConf.Database.Username, sConf.Database.Password),
-		it.Opts(sConf.Database.TablePrefix),
-	)
-
-	if err != nil {
-		log.Fatalf("ERROR: %+v", err)
-	}
-
-	p.RecycleTables()
-	// End: Setup the db
-
-	time.Sleep(10 * time.Second)
-
 	it.SendBeacons("./data/old_style/*.json", "./data/new_style/*.json.lines")
-	s.NoError(err)
-
 	time.Sleep(2 * time.Second)
 
 	var cntExpect uint64 = 25
-
-	s.Assert().Exactly(cntExpect, p.CountRecords(""))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords(""))
 }
 
 func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsPersisted() {
-	// Start: Setup the db
-	path, err := os.Getwd()
-	if err != nil {
-		log.Println(err)
-	}
-
-	confPath := path + "/config/startup_config.yaml"
-
-	f, err := os.Open(confPath)
-	if err != nil {
-		log.Println(err)
-	}
-	defer f.Close()
-
-	var sConf config.StartupConfig
-	decoder := yaml.NewDecoder(f)
-	err = decoder.Decode(&sConf)
-
-	if err != nil {
-		log.Println(err)
-	}
-
-	p, err := it.New(
-		it.Server(sConf.Database.Host, sConf.Database.Port, sConf.Database.DatabaseName),
-		it.Auth(sConf.Database.Username, sConf.Database.Password),
-		it.Opts(sConf.Database.TablePrefix),
-	)
-
-	if err != nil {
-		log.Fatalf("ERROR: %+v", err)
-	}
-
-	p.RecycleTables()
-	// End: Setup the db
-
-	time.Sleep(10 * time.Second)
-
 	it.SendBeacons("", "./data/misc/all-fields.json.lines")
-	s.NoError(err)
-
 	time.Sleep(2 * time.Second)
 
 	var cntExpect uint64 = 1
 
-	s.Assert().Exactly(cntExpect, p.CountRecords(""))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords(""))
 
 	// Set expectations
 	cntExpect = 1
 
-	s.Assert().Exactly(cntExpect, p.CountRecords("where cumulative_layout_shift > 0.095"))
-	s.Assert().Exactly(cntExpect, p.CountRecords("where first_input_delay = 1"))
-	s.Assert().Exactly(cntExpect, p.CountRecords("where user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.5112.102 Safari/537.36'"))
-	s.Assert().Exactly(cntExpect, p.CountRecords("where device_type = 'desktop'"))
-	s.Assert().Exactly(cntExpect, p.CountRecords("where browser_version = '104.0.5112'"))
-	s.Assert().Exactly(cntExpect, p.CountRecords("where browser_name = 'Chrome'"))
-	s.Assert().Exactly(cntExpect, p.CountRecords("where ua_vnd = 'Google Inc.'"))
-	s.Assert().Exactly(cntExpect, p.CountRecords("where ua_plt = 'Win32'"))
-	s.Assert().Exactly(cntExpect, p.CountRecords("where operating_system = 'Windows'"))
-	s.Assert().Exactly(cntExpect, p.CountRecords("where operating_system_version = '10'"))
-	s.Assert().Exactly(cntExpect, p.CountRecords("where device_manufacturer is NULL"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where cumulative_layout_shift > 0.095"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where first_input_delay = 1"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.5112.102 Safari/537.36'"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where device_type = 'desktop'"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where browser_version = '104.0.5112'"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where browser_name = 'Chrome'"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where ua_vnd = 'Google Inc.'"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where ua_plt = 'Win32'"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where operating_system = 'Windows'"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where operating_system_version = '10'"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where device_manufacturer is NULL"))
 }
 
 func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsEmpty() {
-	// Start: Setup the db
-	path, err := os.Getwd()
-	if err != nil {
-		log.Println(err)
-	}
-
-	confPath := path + "/config/startup_config.yaml"
-
-	f, err := os.Open(confPath)
-	if err != nil {
-		log.Println(err)
-	}
-	defer f.Close()
-
-	var sConf config.StartupConfig
-	decoder := yaml.NewDecoder(f)
-	err = decoder.Decode(&sConf)
-
-	if err != nil {
-		log.Println(err)
-	}
-
-	p, err := it.New(
-		it.Server(sConf.Database.Host, sConf.Database.Port, sConf.Database.DatabaseName),
-		it.Auth(sConf.Database.Username, sConf.Database.Password),
-		it.Opts(sConf.Database.TablePrefix),
-	)
-
-	if err != nil {
-		log.Fatalf("ERROR: %+v", err)
-	}
-
-	p.RecycleTables()
-	// End: Setup the db
-
-	time.Sleep(10 * time.Second)
-
 	it.SendBeacons("", "./data/misc/empty-fields.json.lines")
-	s.NoError(err)
-
 	time.Sleep(2 * time.Second)
 
 	var cntExpect uint64 = 1
 
-	s.Assert().Exactly(cntExpect, p.CountRecords(""))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords(""))
 
 	// Set expectations
 	cntExpect = 1
 
-	s.Assert().Exactly(cntExpect, p.CountRecords("where cumulative_layout_shift IS NULL"))
-	s.Assert().Exactly(cntExpect, p.CountRecords("where first_input_delay IS NULL"))
-	s.Assert().Exactly(cntExpect, p.CountRecords("where user_agent IS NULL"))
-	s.Assert().Exactly(cntExpect, p.CountRecords("where device_type = 'unknown'"))
-	s.Assert().Exactly(cntExpect, p.CountRecords("where browser_version IS NULL"))
-	s.Assert().Exactly(cntExpect, p.CountRecords("where browser_name = 'Other'"))
-	s.Assert().Exactly(cntExpect, p.CountRecords("where ua_vnd IS NULL"))
-	s.Assert().Exactly(cntExpect, p.CountRecords("where ua_plt IS NULL"))
-	s.Assert().Exactly(cntExpect, p.CountRecords("where operating_system = 'Other'"))
-	s.Assert().Exactly(cntExpect, p.CountRecords("where operating_system_version is NULL"))
-	s.Assert().Exactly(cntExpect, p.CountRecords("where device_manufacturer is NULL"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where cumulative_layout_shift IS NULL"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where first_input_delay IS NULL"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where user_agent IS NULL"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where device_type = 'unknown'"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where browser_version IS NULL"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where browser_name = 'Other'"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where ua_vnd IS NULL"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where ua_plt IS NULL"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where operating_system = 'Other'"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where operating_system_version is NULL"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where device_manufacturer is NULL"))
 }
 
 func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsMissing() {
-	// Start: Setup the db
-	path, err := os.Getwd()
-	if err != nil {
-		log.Println(err)
-	}
-
-	confPath := path + "/config/startup_config.yaml"
-
-	f, err := os.Open(confPath)
-	if err != nil {
-		log.Println(err)
-	}
-	defer f.Close()
-
-	var sConf config.StartupConfig
-	decoder := yaml.NewDecoder(f)
-	err = decoder.Decode(&sConf)
-
-	if err != nil {
-		log.Println(err)
-	}
-
-	p, err := it.New(
-		it.Server(sConf.Database.Host, sConf.Database.Port, sConf.Database.DatabaseName),
-		it.Auth(sConf.Database.Username, sConf.Database.Password),
-		it.Opts(sConf.Database.TablePrefix),
-	)
-
-	if err != nil {
-		log.Fatalf("ERROR: %+v", err)
-	}
-
-	p.RecycleTables()
-	// End: Setup the db
-
-	time.Sleep(10 * time.Second)
-
 	it.SendBeacons("", "./data/misc/missing-fields.json.lines")
-	s.NoError(err)
-
 	time.Sleep(2 * time.Second)
 
 	var cntExpect uint64 = 1
 
-	s.Assert().Exactly(cntExpect, p.CountRecords(""))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords(""))
 
 	// Set expectations
 	cntExpect = 1
 
-	s.Assert().Exactly(cntExpect, p.CountRecords("where cumulative_layout_shift IS NULL"))
-	s.Assert().Exactly(cntExpect, p.CountRecords("where first_input_delay IS NULL"))
-	s.Assert().Exactly(cntExpect, p.CountRecords("where user_agent IS NULL"))
-	s.Assert().Exactly(cntExpect, p.CountRecords("where device_type = 'unknown'"))
-	s.Assert().Exactly(cntExpect, p.CountRecords("where browser_version IS NULL"))
-	s.Assert().Exactly(cntExpect, p.CountRecords("where browser_name = 'Other'"))
-	s.Assert().Exactly(cntExpect, p.CountRecords("where ua_vnd IS NULL"))
-	s.Assert().Exactly(cntExpect, p.CountRecords("where ua_plt IS NULL"))
-	s.Assert().Exactly(cntExpect, p.CountRecords("where operating_system = 'Other'"))
-	s.Assert().Exactly(cntExpect, p.CountRecords("where operating_system_version is NULL"))
-	s.Assert().Exactly(cntExpect, p.CountRecords("where device_manufacturer is NULL"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where cumulative_layout_shift IS NULL"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where first_input_delay IS NULL"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where user_agent IS NULL"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where device_type = 'unknown'"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where browser_version IS NULL"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where browser_name = 'Other'"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where ua_vnd IS NULL"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where ua_plt IS NULL"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where operating_system = 'Other'"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where operating_system_version is NULL"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where device_manufacturer is NULL"))
 }
 
 func (s *e2eTestSuite) Test_EndToEnd_HealthCheck() {
@@ -300,7 +167,7 @@ func (s *e2eTestSuite) Test_EndToEnd_HealthCheck() {
 			return http.ErrUseLastResponse
 		}}
 
-	req, _ := http.NewRequest("GET", "http://localhost:8087/health", strings.NewReader(""))
+	req, _ := http.NewRequest("GET", fmt.Sprintf("http://%v:%v/health", s.sConf.Server.Host, s.sConf.Server.Port), strings.NewReader(""))
 
 	resp, err := client.Do(req)
 

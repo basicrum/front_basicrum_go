@@ -10,8 +10,9 @@ require (
 	github.com/rs/cors v1.8.2
 	github.com/stretchr/testify v1.8.1
 	github.com/ua-parser/uap-go v0.0.0-20211112212520-00c877edfe0f
-	gopkg.in/yaml.v2 v2.4.0
 )
+
+require gopkg.in/yaml.v2 v2.4.0 // indirect
 
 require (
 	github.com/ClickHouse/ch-go v0.50.0 // indirect
@@ -20,6 +21,7 @@ require (
 	github.com/go-faster/city v1.0.1 // indirect
 	github.com/go-faster/errors v0.6.1 // indirect
 	github.com/google/uuid v1.3.0 // indirect
+	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/klauspost/compress v1.15.12 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
 	github.com/paulmach/orb v0.7.1 // indirect
