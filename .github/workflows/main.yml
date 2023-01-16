@@ -20,33 +20,13 @@ jobs:
 
     steps:
 
-    - name: Install Go
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.19.x
-
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Copying startup_config.yaml
-      uses: canastro/copy-file-action@master
-      with:
-        source: "it/config/startup_config.yaml"
-        target: "startup_config.yaml"
-
-    - name: Start services
-      run: make up
-
-    - name: Start Front Basic RUM
-      run: go run main.go &
-
     - name: Unit Test
-      working-directory: /home/runner/work/front_basicrum_go/front_basicrum_go/beacon
-      run: go test
+      working-directory: /home/runner/work/front_basicrum_go/front_basicrum_go
+      run: make docker-unit-test
 
     - name: Integration test
-      working-directory: /home/runner/work/front_basicrum_go/front_basicrum_go/it
-      run: go test
-    
-    - name: Stop services
-      run: make down
+      working-directory: /home/runner/work/front_basicrum_go/front_basicrum_go
+      run: make docker-integration-test

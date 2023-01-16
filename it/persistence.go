@@ -21,15 +21,15 @@ type opts struct {
 	prefix string
 }
 
-type persistence struct {
+type Persistence struct {
 	server server
 	conn   connection
 	opts   *opts
 }
 
-func New(s server, a auth, opts *opts) (*persistence, error) {
+func New(s server, a auth, opts *opts) (*Persistence, error) {
 	if conn := s.open(&a); conn != nil {
-		return &persistence{s, connection{conn, a}, opts}, nil
+		return &Persistence{s, connection{conn, a}, opts}, nil
 	}
 
 	return nil, errors.New("connection to the server failed")
@@ -47,14 +47,14 @@ func Opts(prefix string) *opts {
 	return &opts{prefix}
 }
 
-func (p *persistence) RecycleTables() {
+func (p *Persistence) RecycleTables() {
 	p.server.RecycleTables(&p.conn)
 }
 
-func (p *persistence) CountRecords(criteria string) uint64 {
+func (p *Persistence) CountRecords(criteria string) uint64 {
 	return p.server.countRecords(&p.conn, criteria)
 }
 
-func (p *persistence) GetFirstRow() RumEventRow {
+func (p *Persistence) GetFirstRow() RumEventRow {
 	return p.server.getFirstRow(&p.conn)
 }

@@ -22,23 +22,35 @@ This project focuses on the component Basic RUM GO but this is how the data flow
 
 ### 1. Start Front Basic RUM GO
 
-**1.1** In the project root folder create **startup_config.yaml**
+**1.1** Set environment variables
 
-```yaml
-server:
-  host: "localhost"
-  port: 8087
+```
+# server
+export SERVER_HOST="localhost"
+export SERVER_PORT=8087
 
-database:
-  host: "localhost"
-  port: 9000
-  database_name: "default"
-  username: "default"
-  password: ""
+# database
+export DATABASE_HOST="localhost"
+export DATABASE_PORT=9000
+export DATABASE_NAME="default"
+export DATABASE_USERNAME="default"
+export DATABASE_PASSWORD=""
+## optional
+export DATABASE_TABLE_PREFIX=""
 
-persistance:
-  database_strategy: all_in_one_db
-  table_strategy: all_in_one_table
+# persistance
+## optional
+PERSISTANCE_DATABASE_STRATEGY=""
+## optional
+PERSISTANCE_TABLE_STRATEGY=""
+
+# backup
+## optional - default false
+BACKUP_ENABLED=true
+## optional. required if BACKUP_ENABLED=true
+BACKUP_DIRECTORY=""
+## optional
+BACKUP_INTERVAL_SECONDS=0
 ```
 
 **1.2** Start Front Basic RUM GO
@@ -50,6 +62,7 @@ go run main.go
 ### 2. Start ClickHouse
 
 Run:
+
 ```
 make up
 ```
@@ -59,6 +72,7 @@ make up
 **3.1** Load http://localhost:8143/ in your browser
 
 **3.2** Run the following SQL:
+
 ```sql
 CREATE TABLE IF NOT EXISTS integration_test_webperf_rum_events (
   event_date                      Date DEFAULT toDate(created_at),
@@ -150,7 +164,6 @@ curl 'http://127.0.0.1:8087/beacon/catcher' \
   --compressed
 ```
 
-
 ### 5. Query the test data
 
 **5.1** Load the ClickHouse dev user interface
@@ -160,6 +173,7 @@ Load http://localhost:8143/ in your browser
 **5.2** Query the data
 
 Run the follwoing query:
+
 ```sql
 SELECT * from integration_test_webperf_rum_events
 ```
@@ -167,6 +181,7 @@ SELECT * from integration_test_webperf_rum_events
 ### 6. Running the server
 
 Start:
+
 ```
 ./main > app.log 2>&1 &
 ```
@@ -174,11 +189,13 @@ Start:
 Periodically check the app.log file for any interesting messages
 
 Check if the server is running:
+
 ```
 netstat -ltnp | grep -w ':8087'
 ```
 
 Stop the server:
+
 ```
 kill -9 $(lsof -i:8087 -t)
 ```

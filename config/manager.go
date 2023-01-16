@@ -1,34 +1,32 @@
 package config
 
 import (
-	"log"
-	"os"
+	"fmt"
+	"reflect"
 
-	"gopkg.in/yaml.v2"
+	"github.com/kelseyhightower/envconfig"
 )
 
-// GetStartupConfig reads StartupConfig from file
-func GetStartupConfig() StartupConfig {
-	path, err := os.Getwd()
-	if err != nil {
-		log.Println(err)
-	}
-
-	confPath := path + "/startup_config.yaml"
-
-	f, err := os.Open(confPath)
-	if err != nil {
-		log.Println(err)
-	}
-	defer f.Close()
-
+// GetStartupConfig reads StartupConfig from environment variables
+func GetStartupConfig() (*StartupConfig, error) {
 	var cfg StartupConfig
-	decoder := yaml.NewDecoder(f)
-	err = decoder.Decode(&cfg)
-
+	err := envconfig.Process("", &cfg)
 	if err != nil {
-		log.Println(err)
+		return nil, err
 	}
+	if cfg.Backup.Enabled {
+		el := reflect.TypeOf(cfg.Backup).Elem()
+		fieldDirectory, ok := el.FieldByName("Directory")
+		if !ok {
+			return nil, fmt.Errorf("internal error: field Directory is not found")
+		}
+		if len(cfg.Backup.Directory) == 0 {
+			return nil, fmt.Errorf("required environment variable[%v]", getStructTag(fieldDirectory, "envconfig"))
+		}
+	}
+	return &cfg, nil
+}
 
-	return cfg
+func getStructTag(f reflect.StructField, tagName string) string {
+	return f.Tag.Get(tagName)
 }

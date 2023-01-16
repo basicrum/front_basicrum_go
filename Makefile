@@ -42,3 +42,18 @@ jump_clickhouse_server: ## Jump to the clickhouse_server container
 .PHONY: lint
 lint: 
 	golangci-lint run
+
+.PHONY: docker-unit-test
+docker-unit-test:
+	docker-compose -f docker-compose.test.yaml up --exit-code-from unit_test unit_test
+
+.PHONY: docker-clean-test
+docker-clean-test: 
+	docker-compose -f docker-compose.test.yaml down --volumes --remove-orphans
+
+.PHONY: _docker-integration-test
+_docker-integration-test:
+	docker-compose -f docker-compose.test.yaml up --exit-code-from integration_test integration_test
+
+.PHONY: docker-integration-test
+docker-integration-test: _docker-integration-test docker-clean-test

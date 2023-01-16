@@ -60,7 +60,9 @@ func httpPostFormOldStyle(params url.Values, client *http.Client, cnt int) {
 
 	fmt.Println(strings.NewReader(params.Encode()))
 
-	req, _ := http.NewRequest("POST", "http://localhost:8087/beacon/catcher", strings.NewReader(params.Encode()))
+	serverHost := os.Getenv("SERVER_HOST")
+	serverPort := os.Getenv("SERVER_PORT")
+	req, _ := http.NewRequest("POST", fmt.Sprintf("http://%v:%v/beacon/catcher", serverHost, serverPort), strings.NewReader(params.Encode()))
 	req.Header.Add("User-Agent", uaStr)
 	req.Header.Add("CF-IPCountry", countryCode)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -101,7 +103,9 @@ func httpPostFormNewStyle(params url.Values, client *http.Client, cnt int) {
 
 	fmt.Println(strings.NewReader(params.Encode()))
 
-	req, _ := http.NewRequest("POST", "http://localhost:8087/beacon/catcher", strings.NewReader(params.Encode()))
+	serverHost := os.Getenv("SERVER_HOST")
+	serverPort := os.Getenv("SERVER_PORT")
+	req, _ := http.NewRequest("POST", fmt.Sprintf("http://%v:%v/beacon/catcher", serverHost, serverPort), strings.NewReader(params.Encode()))
 
 	if uaStr, ok := headers["User-Agent"]; ok {
 		req.Header.Add("User-Agent", uaStr[0])

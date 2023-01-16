@@ -3,24 +3,24 @@ package config
 // StartupConfig contains application configuration
 type StartupConfig struct {
 	Server struct {
-		Host string `yaml:"host"`
-		Port string `yaml:"port"`
-	} `yaml:"server"`
+		Host string `required:"true" envconfig:"SERVER_HOST"`
+		Port string `required:"true" envconfig:"SERVER_PORT"`
+	}
 	Database struct {
-		Username     string `yaml:"username"`
-		Password     string `yaml:"password"`
-		DatabaseName string `yaml:"database_name"`
-		Host         string `yaml:"host"`
-		Port         int16  `yaml:"port"`
-		TablePrefix  string `yaml:"table_prefix"`
-	} `yaml:"database"`
+		Username     string `required:"true" envconfig:"DATABASE_USERNAME"`
+		Password     string `required:"true" envconfig:"DATABASE_PASSWORD"`
+		DatabaseName string `required:"true" envconfig:"DATABASE_NAME"`
+		Host         string `required:"true" envconfig:"DATABASE_HOST"`
+		Port         int16  `required:"true" envconfig:"DATABASE_PORT"`
+		TablePrefix  string `envconfig:"DATABASE_TABLE_PREFIX"`
+	}
 	Persistance struct {
-		DatabaseStrategy string `yaml:"database_strategy"`
-		TableStrategy    string `yaml:"table_strategy"`
-	} `yaml:"persistance"`
+		DatabaseStrategy string `envconfig:"PERSISTANCE_DATABASE_STRATEGY"`
+		TableStrategy    string `envconfig:"PERSISTANCE_TABLE_STRATEGY"`
+	}
 	Backup struct {
-		Enabled         bool   `yaml:"enabled"`
-		Directory       string `yaml:"directory"`
-		IntervalSeconds uint32 `yaml:"interval_seconds"`
-	} `yaml:"backup"`
+		Enabled         bool   `envconfig:"BACKUP_ENABLED"`
+		Directory       string `envconfig:"BACKUP_DIRECTORY"`
+		IntervalSeconds uint32 `envconfig:"BACKUP_INTERVAL_SECONDS"`
+	}
 }
