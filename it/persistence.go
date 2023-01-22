@@ -5,16 +5,19 @@ import (
 	"errors"
 )
 
+const baseTableName = "webperf_rum_events"
+
 type auth struct {
 	user string
 	pwd  string
 }
 
 type server struct {
-	host string
-	port int16
-	db   string
-	ctx  context.Context
+	host      string
+	port      int16
+	db        string
+	ctx       context.Context
+	tableName string
 }
 
 type opts struct {
@@ -35,8 +38,9 @@ func New(s server, a auth, opts *opts) (*Persistence, error) {
 	return nil, errors.New("connection to the server failed")
 }
 
-func Server(host string, port int16, db string) server {
-	return server{host, port, db, context.Background()}
+func Server(host string, port int16, db string, tablePrefix string) server {
+	tableName := tablePrefix + baseTableName
+	return server{host, port, db, context.Background(), tableName}
 }
 
 func Auth(user string, pwd string) auth {

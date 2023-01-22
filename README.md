@@ -20,9 +20,17 @@ This project focuses on the component Basic RUM GO but this is how the data flow
 
 ## How to start dev environment
 
-### 1. Start Front Basic RUM GO
+### 1. Start ClickHouse
 
-**1.1** Set environment variables
+Run:
+
+```
+make up
+```
+
+### 2. Start Front Basic RUM GO
+
+**2.1** Set environment variables
 
 ```
 # server
@@ -53,28 +61,24 @@ BACKUP_DIRECTORY=""
 BACKUP_INTERVAL_SECONDS=0
 ```
 
-**1.2** Start Front Basic RUM GO
+**2.2** Start Front Basic RUM GO
 
 ```
 go run main.go
 ```
 
-### 2. Start ClickHouse
+**2.3** Application creates table on startup with following structure### 3.
 
-Run:
+### 3. Table is automatically created in ClickHouse
 
-```
-make up
-```
-
-### 3. Create a table in ClickHouse
+You can check that the table is created with required structure by following the steps below.
 
 **3.1** Load http://localhost:8143/ in your browser
 
-**3.2** Run the following SQL:
+**3.2** Check a table is created:
 
 ```sql
-CREATE TABLE IF NOT EXISTS integration_test_webperf_rum_events (
+CREATE TABLE IF NOT EXISTS webperf_rum_events (
   event_date                      Date DEFAULT toDate(created_at),
   hostname                        LowCardinality(String),
   created_at                      DateTime,
@@ -175,7 +179,7 @@ Load http://localhost:8143/ in your browser
 Run the follwoing query:
 
 ```sql
-SELECT * from integration_test_webperf_rum_events
+SELECT * from webperf_rum_events
 ```
 
 ### 6. Running the server

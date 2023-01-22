@@ -3,9 +3,12 @@ package persistence
 import (
 	"context"
 	"errors"
+	"log"
 
 	"github.com/ua-parser/uap-go/uaparser"
 )
+
+const baseTableName = "webperf_rum_events"
 
 type auth struct {
 	user string
@@ -24,18 +27,20 @@ type opts struct {
 }
 
 type persistence struct {
-	server server
-	conn   connection
-	uaP    *uaparser.Parser
-	opts   *opts
-	Events chan *event
+	server    server
+	conn      connection
+	uaP       *uaparser.Parser
+	opts      *opts
+	Events    chan *event
+	tableName string
 }
 
 // New creates persistance service
 // nolint: revive
 func New(s server, a auth, opts *opts, uaP *uaparser.Parser) (*persistence, error) {
 	if conn := s.open(&a); conn != nil {
-		return &persistence{s, connection{conn, a}, uaP, opts, make(chan *event)}, nil
+		tableName := opts.prefix + baseTableName
+		return &persistence{s, connection{conn, a}, uaP, opts, make(chan *event), tableName}, nil
 	}
 
 	return nil, errors.New("connection to the server failed")
@@ -66,13 +71,19 @@ func (p *persistence) Run() {
 		if event == nil {
 			continue
 		}
-		table := event.name
-
-		tPrefix := p.opts.prefix
-		if tPrefix != "" {
-			table = tPrefix + "_" + table
-		}
-
-		go p.server.save(&p.conn, event.payload(p.uaP), table)
+		go p.server.save(&p.conn, event.payload(p.uaP), p.tableName)
 	}
+}
+
+// CreateTable creates the table if not exists
+func (p *persistence) CreateTable() error {
+	tableExist, err := p.server.CheckTableExist(&p.conn, p.tableName)
+	if err != nil {
+		return err
+	}
+	if tableExist {
+		log.Printf("table already exists")
+		return nil
+	}
+	return p.server.CreateTable(&p.conn, p.tableName)
 }

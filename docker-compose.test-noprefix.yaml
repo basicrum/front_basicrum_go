@@ -35,7 +35,7 @@ services:
       - DATABASE_NAME=default
       - DATABASE_USERNAME=default
       - DATABASE_PASSWORD=
-      - DATABASE_TABLE_PREFIX=integration_test_
+      - DATABASE_TABLE_PREFIX=
       - PERSISTANCE_DATABASE_STRATEGY=all_in_one_db
       - PERSISTANCE_TABLE_STRATEGY=all_in_one_table
       - BACKUP_ENABLED=false
@@ -58,7 +58,7 @@ services:
       - DATABASE_NAME=default
       - DATABASE_USERNAME=default
       - DATABASE_PASSWORD=
-      - DATABASE_TABLE_PREFIX=integration_test_
+      - DATABASE_TABLE_PREFIX=
     depends_on:
       integration_server:
         condition: service_healthy

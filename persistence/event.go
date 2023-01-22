@@ -11,7 +11,6 @@ import (
 )
 
 type event struct {
-	name      string
 	reqParams *url.Values
 	headers   *http.Header
 	userAgent string
@@ -19,7 +18,7 @@ type event struct {
 
 // Event creates event to be stored
 func (*persistence) Event(reqParams *url.Values, headers *http.Header, userAgent string) *event {
-	return &event{"webperf_rum_events", reqParams, headers, userAgent}
+	return &event{reqParams, headers, userAgent}
 }
 
 // TODO !!! beacon logic must reside in beacon pkg, for now it is just a copy-paste from main
