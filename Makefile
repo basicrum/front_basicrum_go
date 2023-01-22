@@ -50,6 +50,7 @@ docker-unit-test:
 .PHONY: docker-clean-test
 docker-clean-test: 
 	docker-compose -f docker-compose.test.yaml down --volumes --remove-orphans
+	docker-compose -f docker-compose.test-noprefix.yaml down --volumes --remove-orphans
 
 .PHONY: _docker-integration-test
 _docker-integration-test:
@@ -57,3 +58,10 @@ _docker-integration-test:
 
 .PHONY: docker-integration-test
 docker-integration-test: _docker-integration-test docker-clean-test
+
+.PHONY: _docker-integration-test-noprefix
+_docker-integration-test-noprefix:
+	docker-compose -f docker-compose.test-noprefix.yaml up --exit-code-from integration_test integration_test
+
+.PHONY: docker-integration-test-noprefix
+docker-integration-test: _docker-integration-test-noprefix docker-clean-test

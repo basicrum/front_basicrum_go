@@ -1,6 +1,7 @@
 package it
 
 import (
+	"fmt"
 	"log"
 	"strconv"
 	"time"
@@ -46,7 +47,7 @@ func (s *server) open(a *auth) *driver.Conn {
 }
 
 func (s *server) RecycleTables(conn *connection) {
-	dropQuery := `TRUNCATE TABLE integration_test_webperf_rum_events`
+	dropQuery := fmt.Sprintf("TRUNCATE TABLE %v", s.tableName)
 	dropErr := (*conn.inner).Exec(s.ctx, dropQuery)
 	if dropErr != nil {
 		log.Print(dropErr)
@@ -54,7 +55,7 @@ func (s *server) RecycleTables(conn *connection) {
 }
 
 func (s *server) countRecords(conn *connection, criteria string) uint64 {
-	query := "SELECT count(*) FROM integration_test_webperf_rum_events " + criteria
+	query := fmt.Sprintf("SELECT count(*) FROM %v %v", s.tableName, criteria)
 	rows, err := (*conn.inner).Query(s.ctx, query)
 	if err != nil {
 		log.Fatal(err)
@@ -82,7 +83,7 @@ func (s *server) getFirstRow(conn *connection) RumEventRow {
 
 	result := []RumEventRow{}
 
-	err := (*conn.inner).Select(s.ctx, &result, "SELECT url, cumulative_layout_shift FROM integration_test_webperf_rum_events")
+	err := (*conn.inner).Select(s.ctx, &result, fmt.Sprintf("SELECT url, cumulative_layout_shift FROM %s", s.tableName))
 
 	if err != nil {
 		log.Fatal(err)

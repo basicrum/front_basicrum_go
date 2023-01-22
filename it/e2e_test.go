@@ -32,7 +32,7 @@ func (s *e2eTestSuite) SetupTest() {
 	sConf := s.sConf
 
 	s.p, err = it.New(
-		it.Server(sConf.Database.Host, sConf.Database.Port, sConf.Database.DatabaseName),
+		it.Server(sConf.Database.Host, sConf.Database.Port, sConf.Database.DatabaseName, sConf.Database.TablePrefix),
 		it.Auth(sConf.Database.Username, sConf.Database.Password),
 		it.Opts(sConf.Database.TablePrefix),
 	)
