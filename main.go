@@ -61,6 +61,11 @@ func main() {
 		log.Fatalf("ERROR: %+v", err)
 	}
 
+	err = p.CreateTable()
+	if err != nil {
+		log.Fatalf("create table ERROR: %+v", err)
+	}
+
 	go p.Run()
 
 	mux := http.NewServeMux()
