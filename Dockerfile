@@ -20,7 +20,4 @@ WORKDIR /bin
 
 COPY --from=builder /go/bin /bin
 
-HEALTHCHECK --interval=60s --timeout=10s --retries=5 --start-period=20s \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:8087/health || exit 1
-
 CMD ["./server"]
