@@ -4,12 +4,12 @@ go 1.19
 
 require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.4.2
-	github.com/eapache/go-resiliency v1.3.0
 	github.com/martinlindhe/base36 v1.1.1
 	github.com/mileusna/useragent v1.2.1
 	github.com/rs/cors v1.8.2
 	github.com/stretchr/testify v1.8.1
 	github.com/ua-parser/uap-go v0.0.0-20211112212520-00c877edfe0f
+	golang.org/x/sync v0.1.0
 )
 
 require gopkg.in/yaml.v2 v2.4.0 // indirect
