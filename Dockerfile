@@ -14,7 +14,7 @@ RUN CGO_ENABLED=0 go build -a -installsuffix cgo -o /go/bin/server .
 FROM alpine
 
 RUN apk update
-RUN apk add wget
+RUN apk add wget bash
 
 WORKDIR /bin
 
