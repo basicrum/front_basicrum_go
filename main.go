@@ -4,13 +4,19 @@
 package main
 
 import (
+	"context"
+	"crypto/tls"
 	_ "embed"
 	"encoding/json"
-	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
+
+	"golang.org/x/crypto/acme/autocert"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/basicrum/front_basicrum_go/backup"
 	"github.com/basicrum/front_basicrum_go/config"
@@ -23,16 +29,12 @@ import (
 //go:embed assets/uaparser_regexes.yaml
 var uaRegexes []byte
 
-// nolint: funlen, revive
+// nolint: funlen, revive, gocognit
 func main() {
 	sConf, err := config.GetStartupConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	var domain string
-	flag.StringVar(&domain, "domain", "", "domain name to request your certificate")
-	flag.Parse()
 
 	// @TODO: Move uaP dependency outside the persistance
 	// We need to get the Regexes from here: https://github.com/ua-parser/uap-core/blob/master/regexes.yaml
@@ -137,24 +139,6 @@ func main() {
 
 		_, _ = w.Write([]byte("ok"))
 	})
-	// log.Println("TLS domain", domain)
-	// certManager := autocert.Manager{
-	// 	Prompt:     autocert.AcceptTOS,
-	// 	HostPolicy: autocert.HostWhitelist(domain),
-	// 	Cache:      autocert.DirCache("certs"),
-	// }
-
-	// tlsConfig := certManager.TLSConfig()
-	// tlsConfig.GetCertificate = getSelfSignedOrLetsEncryptCert(&certManager)
-
-	// server := http.Server{
-	// 	Addr:    initAddress,
-	// 	Handler: r,
-	// 	// TLSConfig: tlsConfig,
-	// }
-
-	// go http.ListenAndServe(":80", certManager.HTTPHandler(nil))
-
 	log.Println("Starting the server on port: " + sConf.Server.Port)
 
 	handler := cors.Default().Handler(mux)
@@ -164,35 +148,70 @@ func main() {
 		Handler: handler,
 		// https://deepsource.io/directory/analyzers/go/issues/GO-S2114
 		ReadHeaderTimeout: 3 * time.Second,
+		ReadTimeout:       5 * time.Second,
+		WriteTimeout:      5 * time.Second,
+		IdleTimeout:       120 * time.Second,
 	}
 
-	errdd := server.ListenAndServe()
+	// nolint: nestif
+	if sConf.Server.SSL {
+		log.Printf("SSL configuration enabled type[%v]\n", sConf.Server.SSLType)
+		switch sConf.Server.SSLType {
+		case config.SSLTypeLetsEncrypt:
+			dataDir := os.TempDir()
+			allowedHost := sConf.Server.SSLLetsEncrypt.Domain
+			log.Printf("SSL allowedHost[%v]\n", allowedHost)
+			hostPolicy := func(ctx context.Context, host string) error {
+				if host == allowedHost {
+					return nil
+				}
+				return fmt.Errorf("acme/autocert: only %s host is allowed", allowedHost)
+			}
+			m := &autocert.Manager{
+				Prompt:     autocert.AcceptTOS,
+				HostPolicy: hostPolicy,
+				Cache:      autocert.DirCache(dataDir),
+			}
+			server.TLSConfig = &tls.Config{
+				GetCertificate: m.GetCertificate,
+				MinVersion:     tls.VersionTLS12,
+			}
 
-	if errdd != nil {
-		log.Println(errdd)
+			g, _ := errgroup.WithContext(context.Background())
+			g.Go(func() error {
+				log.Printf("starting https server on port[%v]", sConf.Server.Port)
+				return server.ListenAndServeTLS("", "")
+			})
+			httpServer := &http.Server{
+				Addr:    ":" + sConf.Server.SSLLetsEncrypt.Port,
+				Handler: m.HTTPHandler(handler),
+				// https://deepsource.io/directory/analyzers/go/issues/GO-S2114
+				ReadHeaderTimeout: 3 * time.Second,
+				ReadTimeout:       5 * time.Second,
+				WriteTimeout:      5 * time.Second,
+				IdleTimeout:       120 * time.Second,
+			}
+			g.Go(func() error {
+				log.Printf("starting http server on port[%v]", sConf.Server.SSLLetsEncrypt.Port)
+				return httpServer.ListenAndServe()
+			})
+			if err := g.Wait(); err != nil {
+				log.Println(err)
+			}
+		case config.SSLTypeFile:
+			log.Printf("starting https server on port[%v]", sConf.Server.Port)
+			errdd := server.ListenAndServe()
+			if errdd != nil {
+				log.Println(errdd)
+			}
+		default:
+			log.Fatalf("unsupported ssl type[%v]", sConf.Server.SSLType)
+		}
+	} else {
+		log.Printf("starting http server on port[%v]", sConf.Server.Port)
+		errdd := server.ListenAndServe()
+		if errdd != nil {
+			log.Println(errdd)
+		}
 	}
-
-	// log.Println("Server listening on", server.Addr)
-	// if err := server.ListenAndServeTLS("", ""); err != nil {
-	// 	log.Println(err)
-	// }
 }
-
-// func getSelfSignedOrLetsEncryptCert(certManager *autocert.Manager) func(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
-// 	return func(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
-// 		dirCache, ok := certManager.Cache.(autocert.DirCache)
-// 		if !ok {
-// 			dirCache = "certs"
-// 		}
-
-// 		keyFile := filepath.Join(string(dirCache), hello.ServerName+".key")
-// 		crtFile := filepath.Join(string(dirCache), hello.ServerName+".crt")
-// 		certificate, err := tls.LoadX509KeyPair(crtFile, keyFile)
-// 		if err != nil {
-// 			log.Printf("%s\nFalling back to Letsencrypt\n", err)
-// 			return certManager.GetCertificate(hello)
-// 		}
-// 		log.Println("Loaded selfsigned certificate.")
-// 		return &certificate, err
-// 	}
-// }
