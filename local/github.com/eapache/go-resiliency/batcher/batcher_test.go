@@ -10,11 +10,11 @@ import (
 
 var errSomeError = errors.New("errSomeError")
 
-func returnsError(params []interface{}) error {
+func returnsError(_ []interface{}) error {
 	return errSomeError
 }
 
-func returnsSuccess(params []interface{}) error {
+func returnsSuccess(_ []interface{}) error {
 	return nil
 }
 
@@ -48,6 +48,7 @@ func TestBatcherError(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		wg.Add(1)
 		go func() {
+			// nolint: errorlint
 			if err := b.Run(nil); err != errSomeError {
 				t.Error(err)
 			}
@@ -67,6 +68,7 @@ func TestBatcherPrefilter(t *testing.T) {
 		return nil
 	})
 
+	// nolint: errorlint
 	if err := b.Run(nil); err != errSomeError {
 		t.Error(err)
 	}
@@ -118,6 +120,8 @@ func ExampleBatcher() {
 	})
 
 	for i := 0; i < 10; i++ {
-		go b.Run(i)
+		go func(i int) {
+			_ = b.Run(i)
+		}(i)
 	}
 }

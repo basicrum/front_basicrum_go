@@ -11,16 +11,18 @@ type work struct {
 	future chan error
 }
 
-type MyChannel struct {
+type myChannel struct {
 	C    chan *work
 	once sync.Once
 }
 
-func NewMyChannel() *MyChannel {
-	return &MyChannel{C: make(chan *work, 4)}
+func newMyChannel() *myChannel {
+	return &myChannel{C: make(chan *work, 4)}
 }
 
-func (mc *MyChannel) SafeClose() {
+// SafeClose closes the underling channel only once
+// to prevent raise of a panic
+func (mc *myChannel) SafeClose() {
 	mc.once.Do(func() {
 		close(mc.C)
 	})
@@ -32,7 +34,7 @@ type Batcher struct {
 	prefilter func(interface{}) error
 
 	lock   sync.Mutex
-	submit *MyChannel
+	submit *myChannel
 	done   chan bool
 	doWork func([]interface{}) error
 }
@@ -87,7 +89,7 @@ func (b *Batcher) submitWork(w *work) {
 
 	if b.submit == nil {
 		b.done = make(chan bool)
-		b.submit = NewMyChannel()
+		b.submit = newMyChannel()
 		go b.batch()
 	}
 
@@ -127,6 +129,7 @@ func (b *Batcher) timer() {
 	b.submit = nil
 }
 
+// Flush is called before shutdown to force process of the last batch
 func (b *Batcher) Flush() {
 	b.lock.Lock()
 	defer b.lock.Unlock()

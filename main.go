@@ -28,7 +28,7 @@ import (
 //go:embed assets/uaparser_regexes.yaml
 var uaRegexes []byte
 
-// nolint: funlen, revive
+// nolint: funlen, revive, gocognit
 func main() {
 	sConf, err := config.GetStartupConfig()
 	if err != nil {
@@ -208,6 +208,7 @@ func main() {
 
 	// wait for all parallel jobs to finish
 	if err := g.Wait(); err != nil {
+		// nolint: gocritic
 		log.Fatalf("Shutdown Failed:%+v", err)
 	}
 	log.Print("Server Exited Properly")
