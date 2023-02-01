@@ -4,26 +4,31 @@
 package main
 
 import (
+	"context"
 	_ "embed"
 	"encoding/json"
 	"flag"
 	"log"
 	"net/http"
 	"net/url"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/basicrum/front_basicrum_go/backup"
 	"github.com/basicrum/front_basicrum_go/config"
+	"github.com/basicrum/front_basicrum_go/local/github.com/eapache/go-resiliency/batcher"
 	"github.com/basicrum/front_basicrum_go/persistence"
-	"github.com/eapache/go-resiliency/batcher"
 	"github.com/rs/cors"
 	"github.com/ua-parser/uap-go/uaparser"
+	"golang.org/x/sync/errgroup"
 )
 
 //go:embed assets/uaparser_regexes.yaml
 var uaRegexes []byte
 
-// nolint: funlen, revive
+// nolint: funlen, revive, gocognit
 func main() {
 	sConf, err := config.GetStartupConfig()
 	if err != nil {
@@ -166,11 +171,47 @@ func main() {
 		ReadHeaderTimeout: 3 * time.Second,
 	}
 
-	errdd := server.ListenAndServe()
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
-	if errdd != nil {
-		log.Println(errdd)
+	go func() {
+		errdd := server.ListenAndServe()
+		if errdd != nil {
+			log.Println(errdd)
+		}
+	}()
+	log.Print("Server Started")
+
+	<-done
+	log.Print("Server Stopped")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer func() {
+		// extra handling here
+		cancel()
+	}()
+
+	g, ctx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		if err := server.Shutdown(ctx); err != nil {
+			log.Printf("Server Shutdown Failed:%+v", err)
+			return err
+		}
+		return nil
+	})
+
+	g.Go(func() error {
+		b.Flush()
+		return nil
+	})
+
+	// wait for all parallel jobs to finish
+	if err := g.Wait(); err != nil {
+		// nolint: gocritic
+		log.Fatalf("Shutdown Failed:%+v", err)
 	}
+	log.Print("Server Exited Properly")
 
 	// log.Println("Server listening on", server.Addr)
 	// if err := server.ListenAndServeTLS("", ""); err != nil {
