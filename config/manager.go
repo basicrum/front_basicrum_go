@@ -8,6 +8,7 @@ import (
 )
 
 // GetStartupConfig reads StartupConfig from environment variables
+// nolint: revive
 func GetStartupConfig() (*StartupConfig, error) {
 	var cfg StartupConfig
 	err := envconfig.Process("", &cfg)
@@ -15,13 +16,28 @@ func GetStartupConfig() (*StartupConfig, error) {
 		return nil, err
 	}
 	if cfg.Backup.Enabled {
-		el := reflect.TypeOf(cfg.Backup).Elem()
-		fieldDirectory, ok := el.FieldByName("Directory")
-		if !ok {
-			return nil, fmt.Errorf("internal error: field Directory is not found")
-		}
 		if len(cfg.Backup.Directory) == 0 {
-			return nil, fmt.Errorf("required environment variable[%v]", getStructTag(fieldDirectory, "envconfig"))
+			return nil, fieldError(cfg.Backup, "Directory")
+		}
+	}
+	if cfg.Server.SSL {
+		switch cfg.Server.SSLType {
+		case SSLTypeFile:
+			if len(cfg.Server.SSLFile.SSLFileCertFile) == 0 {
+				return nil, fieldError(cfg.Server.SSLFile, "SSLFileCertFile")
+			}
+			if len(cfg.Server.SSLFile.SSLFileKeyFile) == 0 {
+				return nil, fieldError(cfg.Server.SSLFile, "SSLFileKeyFile")
+			}
+		case SSLTypeLetsEncrypt:
+			if len(cfg.Server.SSLLetsEncrypt.Port) == 0 {
+				return nil, fieldError(cfg.Server.SSLLetsEncrypt, "Port")
+			}
+			if len(cfg.Server.SSLLetsEncrypt.Domain) == 0 {
+				return nil, fieldError(cfg.Server.SSLLetsEncrypt, "Domain")
+			}
+		default:
+			return nil, fmt.Errorf("unsupported ssl type[%v]", cfg.Server.SSLType)
 		}
 	}
 	return &cfg, nil
@@ -29,4 +45,13 @@ func GetStartupConfig() (*StartupConfig, error) {
 
 func getStructTag(f reflect.StructField, tagName string) string {
 	return f.Tag.Get(tagName)
+}
+
+func fieldError(parentElement any, fieldName string) error {
+	el := reflect.TypeOf(parentElement).Elem()
+	field, ok := el.FieldByName(fieldName)
+	if !ok {
+		return fmt.Errorf("internal error: field %v is not found", fieldName)
+	}
+	return fmt.Errorf("required environment variable[%v]", getStructTag(field, "envconfig"))
 }

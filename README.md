@@ -61,6 +61,29 @@ BACKUP_DIRECTORY=""
 BACKUP_INTERVAL_SECONDS=0
 ```
 
+**2.1.1** If you want to use SSL with custom files
+
+```
+# server
+export SERVER_SSL=true
+export SERVER_SSL_TYPE=FILE
+export SERVER_SSL_CERT_FILE=domain.crt
+export SERVER_SSL_KEY_FILE=domain.key
+```
+
+**2.1.2** If you want to use SSL with Let's encrypt
+
+```
+# server
+export SERVER_SSL=true
+export SERVER_SSL_TYPE=LETS_ENCRYPT
+export SERVER_SSL_LETS_ENCRYPT_PORT=80
+export SERVER_SSL_LETS_ENCRYPT_DOMAIN=domain.com
+```
+
+Note: To verify that you’re the owner of domain for which you want a certificate, Let’s Encrypt server calls back your server.
+For that to work, DNS name must resolve to the IP address of your server.
+
 **2.2** Start Front Basic RUM GO
 
 ```
