@@ -13,6 +13,8 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"golang.org/x/crypto/acme/autocert"
@@ -20,8 +22,8 @@ import (
 
 	"github.com/basicrum/front_basicrum_go/backup"
 	"github.com/basicrum/front_basicrum_go/config"
+	"github.com/basicrum/front_basicrum_go/local/github.com/eapache/go-resiliency/batcher"
 	"github.com/basicrum/front_basicrum_go/persistence"
-	"github.com/eapache/go-resiliency/batcher"
 	"github.com/rs/cors"
 	"github.com/ua-parser/uap-go/uaparser"
 )
@@ -153,65 +155,98 @@ func main() {
 		IdleTimeout:       120 * time.Second,
 	}
 
-	// nolint: nestif
-	if sConf.Server.SSL {
-		log.Printf("SSL configuration enabled type[%v]\n", sConf.Server.SSLType)
-		switch sConf.Server.SSLType {
-		case config.SSLTypeLetsEncrypt:
-			dataDir := os.TempDir()
-			allowedHost := sConf.Server.SSLLetsEncrypt.Domain
-			log.Printf("SSL allowedHost[%v]\n", allowedHost)
-			hostPolicy := func(ctx context.Context, host string) error {
-				if host == allowedHost {
-					return nil
-				}
-				return fmt.Errorf("acme/autocert: only %s host is allowed", allowedHost)
-			}
-			m := &autocert.Manager{
-				Prompt:     autocert.AcceptTOS,
-				HostPolicy: hostPolicy,
-				Cache:      autocert.DirCache(dataDir),
-			}
-			server.TLSConfig = &tls.Config{
-				GetCertificate: m.GetCertificate,
-				MinVersion:     tls.VersionTLS12,
-			}
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
 
-			g, _ := errgroup.WithContext(context.Background())
-			g.Go(func() error {
+		// nolint: nestif
+		if sConf.Server.SSL {
+			log.Printf("SSL configuration enabled type[%v]\n", sConf.Server.SSLType)
+			switch sConf.Server.SSLType {
+			case config.SSLTypeLetsEncrypt:
+				dataDir := os.TempDir()
+				allowedHost := sConf.Server.SSLLetsEncrypt.Domain
+				log.Printf("SSL allowedHost[%v]\n", allowedHost)
+				hostPolicy := func(ctx context.Context, host string) error {
+					if host == allowedHost {
+						return nil
+					}
+					return fmt.Errorf("acme/autocert: only %s host is allowed", allowedHost)
+				}
+				m := &autocert.Manager{
+					Prompt:     autocert.AcceptTOS,
+					HostPolicy: hostPolicy,
+					Cache:      autocert.DirCache(dataDir),
+				}
+				server.TLSConfig = &tls.Config{
+					GetCertificate: m.GetCertificate,
+					MinVersion:     tls.VersionTLS12,
+				}
+
+				g, _ := errgroup.WithContext(context.Background())
+				g.Go(func() error {
+					log.Printf("starting https server on port[%v]", sConf.Server.Port)
+					return server.ListenAndServeTLS("", "")
+				})
+				httpServer := &http.Server{
+					Addr:    ":" + sConf.Server.SSLLetsEncrypt.Port,
+					Handler: m.HTTPHandler(handler),
+					// https://deepsource.io/directory/analyzers/go/issues/GO-S2114
+					ReadHeaderTimeout: 3 * time.Second,
+					ReadTimeout:       5 * time.Second,
+					WriteTimeout:      5 * time.Second,
+					IdleTimeout:       120 * time.Second,
+				}
+				g.Go(func() error {
+					log.Printf("starting http server on port[%v]", sConf.Server.SSLLetsEncrypt.Port)
+					return httpServer.ListenAndServe()
+				})
+				if err := g.Wait(); err != nil {
+					log.Println(err)
+				}
+			case config.SSLTypeFile:
 				log.Printf("starting https server on port[%v]", sConf.Server.Port)
-				return server.ListenAndServeTLS("", "")
-			})
-			httpServer := &http.Server{
-				Addr:    ":" + sConf.Server.SSLLetsEncrypt.Port,
-				Handler: m.HTTPHandler(handler),
-				// https://deepsource.io/directory/analyzers/go/issues/GO-S2114
-				ReadHeaderTimeout: 3 * time.Second,
-				ReadTimeout:       5 * time.Second,
-				WriteTimeout:      5 * time.Second,
-				IdleTimeout:       120 * time.Second,
+				errdd := server.ListenAndServe()
+				if errdd != nil {
+					log.Println(errdd)
+				}
+			default:
+				log.Fatalf("unsupported ssl type[%v]", sConf.Server.SSLType)
 			}
-			g.Go(func() error {
-				log.Printf("starting http server on port[%v]", sConf.Server.SSLLetsEncrypt.Port)
-				return httpServer.ListenAndServe()
-			})
-			if err := g.Wait(); err != nil {
-				log.Println(err)
-			}
-		case config.SSLTypeFile:
-			log.Printf("starting https server on port[%v]", sConf.Server.Port)
-			errdd := server.ListenAndServe()
-			if errdd != nil {
-				log.Println(errdd)
-			}
-		default:
-			log.Fatalf("unsupported ssl type[%v]", sConf.Server.SSLType)
+		} else {
+			log.Printf("starting http server on port[%v]", sConf.Server.Port)
 		}
-	} else {
-		log.Printf("starting http server on port[%v]", sConf.Server.Port)
-		errdd := server.ListenAndServe()
-		if errdd != nil {
-			log.Println(errdd)
+	}()
+	log.Print("Server Started")
+
+	<-done
+	log.Print("Server Stopped")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer func() {
+		// extra handling here
+		cancel()
+	}()
+
+	g, ctx := errgroup.WithContext(ctx)
+
+	g.Go(func() error {
+		if err := server.Shutdown(ctx); err != nil {
+			log.Printf("Server Shutdown Failed:%+v", err)
+			return err
 		}
+		return nil
+	})
+
+	g.Go(func() error {
+		b.Flush()
+		return nil
+	})
+
+	// wait for all parallel jobs to finish
+	if err := g.Wait(); err != nil {
+		// nolint: gocritic
+		log.Fatalf("Shutdown Failed:%+v", err)
 	}
+	log.Print("Server Exited Properly")
 }

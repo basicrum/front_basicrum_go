@@ -4,13 +4,13 @@ go 1.19
 
 require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.4.2
-	github.com/eapache/go-resiliency v1.3.0
 	github.com/martinlindhe/base36 v1.1.1
 	github.com/mileusna/useragent v1.2.1
 	github.com/rs/cors v1.8.2
 	github.com/stretchr/testify v1.8.1
 	github.com/ua-parser/uap-go v0.0.0-20211112212520-00c877edfe0f
 	golang.org/x/crypto v0.5.0
+	golang.org/x/sync v0.1.0
 )
 
 require (
@@ -37,7 +37,6 @@ require (
 	github.com/shopspring/decimal v1.3.1 // indirect
 	go.opentelemetry.io/otel v1.11.1 // indirect
 	go.opentelemetry.io/otel/trace v1.11.1 // indirect
-	golang.org/x/sync v0.1.0
 	golang.org/x/sys v0.4.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

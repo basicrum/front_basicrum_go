@@ -65,3 +65,8 @@ _docker-integration-test-noprefix:
 
 .PHONY: docker-integration-test-noprefix
 docker-integration-test: _docker-integration-test-noprefix docker-clean-test
+
+.PHONY: docker-hub
+docker-hub:
+	docker build -t basicrum/front_basicrum_go:$(VERSION) .
+	# docker push basicrum/front_basicrum_go:$(VERSION)
