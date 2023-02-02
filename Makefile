@@ -54,14 +54,14 @@ docker-clean-test:
 
 .PHONY: _docker-integration-test
 _docker-integration-test:
-	docker-compose -f docker-compose.test.yaml up --exit-code-from integration_test integration_test
+	docker-compose -f docker-compose.test.yaml up --build --exit-code-from integration_test integration_test
 
 .PHONY: docker-integration-test
 docker-integration-test: _docker-integration-test docker-clean-test
 
 .PHONY: _docker-integration-test-noprefix
 _docker-integration-test-noprefix:
-	docker-compose -f docker-compose.test-noprefix.yaml up --exit-code-from integration_test integration_test
+	docker-compose -f docker-compose.test-noprefix.yaml up --build --exit-code-from integration_test integration_test
 
 .PHONY: docker-integration-test-noprefix
 docker-integration-test-noprefix: _docker-integration-test-noprefix docker-clean-test

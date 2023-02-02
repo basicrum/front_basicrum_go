@@ -141,7 +141,6 @@ func main() {
 
 		_, _ = w.Write([]byte("ok"))
 	})
-	log.Println("Starting the server on port: " + sConf.Server.Port)
 
 	handler := cors.Default().Handler(mux)
 
@@ -205,8 +204,8 @@ func main() {
 					log.Println(err)
 				}
 			case config.SSLTypeFile:
-				log.Printf("starting https server on port[%v]", sConf.Server.Port)
-				errdd := server.ListenAndServe()
+				log.Printf("starting https server on port[%v] with certFile[%v] keyFile[%v]", sConf.Server.Port, sConf.Server.SSLFile.SSLFileCertFile, sConf.Server.SSLFile.SSLFileCertFile)
+				errdd := server.ListenAndServeTLS(sConf.Server.SSLFile.SSLFileCertFile, sConf.Server.SSLFile.SSLFileCertFile)
 				if errdd != nil {
 					log.Println(errdd)
 				}
@@ -215,6 +214,10 @@ func main() {
 			}
 		} else {
 			log.Printf("starting http server on port[%v]", sConf.Server.Port)
+			errdd := server.ListenAndServe()
+			if errdd != nil {
+				log.Println(errdd)
+			}
 		}
 	}()
 	log.Print("Server Started")
