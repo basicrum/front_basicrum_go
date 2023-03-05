@@ -3,11 +3,11 @@ package beacon
 import (
 	"encoding/json"
 	"log"
-	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 
+	"github.com/basicrum/front_basicrum_go/types"
 	ua "github.com/mileusna/useragent"
 	"github.com/ua-parser/uap-go/uaparser"
 )
@@ -135,10 +135,13 @@ type Beacon struct {
 	Sb             string
 }
 
-// FromRequestParams creates Beacon request from http request parameters
+// FromEvent creates Beacon request from http request parameters
 // nolint: funlen
-func FromRequestParams(values *url.Values, uaString string, h *http.Header) Beacon {
-	b := Beacon{
+func FromEvent(event *types.Event) Beacon {
+	values := event.RequestParameters
+	userAgent := event.UserAgent
+	header := event.Headers
+	return Beacon{
 		// Used constructing event date
 		CreatedAt: values.Get("created_at"),
 
@@ -184,9 +187,9 @@ func FromRequestParams(values *url.Values, uaString string, h *http.Header) Beac
 		Ua_Vnd:         values.Get("ua.vnd"),
 		Pid:            values.Get("pid"),
 		N:              values.Get("n"),
-		UserAgent:      uaString,
-		H_CF_IPCountry: cleanupHeaderValue(h.Get("CF-IPCountry")),
-		H_CF_IPCity:    cleanupHeaderValue(h.Get("CF-IPCity")),
+		UserAgent:      userAgent,
+		H_CF_IPCountry: cleanupHeaderValue(header.Get("CF-IPCountry")),
+		H_CF_IPCity:    cleanupHeaderValue(header.Get("CF-IPCity")),
 		Http_Initiator: values.Get("http_initiator"),
 
 		// Navigation Timing
@@ -257,17 +260,15 @@ func FromRequestParams(values *url.Values, uaString string, h *http.Header) Beac
 		Net_Sd:         values.Get("net.sd"),
 		Sb:             values.Get("sb"),
 	}
-
-	return b
 }
 
 // ConvertToRumEvent convert Beacon request to Rum Event
-func ConvertToRumEvent(b Beacon, uaP *uaparser.Parser) RumEvent {
-	uaPres := uaP.Parse(b.UserAgent)
+func ConvertToRumEvent(b Beacon, userAgentParser *uaparser.Parser) RumEvent {
+	userAgentClient := userAgentParser.Parse(b.UserAgent)
 
-	dT := getDeviceType(b.UserAgent)
+	deviceType := getDeviceType(b.UserAgent)
 
-	sWidth, sHeight := getScreenSize(b.Scr_Xy)
+	screenWidth, screenHeight := getScreenSize(b.Scr_Xy)
 
 	urlValue, err := url.Parse(b.U)
 	if err != nil {
@@ -276,17 +277,17 @@ func ConvertToRumEvent(b Beacon, uaP *uaparser.Parser) RumEvent {
 
 	hostname := urlValue.Hostname()
 
-	re := RumEvent{
+	return RumEvent{
 		Created_At:               b.CreatedAt,
 		Hostname:                 hostname,
 		Url:                      b.U,
 		Cumulative_Layout_Shift:  json.Number(b.C_Cls),
-		Device_Type:              dT,
-		Device_Manufacturer:      uaPres.Device.Brand,
-		Operating_System:         uaPres.Os.Family,
-		Operating_System_Version: uaPres.Os.ToVersionString(),
-		Browser_Name:             uaPres.UserAgent.Family,
-		Browser_Version:          uaPres.UserAgent.ToVersionString(),
+		Device_Type:              deviceType,
+		Device_Manufacturer:      userAgentClient.Device.Brand,
+		Operating_System:         userAgentClient.Os.Family,
+		Operating_System_Version: userAgentClient.Os.ToVersionString(),
+		Browser_Name:             userAgentClient.UserAgent.Family,
+		Browser_Version:          userAgentClient.UserAgent.ToVersionString(),
 		Connect_Duration:         calculateDelta(b.Nt_Con_St, b.Nt_Con_End),
 		Dns_Duration:             calculateDelta(b.Nt_Dns_St, b.Nt_Dns_End),
 		First_Byte_Duration:      calculateDelta(b.Nt_Nav_St, b.Nt_Res_St),
@@ -305,8 +306,8 @@ func ConvertToRumEvent(b Beacon, uaP *uaparser.Parser) RumEvent {
 		User_Agent:               b.UserAgent,
 		Visibility_State:         b.Vis_St,
 		Boomerang_Version:        b.V,
-		Screen_Width:             sWidth,
-		Screen_Height:            sHeight,
+		Screen_Width:             screenWidth,
+		Screen_Height:            screenHeight,
 		Dom_Res:                  b.Dom_Res,
 		Dom_Doms:                 b.Dom_Doms,
 		Mem_Total:                b.Mem_Total,
@@ -333,8 +334,6 @@ func ConvertToRumEvent(b Beacon, uaP *uaparser.Parser) RumEvent {
 		Ua_Plt:                   b.Ua_Plt,
 		Data_Saver_On:            json.Number(b.Net_Sd),
 	}
-
-	return re
 }
 
 func calculateDelta(p1 string, p2 string) string {

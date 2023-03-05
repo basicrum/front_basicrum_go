@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.4.2
+	github.com/eapache/go-resiliency v1.3.1-0.20230202171514-83b926b9feca
 	github.com/martinlindhe/base36 v1.1.1
 	github.com/mileusna/useragent v1.2.1
 	github.com/rs/cors v1.8.2

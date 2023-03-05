@@ -1,26 +1,26 @@
-package persistence
+package dao
 
 import (
+	"context"
 	"fmt"
 	"log"
-	"strconv"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
-	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 )
 
-type connection struct {
-	inner *driver.Conn
-	auth  auth
+const baseTableName = "webperf_rum_events"
+
+// DAO is data access object for clickhouse database
+type DAO struct {
+	conn  clickhouse.Conn
+	table string
 }
 
-func (s *server) addr() string {
-	return s.host + ":" + strconv.FormatInt(int64(s.port), 10)
-}
-
-func (s *server) options(a *auth) *clickhouse.Options {
-	return &clickhouse.Options{
+// New creates persistance service
+// nolint: revive
+func New(s server, a auth, opts *opts) (*DAO, error) {
+	conn, err := clickhouse.Open(&clickhouse.Options{
 		Addr: []string{s.addr()},
 		Auth: clickhouse.Auth{
 			Database: s.db,
@@ -29,39 +29,51 @@ func (s *server) options(a *auth) *clickhouse.Options {
 		},
 		Debug:           false,
 		ConnMaxLifetime: time.Hour,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("clickhouse connection failed: %w", err)
 	}
+	table := opts.prefix + baseTableName
+	return &DAO{
+		conn:  conn,
+		table: table,
+	}, nil
 }
 
-func (s *server) open(a *auth) *driver.Conn {
-	conn, err := clickhouse.Open(s.options(a))
+// Save stores data into table in clickhouse database
+func (p *DAO) Save(data string) error {
+	if data == "" {
+		return fmt.Errorf("clickhouse invalid data for table %s: %s", p.table, data)
+	}
+	query := fmt.Sprintf(
+		"INSERT INTO %s SETTINGS input_format_skip_unknown_fields = true FORMAT JSONEachRow %s",
+		p.table,
+		data,
+	)
+	err := p.conn.AsyncInsert(context.Background(), query, false)
 	if err != nil {
-		log.Printf("clickhouse connection failed: %s", err)
+		return fmt.Errorf("clickhouse insert failed: %w", err)
+	}
+	return nil
+}
+
+// CreateTableIfNotExist creates the table if not exists
+func (p *DAO) CreateTableIfNotExist() error {
+	tableExist, err := p.CheckTableExist()
+	if err != nil {
+		return err
+	}
+	if tableExist {
+		log.Printf("table already exists")
 		return nil
 	}
-	return &conn
-}
-
-func (s *server) save(conn *connection, data string, table string) {
-	if data != "" && table != "" {
-		query := fmt.Sprintf(
-			`INSERT INTO %s SETTINGS input_format_skip_unknown_fields = true FORMAT JSONEachRow
-				%s`, table, data)
-		err := (*conn.inner).AsyncInsert(s.ctx, query, false)
-		if err != nil {
-			log.Printf("clickhouse insert failed: %+v", err)
-		}
-	} else {
-		log.Printf("clickhouse invalid data for table %s: %s", table, data)
-	}
+	return p.CreateTable()
 }
 
 // CheckTableExist checks if table exists
-func (s *server) CheckTableExist(conn *connection, table string) (bool, error) {
-	if table == "" {
-		return false, fmt.Errorf("table is required")
-	}
-	query := fmt.Sprintf(`EXISTS %s`, table)
-	rows, err := (*conn.inner).Query(s.ctx, query)
+func (p *DAO) CheckTableExist() (bool, error) {
+	query := fmt.Sprintf(`EXISTS %s`, p.table)
+	rows, err := p.conn.Query(context.Background(), query)
 	if err != nil {
 		return false, err
 	}
@@ -77,7 +89,7 @@ func (s *server) CheckTableExist(conn *connection, table string) (bool, error) {
 }
 
 // CreateTable creates the table if not exists
-func (s *server) CreateTable(conn *connection, table string) error {
+func (p *DAO) CreateTable() error {
 	createQuery := fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
 		event_date                      Date DEFAULT toDate(created_at),
 		hostname                        LowCardinality(String),
@@ -145,8 +157,8 @@ func (s *server) CreateTable(conn *connection, table string) error {
 		ENGINE = MergeTree()
 		PARTITION BY toYYYYMMDD(event_date)
 		ORDER BY (hostname, event_date)
-		SETTINGS index_granularity = 8192`, table)
+		SETTINGS index_granularity = 8192`, p.table)
 
 	log.Printf("creating table with query: %v", createQuery)
-	return (*conn.inner).Exec(s.ctx, createQuery)
+	return p.conn.Exec(context.Background(), createQuery)
 }
