@@ -333,6 +333,9 @@ func ConvertToRumEvent(b Beacon, userAgentParser *uaparser.Parser) RumEvent {
 		Ua_Vnd:                   b.Ua_Vnd,
 		Ua_Plt:                   b.Ua_Plt,
 		Data_Saver_On:            json.Number(b.Net_Sd),
+		Mob_Etype:                b.Mob_Etype,
+		Mob_Dl:                   json.Number(b.Mob_Dl),
+		Mob_Rtt:                  json.Number(b.Mob_Rtt),
 	}
 }
 

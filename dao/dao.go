@@ -152,7 +152,12 @@ func (p *DAO) CreateTable() error {
 		dom_script                      Nullable(UInt16),
 		dom_iframe                      Nullable(UInt16),
 		dom_link                        Nullable(UInt16),
-		dom_link_css                    Nullable(UInt16)
+		dom_link_css                    Nullable(UInt16),
+
+		mob_etype                       LowCardinality(Nullable(String)),
+		mob_dl                          Nullable(UInt16),
+		mob_rtt                         Nullable(UInt16)
+
 	)
 		ENGINE = MergeTree()
 		PARTITION BY toYYYYMMDD(event_date)

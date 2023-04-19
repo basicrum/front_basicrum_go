@@ -63,4 +63,8 @@ type RumEvent struct {
 	Ua_Vnd                   string      `json:"ua_vnd,omitempty"`
 	Ua_Plt                   string      `json:"ua_plt,omitempty"`
 	Data_Saver_On            json.Number `json:"data_saver_on,omitempty"`
+	Mob_Etype                string      `json:"mob_etype,omitempty"`
+	Mob_Dl                   json.Number `json:"mob_dl,omitempty"`
+	Mob_Rtt                  json.Number `json:"mob_rtt,omitempty"`
+
 }
