@@ -1,1 +1,0 @@
-select mob_etype,mob_dl,mob_rtt from webperf_rum_events
