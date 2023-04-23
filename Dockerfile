@@ -19,6 +19,6 @@ RUN apk add wget bash
 WORKDIR /bin
 
 COPY --from=builder /go/bin /bin
-COPY /template_migrations /template_migrations
+COPY /template_migrations /bin/template_migrations
 
 CMD ["./server"]
