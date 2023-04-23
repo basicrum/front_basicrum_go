@@ -5,14 +5,16 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/golang-migrate/migrate/v4"
+
+	// migration clickhouse database import
 	_ "github.com/golang-migrate/migrate/v4/database/clickhouse"
+	// migration file source import
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
@@ -89,7 +91,7 @@ func (p *DAO) Migrate() error {
 	defer os.RemoveAll(tempDir)
 	err = p.copyMigrations(tempDir)
 	if err != nil {
-		return fmt.Errorf("cannot copy migrations err[%v]", err)
+		return fmt.Errorf("cannot copy migrations err[%w]", err)
 	}
 	return p.migrateUp(tempDir)
 }
@@ -98,7 +100,7 @@ func (p *DAO) copyMigrations(tempDir string) error {
 	srcDir := migrationsTemplateDir
 
 	// read files in migrations template directory
-	files, err := ioutil.ReadDir(srcDir)
+	files, err := os.ReadDir(srcDir)
 	if err != nil {
 		return fmt.Errorf("cannot read files in directory[%v] err[%w]", srcDir, err)
 	}
@@ -109,21 +111,30 @@ func (p *DAO) copyMigrations(tempDir string) error {
 			// skip directories
 			continue
 		}
-		// build source and destination file paths
-		srcFile := filepath.Join(srcDir, f.Name())
-		dstFile := filepath.Join(tempDir, f.Name())
-
-		// copy migration file
-		_, err := p.copyFile(srcFile, dstFile)
+		err = p.processMigrationFile(srcDir, tempDir, f.Name())
 		if err != nil {
-			return fmt.Errorf("cannot copy file[%v] into temp directory[%v] err[%w]", srcFile, dstFile, err)
+			return err
 		}
+	}
 
-		// replace table prefix in file
-		err = p.replaceTextInFile(dstFile, tablePrefixPlaceholder, p.prefix)
-		if err != nil {
-			return fmt.Errorf("cannot replace table prefix in migration file[%v] err[%w]", dstFile, err)
-		}
+	return nil
+}
+
+func (p *DAO) processMigrationFile(srcDir, tempDir, filename string) error {
+	// build source and destination file paths
+	srcFile := filepath.Join(srcDir, filename)
+	dstFile := filepath.Join(tempDir, filename)
+
+	// copy migration file
+	_, err := p.copyFile(srcFile, dstFile)
+	if err != nil {
+		return fmt.Errorf("cannot copy file[%v] into temp directory[%v] err[%w]", srcFile, dstFile, err)
+	}
+
+	// replace table prefix in file
+	err = p.replaceTextInFile(dstFile, tablePrefixPlaceholder, p.prefix)
+	if err != nil {
+		return fmt.Errorf("cannot replace table prefix in migration file[%v] err[%w]", dstFile, err)
 	}
 
 	return nil
@@ -162,16 +173,16 @@ func (*DAO) replaceTextInFile(file, find, replace string) error {
 	}
 
 	// read file
-	input, err := ioutil.ReadFile(file)
+	input, err := os.ReadFile(file)
 	if err != nil {
 		return fmt.Errorf("cannot read source migration file[%v] err[%w]", file, err)
 	}
 
 	// replace text in file
-	output := bytes.Replace(input, []byte(find), []byte(replace), -1)
+	output := bytes.ReplaceAll(input, []byte(find), []byte(replace))
 
 	// save file
-	if err = ioutil.WriteFile(file, output, stat.Mode()); err != nil {
+	if err = os.WriteFile(file, output, stat.Mode()); err != nil {
 		return fmt.Errorf("cannot write replaced migration file[%v] err[%w]", file, err)
 	}
 	return nil
@@ -181,11 +192,11 @@ func (p *DAO) migrateUp(sourcePath string) error {
 	sourceURL := fmt.Sprintf("file://%s", sourcePath)
 	m, err := migrate.New(sourceURL, p.migrateDatabaseURL)
 	if err != nil {
-		return fmt.Errorf("cannot create migrate err[%v]", err)
+		return fmt.Errorf("cannot create migrate err[%w]", err)
 	}
 	err = m.Up()
 	if err != nil {
-		return fmt.Errorf("cannot execute migrate up err[%v]", err)
+		return fmt.Errorf("cannot execute migrate up err[%w]", err)
 	}
 	return nil
 }
