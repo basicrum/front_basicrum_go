@@ -42,9 +42,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = daoService.CreateTableIfNotExist()
+	err = daoService.Migrate()
 	if err != nil {
-		log.Fatalf("create table ERROR: %+v", err)
+		log.Fatalf("migrate database ERROR: %+v", err)
 	}
 
 	backupInterval := time.Duration(sConf.Backup.IntervalSeconds) * time.Second

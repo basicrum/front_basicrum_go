@@ -1,20 +1,33 @@
 package dao
 
 import (
+	"bytes"
 	"context"
 	"fmt"
-	"log"
+	"io"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/clickhouse"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
-const baseTableName = "webperf_rum_events"
+const (
+	baseTableName          = "webperf_rum_events"
+	tablePrefixPlaceholder = "{prefix}"
+	migrationsTemplateDir  = "template_migrations"
+)
 
 // DAO is data access object for clickhouse database
 type DAO struct {
-	conn  clickhouse.Conn
-	table string
+	conn               clickhouse.Conn
+	table              string
+	migrateDatabaseURL string
+	prefix             string
 }
 
 // New creates persistance service
@@ -33,10 +46,20 @@ func New(s server, a auth, opts *opts) (*DAO, error) {
 	if err != nil {
 		return nil, fmt.Errorf("clickhouse connection failed: %w", err)
 	}
+	// https://github.com/golang-migrate/migrate/tree/master/database/clickhouse
+	// clickhouse://host:port?username=user&password=password&database=clicks&x-multi-statement=true
+	migrateDatabaseURL := fmt.Sprintf("clickhouse://%v?username=%v&password=%v&database=%v&x-multi-statement=true",
+		s.addr(),
+		a.user,
+		a.pwd,
+		s.db,
+	)
 	table := opts.prefix + baseTableName
 	return &DAO{
-		conn:  conn,
-		table: table,
+		conn:               conn,
+		table:              table,
+		migrateDatabaseURL: migrateDatabaseURL,
+		prefix:             opts.prefix,
 	}, nil
 }
 
@@ -57,108 +80,112 @@ func (p *DAO) Save(data string) error {
 	return nil
 }
 
-// CreateTableIfNotExist creates the table if not exists
-func (p *DAO) CreateTableIfNotExist() error {
-	tableExist, err := p.CheckTableExist()
+// Migrate applies all pending database migrations
+func (p *DAO) Migrate() error {
+	tempDir, err := os.MkdirTemp("", "migrations")
 	if err != nil {
-		return err
+		return fmt.Errorf("cannot create temp directory migrations err[%w]", err)
 	}
-	if tableExist {
-		log.Printf("table already exists")
-		return nil
+	defer os.RemoveAll(tempDir)
+	err = p.copyMigrations(tempDir)
+	if err != nil {
+		return fmt.Errorf("cannot copy migrations err[%v]", err)
 	}
-	return p.CreateTable()
+	return p.migrateUp(tempDir)
 }
 
-// CheckTableExist checks if table exists
-func (p *DAO) CheckTableExist() (bool, error) {
-	query := fmt.Sprintf(`EXISTS %s`, p.table)
-	rows, err := p.conn.Query(context.Background(), query)
+func (p *DAO) copyMigrations(tempDir string) error {
+	srcDir := migrationsTemplateDir
+
+	// read files in migrations template directory
+	files, err := ioutil.ReadDir(srcDir)
 	if err != nil {
-		return false, err
+		return fmt.Errorf("cannot read files in directory[%v] err[%w]", srcDir, err)
 	}
-	if rows.Next() {
-		var result *uint8
-		err = rows.Scan(&result)
-		if err != nil {
-			return false, err
+
+	for _, f := range files {
+		if f.IsDir() {
+			// copy only files
+			// skip directories
+			continue
 		}
-		return result != nil && *result == 1, nil
+		// build source and destination file paths
+		srcFile := filepath.Join(srcDir, f.Name())
+		dstFile := filepath.Join(tempDir, f.Name())
+
+		// copy migration file
+		_, err := p.copyFile(srcFile, dstFile)
+		if err != nil {
+			return fmt.Errorf("cannot copy file[%v] into temp directory[%v] err[%w]", srcFile, dstFile, err)
+		}
+
+		// replace table prefix in file
+		err = p.replaceTextInFile(dstFile, tablePrefixPlaceholder, p.prefix)
+		if err != nil {
+			return fmt.Errorf("cannot replace table prefix in migration file[%v] err[%w]", dstFile, err)
+		}
 	}
-	return false, fmt.Errorf("no rows found")
+
+	return nil
 }
 
-// CreateTable creates the table if not exists
-func (p *DAO) CreateTable() error {
-	createQuery := fmt.Sprintf(`CREATE TABLE IF NOT EXISTS %s (
-		event_date                      Date DEFAULT toDate(created_at),
-		hostname                        LowCardinality(String),
-		created_at                      DateTime,
-		event_type                      LowCardinality(String),
-		browser_name                    LowCardinality(String),
-		browser_version                 Nullable(String),
-		ua_vnd                          LowCardinality(Nullable(String)),
-		ua_plt                          LowCardinality(Nullable(String)),
-		device_type                     LowCardinality(String),
-		device_manufacturer             LowCardinality(Nullable(String)),
-		operating_system                LowCardinality(String),
-		operating_system_version        Nullable(String),
-		user_agent                      Nullable(String),
-		next_hop_protocol               LowCardinality(String),
-		visibility_state                LowCardinality(String),
-	
-		session_id                      FixedString(43),
-		session_length                  UInt8,
-		url                             String,
-		connect_duration                Nullable(UInt16),
-		dns_duration                    Nullable(UInt16),
-		first_byte_duration             Nullable(UInt16),
-		redirect_duration               Nullable(UInt16),
-		redirects_count                 UInt8,
-		
-		first_contentful_paint          Nullable(UInt16),
-		first_paint                     Nullable(UInt16),
-	
-		cumulative_layout_shift         Nullable(Float32),
-		first_input_delay               Nullable(UInt16),
-		largest_contentful_paint        Nullable(UInt16),
-	
-		geo_country_code                FixedString(2),
-		geo_city_name                   Nullable(String),
-		page_id                         FixedString(8),
+func (*DAO) copyFile(src, dst string) (int64, error) {
+	sourceFileStat, err := os.Stat(src)
+	if err != nil {
+		return 0, err
+	}
 
-		data_saver_on                   Nullable(UInt8),
+	if !sourceFileStat.Mode().IsRegular() {
+		return 0, fmt.Errorf("%s is not a regular file", src)
+	}
 
-		boomerang_version               LowCardinality(String),
-		screen_width                    Nullable(UInt16),
-		screen_height                   Nullable(UInt16),
+	source, err := os.Open(src)
+	if err != nil {
+		return 0, err
+	}
+	defer source.Close()
 
-		dom_res                         Nullable(UInt16),
-		dom_doms                        Nullable(UInt16),
-		mem_total                       Nullable(UInt32),
-		mem_limit                       Nullable(UInt32),
-		mem_used                        Nullable(UInt32),
-		mem_lsln                        Nullable(UInt32),
-		mem_ssln                        Nullable(UInt32),
-		mem_lssz                        Nullable(UInt32),
-		scr_bpp                         Nullable(String),
-		scr_orn                         Nullable(String),
-		cpu_cnc                         Nullable(UInt8),
-		dom_ln                          Nullable(UInt16),
-		dom_sz                          Nullable(UInt16),
-		dom_ck                          Nullable(UInt16),
-		dom_img                         Nullable(UInt16),
-		dom_img_uniq                    Nullable(UInt16),
-		dom_script                      Nullable(UInt16),
-		dom_iframe                      Nullable(UInt16),
-		dom_link                        Nullable(UInt16),
-		dom_link_css                    Nullable(UInt16)
-	)
-		ENGINE = MergeTree()
-		PARTITION BY toYYYYMMDD(event_date)
-		ORDER BY (hostname, event_date)
-		SETTINGS index_granularity = 8192`, p.table)
+	destination, err := os.Create(dst)
+	if err != nil {
+		return 0, err
+	}
+	defer destination.Close()
+	nBytes, err := io.Copy(destination, source)
+	return nBytes, err
+}
 
-	log.Printf("creating table with query: %v", createQuery)
-	return p.conn.Exec(context.Background(), createQuery)
+func (*DAO) replaceTextInFile(file, find, replace string) error {
+	// read file permissions
+	stat, err := os.Stat(file)
+	if err != nil {
+		return fmt.Errorf("cannot read file stat file[%v] err[%w]", file, err)
+	}
+
+	// read file
+	input, err := ioutil.ReadFile(file)
+	if err != nil {
+		return fmt.Errorf("cannot read source migration file[%v] err[%w]", file, err)
+	}
+
+	// replace text in file
+	output := bytes.Replace(input, []byte(find), []byte(replace), -1)
+
+	// save file
+	if err = ioutil.WriteFile(file, output, stat.Mode()); err != nil {
+		return fmt.Errorf("cannot write replaced migration file[%v] err[%w]", file, err)
+	}
+	return nil
+}
+
+func (p *DAO) migrateUp(sourcePath string) error {
+	sourceURL := fmt.Sprintf("file://%s", sourcePath)
+	m, err := migrate.New(sourceURL, p.migrateDatabaseURL)
+	if err != nil {
+		return fmt.Errorf("cannot create migrate err[%v]", err)
+	}
+	err = m.Up()
+	if err != nil {
+		return fmt.Errorf("cannot execute migrate up err[%v]", err)
+	}
+	return nil
 }
