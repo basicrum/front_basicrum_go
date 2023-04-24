@@ -1,7 +1,7 @@
 version: "3.7"
 
 services:
-  dev_clickhouse_server:
+  dev_clickhouse_server2:
     image: clickhouse/clickhouse-server:22.8
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "localhost:8123/ping"]
@@ -19,7 +19,7 @@ services:
       nofile:
        soft: 262144
        hard: 262144
-  integration_server:
+  integration_server2:
     build: .
     healthcheck:
       test: wget --no-verbose --tries=1 --spider http://localhost:8087/health || exit 1
@@ -30,7 +30,7 @@ services:
     environment:
       - SERVER_HOST=localhost
       - SERVER_PORT=8087
-      - DATABASE_HOST=dev_clickhouse_server
+      - DATABASE_HOST=dev_clickhouse_server2
       - DATABASE_PORT=9000
       - DATABASE_NAME=default
       - DATABASE_USERNAME=default
@@ -42,21 +42,21 @@ services:
       - BACKUP_DIRECTORY=/home/basicrum_archive
       - BACKUP_INTERVAL_SECONDS=5
     depends_on:
-      dev_clickhouse_server:
+      dev_clickhouse_server2:
         condition: service_healthy
   integration_test:
     image: golang:1.19
     environment:
-      - SERVER_HOST=integration_server
+      - SERVER_HOST=integration_server2
       - SERVER_PORT=8087
-      - DATABASE_HOST=dev_clickhouse_server
+      - DATABASE_HOST=dev_clickhouse_server2
       - DATABASE_PORT=9000
       - DATABASE_NAME=default
       - DATABASE_USERNAME=default
       - DATABASE_PASSWORD=
       - DATABASE_TABLE_PREFIX=
     depends_on:
-      integration_server:
+      integration_server2:
         condition: service_healthy
     working_dir: /go/src/app/it
     command: go test
