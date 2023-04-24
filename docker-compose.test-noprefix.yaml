@@ -44,7 +44,7 @@ services:
     depends_on:
       dev_clickhouse_server2:
         condition: service_healthy
-  integration_test:
+  integration_test2:
     image: golang:1.19
     environment:
       - SERVER_HOST=integration_server2
