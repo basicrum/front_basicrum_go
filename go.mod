@@ -10,16 +10,22 @@ require (
 	github.com/rs/cors v1.8.2
 	github.com/stretchr/testify v1.8.1
 	github.com/ua-parser/uap-go v0.0.0-20211112212520-00c877edfe0f
+	github.com/uptrace/go-clickhouse v0.3.1
+	github.com/uptrace/go-clickhouse/chdebug v0.3.1
 	golang.org/x/crypto v0.5.0
 	golang.org/x/sync v0.1.0
 )
 
 require (
-	github.com/hashicorp/errwrap v1.1.0 // indirect
-	github.com/hashicorp/go-multierror v1.1.1 // indirect
-	go.uber.org/atomic v1.10.0 // indirect
+	github.com/codemodus/kace v0.5.1 // indirect
+	github.com/fatih/color v1.14.1 // indirect
+	github.com/jinzhu/inflection v1.0.0 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.17 // indirect
+	golang.org/x/exp v0.0.0-20230213192124-5e25df0256eb // indirect
 	golang.org/x/net v0.5.0 // indirect
 	golang.org/x/text v0.6.0 // indirect
+	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
@@ -29,7 +35,6 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/go-faster/city v1.0.1 // indirect
 	github.com/go-faster/errors v0.6.1 // indirect
-	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/klauspost/compress v1.15.12 // indirect
@@ -40,8 +45,8 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/shopspring/decimal v1.3.1 // indirect
-	go.opentelemetry.io/otel v1.11.1 // indirect
-	go.opentelemetry.io/otel/trace v1.11.1 // indirect
-	golang.org/x/sys v0.4.0 // indirect
+	go.opentelemetry.io/otel v1.13.0 // indirect
+	go.opentelemetry.io/otel/trace v1.13.0 // indirect
+	golang.org/x/sys v0.5.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

@@ -5,17 +5,16 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
-	"github.com/golang-migrate/migrate/v4"
 
-	// migration clickhouse database import
-	_ "github.com/golang-migrate/migrate/v4/database/clickhouse"
-	// migration file source import
-	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/uptrace/go-clickhouse/ch"
+	"github.com/uptrace/go-clickhouse/chdebug"
+	"github.com/uptrace/go-clickhouse/chmigrate"
 )
 
 const (
@@ -48,12 +47,10 @@ func New(s server, a auth, opts *opts) (*DAO, error) {
 	if err != nil {
 		return nil, fmt.Errorf("clickhouse connection failed: %w", err)
 	}
-	// https://github.com/golang-migrate/migrate/tree/master/database/clickhouse
-	// clickhouse://host:port?username=user&password=password&database=clicks&x-multi-statement=true
-	migrateDatabaseURL := fmt.Sprintf("clickhouse://%v?username=%v&password=%v&database=%v&x-multi-statement=true",
-		s.addr(),
+	migrateDatabaseURL := fmt.Sprintf("clickhouse://%v:%v@%v/%v?sslmode=disable",
 		a.user,
 		a.pwd,
+		s.addr(),
 		s.db,
 	)
 	table := opts.prefix + baseTableName
@@ -189,14 +186,51 @@ func (*DAO) replaceTextInFile(file, find, replace string) error {
 }
 
 func (p *DAO) migrateUp(sourcePath string) error {
-	sourceURL := fmt.Sprintf("file://%s", sourcePath)
-	m, err := migrate.New(sourceURL, p.migrateDatabaseURL)
-	if err != nil {
-		return fmt.Errorf("cannot create migrate err[%w]", err)
+	db := ch.Connect(ch.WithDSN(p.migrateDatabaseURL))
+
+	db.AddQueryHook(chdebug.NewQueryHook(
+		chdebug.WithEnabled(false),
+		chdebug.FromEnv("CHDEBUG"),
+	))
+
+	sourceFS := os.DirFS(sourcePath)
+	var migrations = chmigrate.NewMigrations()
+	if err := migrations.Discover(sourceFS); err != nil {
+		return fmt.Errorf("cannot discover migrations path[%v] err[%w]", sourcePath, err)
 	}
-	err = m.Up()
+
+	migrator := chmigrate.NewMigrator(db, migrations)
+
+	ctx := context.Background()
+
+	// create ch_migrations (changelog) and ch_migration_locks tables
+	err := migrator.Init(ctx)
 	if err != nil {
-		return fmt.Errorf("cannot execute migrate up err[%w]", err)
+		return err
 	}
+
+	// lock the migrations
+	if err := migrator.Lock(ctx); err != nil {
+		return err
+	}
+	// unlock the migrations
+	defer func() {
+		if err := migrator.Unlock(ctx); err != nil {
+			log.Printf("received unlock err[%v]\n", err)
+		}
+	}()
+
+	// apply the migrations
+	group, err := migrator.Migrate(ctx)
+	if err != nil {
+		return err
+	}
+
+	if group.IsZero() {
+		log.Printf("there are no new migrations to run (database is up to date)\n")
+		return nil
+	}
+	log.Printf("migrated to %s\n", group)
+
 	return nil
 }

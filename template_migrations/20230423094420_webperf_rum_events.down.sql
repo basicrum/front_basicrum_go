@@ -1,1 +1,1 @@
-DROP TABLE IF EXISTS {prefix}webperf_rum_events;
+DROP TABLE IF EXISTS {prefix}webperf_rum_events
