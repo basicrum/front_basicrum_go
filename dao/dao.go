@@ -3,8 +3,10 @@ package dao
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
@@ -15,12 +17,14 @@ import (
 	"github.com/uptrace/go-clickhouse/ch"
 	"github.com/uptrace/go-clickhouse/chdebug"
 	"github.com/uptrace/go-clickhouse/chmigrate"
+
+	"github.com/basicrum/front_basicrum_go/templatemigrations"
 )
 
 const (
 	baseTableName          = "webperf_rum_events"
 	tablePrefixPlaceholder = "{prefix}"
-	migrationsTemplateDir  = "template_migrations"
+	bufferSize             = 1024
 )
 
 // DAO is data access object for clickhouse database
@@ -93,37 +97,36 @@ func (p *DAO) Migrate() error {
 	return p.migrateUp(tempDir)
 }
 
+// nolint: revive
 func (p *DAO) copyMigrations(tempDir string) error {
-	srcDir := migrationsTemplateDir
-
-	// read files in migrations template directory
-	files, err := os.ReadDir(srcDir)
-	if err != nil {
-		return fmt.Errorf("cannot read files in directory[%v] err[%w]", srcDir, err)
-	}
-
-	for _, f := range files {
-		if f.IsDir() {
-			// copy only files
-			// skip directories
-			continue
-		}
-		err = p.processMigrationFile(srcDir, tempDir, f.Name())
+	return fs.WalkDir(templatemigrations.SQLMigrations, ".", func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-	}
+		if d.IsDir() {
+			return nil
+		}
 
-	return nil
+		f, err := templatemigrations.SQLMigrations.Open(path)
+		if err != nil {
+			return err
+		}
+		defer func() {
+			if err := f.Close(); err != nil {
+				log.Printf("received close file[%v] err[%v]\n", path, err)
+			}
+		}()
+
+		return p.processMigrationFile(f, tempDir, path)
+	})
 }
 
-func (p *DAO) processMigrationFile(srcDir, tempDir, filename string) error {
+func (p *DAO) processMigrationFile(srcFile fs.File, tempDir, filename string) error {
 	// build source and destination file paths
-	srcFile := filepath.Join(srcDir, filename)
 	dstFile := filepath.Join(tempDir, filename)
 
 	// copy migration file
-	_, err := p.copyFile(srcFile, dstFile)
+	err := p.copyFile(srcFile, dstFile)
 	if err != nil {
 		return fmt.Errorf("cannot copy file[%v] into temp directory[%v] err[%w]", srcFile, dstFile, err)
 	}
@@ -137,29 +140,38 @@ func (p *DAO) processMigrationFile(srcDir, tempDir, filename string) error {
 	return nil
 }
 
-func (*DAO) copyFile(src, dst string) (int64, error) {
-	sourceFileStat, err := os.Stat(src)
+// nolint: revive
+func (*DAO) copyFile(src fs.File, dst string) error {
+	sourceFileStat, err := src.Stat()
 	if err != nil {
-		return 0, err
+		return err
 	}
 
 	if !sourceFileStat.Mode().IsRegular() {
-		return 0, fmt.Errorf("%s is not a regular file", src)
+		return fmt.Errorf("%s is not a regular file", src)
 	}
-
-	source, err := os.Open(src)
-	if err != nil {
-		return 0, err
-	}
-	defer source.Close()
 
 	destination, err := os.Create(dst)
 	if err != nil {
-		return 0, err
+		return err
 	}
 	defer destination.Close()
-	nBytes, err := io.Copy(destination, source)
-	return nBytes, err
+
+	buf := make([]byte, bufferSize)
+	for {
+		n, err := src.Read(buf)
+		if err != nil && !errors.Is(err, io.EOF) {
+			return err
+		}
+		if n == 0 {
+			break
+		}
+
+		if _, err := destination.Write(buf[:n]); err != nil {
+			return err
+		}
+	}
+	return err
 }
 
 func (*DAO) replaceTextInFile(file, find, replace string) error {

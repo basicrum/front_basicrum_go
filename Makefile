@@ -70,3 +70,7 @@ docker-integration-test-noprefix: _docker-integration-test-noprefix docker-clean
 docker-hub:
 	docker build -t basicrum/front_basicrum_go:$(VERSION) .
 	# docker push basicrum/front_basicrum_go:$(VERSION)
+
+.PHONY: debug-docker-integration-test
+debug-docker-integration-test:
+	docker-compose -f docker-compose.test.yaml up --build integration_server
