@@ -61,7 +61,7 @@ docker-integration-test: _docker-integration-test docker-clean-test
 
 .PHONY: _docker-integration-test-noprefix
 _docker-integration-test-noprefix:
-	docker-compose -f docker-compose.test-noprefix.yaml up --build --exit-code-from integration_test integration_test
+	docker-compose -f docker-compose.test-noprefix.yaml up --build --exit-code-from integration_test2 integration_test2
 
 .PHONY: docker-integration-test-noprefix
 docker-integration-test-noprefix: _docker-integration-test-noprefix docker-clean-test
@@ -70,3 +70,7 @@ docker-integration-test-noprefix: _docker-integration-test-noprefix docker-clean
 docker-hub:
 	docker build -t basicrum/front_basicrum_go:$(VERSION) .
 	# docker push basicrum/front_basicrum_go:$(VERSION)
+
+.PHONY: debug-docker-integration-test
+debug-docker-integration-test:
+	docker-compose -f docker-compose.test.yaml up --build integration_server
