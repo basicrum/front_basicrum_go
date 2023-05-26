@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/basicrum/front_basicrum_go/geoip"
 	"github.com/basicrum/front_basicrum_go/types"
 	ua "github.com/mileusna/useragent"
 	"github.com/ua-parser/uap-go/uaparser"
@@ -137,10 +138,14 @@ type Beacon struct {
 
 // FromEvent creates Beacon request from http request parameters
 // nolint: funlen
-func FromEvent(event *types.Event) Beacon {
+func FromEvent(event *types.Event, geoIPService geoip.Service) Beacon {
 	values := event.RequestParameters
 	userAgent := event.UserAgent
 	header := event.Headers
+	country, city, err := geoIPService.CountryAndCity(header, event.RemoteAddr)
+	if err != nil {
+		log.Println(err)
+	}
 	return Beacon{
 		// Used constructing event date
 		CreatedAt: values.Get("created_at"),
@@ -188,8 +193,8 @@ func FromEvent(event *types.Event) Beacon {
 		Pid:            values.Get("pid"),
 		N:              values.Get("n"),
 		UserAgent:      userAgent,
-		H_CF_IPCountry: cleanupHeaderValue(header.Get("CF-IPCountry")),
-		H_CF_IPCity:    cleanupHeaderValue(header.Get("CF-IPCity")),
+		H_CF_IPCountry: country,
+		H_CF_IPCity:    city,
 		Http_Initiator: values.Get("http_initiator"),
 
 		// Navigation Timing
@@ -300,8 +305,8 @@ func ConvertToRumEvent(b Beacon, userAgentParser *uaparser.Parser) RumEvent {
 		Event_Type:               getEventType(b.Rt_Quit, b.Http_Initiator),
 		Session_Id:               b.Rt_Si,
 		Session_Length:           b.Rt_Sl,
-		Geo_Country_Code:         getCountryCode(b.H_CF_IPCountry),
-		Geo_City_Name:            getCountryCode(b.H_CF_IPCity),
+		Geo_Country_Code:         b.H_CF_IPCountry,
+		Geo_City_Name:            b.H_CF_IPCity,
 		Next_Hop_Protocol:        b.Nt_Protocol,
 		User_Agent:               b.UserAgent,
 		Visibility_State:         b.Vis_St,
@@ -377,29 +382,6 @@ func getDeviceType(uagent string) string {
 	}
 
 	return dT
-}
-
-func cleanupHeaderValue(hVal string) string {
-	hVal = strings.TrimSpace(hVal)
-
-	// Remove leading white space
-	// nolint: revive
-	if len(hVal) > 0 && hVal[0] == '"' {
-		hVal = hVal[1:]
-	}
-
-	// Remove trailing white space
-	if len(hVal) > 0 && hVal[len(hVal)-1] == '"' {
-		hVal = hVal[:len(hVal)-1]
-	}
-
-	hVal = strings.TrimSpace(hVal)
-
-	return hVal
-}
-
-func getCountryCode(cfIPCountry string) string {
-	return cfIPCountry
 }
 
 // nolint: revive

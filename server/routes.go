@@ -36,7 +36,7 @@ func newEventFromRequest(r *http.Request) (*types.Event, error) {
 	if !form.Has("created_at") {
 		form.Set("created_at", time.Now().UTC().Format("2006-01-02 15:04:05"))
 	}
-	return types.NewEvent(form, r.Header, r.UserAgent()), nil
+	return types.NewEvent(form, r.Header, r.UserAgent(), r.RemoteAddr), nil
 }
 
 func (*Server) headersNoCache(w http.ResponseWriter) {
