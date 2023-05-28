@@ -134,18 +134,16 @@ type Beacon struct {
 	Dom_Link_Css   string
 	Net_Sd         string
 	Sb             string
+
+	IP string
 }
 
 // FromEvent creates Beacon request from http request parameters
 // nolint: funlen
-func FromEvent(event *types.Event, geoIPService geoip.Service) Beacon {
+func FromEvent(event *types.Event) Beacon {
 	values := event.RequestParameters
 	userAgent := event.UserAgent
 	header := event.Headers
-	country, city, err := geoIPService.CountryAndCity(header, event.RemoteAddr)
-	if err != nil {
-		log.Println(err)
-	}
 	return Beacon{
 		// Used constructing event date
 		CreatedAt: values.Get("created_at"),
@@ -193,8 +191,8 @@ func FromEvent(event *types.Event, geoIPService geoip.Service) Beacon {
 		Pid:            values.Get("pid"),
 		N:              values.Get("n"),
 		UserAgent:      userAgent,
-		H_CF_IPCountry: country,
-		H_CF_IPCity:    city,
+		H_CF_IPCountry: cleanupHeaderValue(header.Get("CF-IPCountry")),
+		H_CF_IPCity:    cleanupHeaderValue(header.Get("CF-IPCity")),
 		Http_Initiator: values.Get("http_initiator"),
 
 		// Navigation Timing
@@ -264,11 +262,21 @@ func FromEvent(event *types.Event, geoIPService geoip.Service) Beacon {
 		Dom_Link_Css:   values.Get("dom.link.css"),
 		Net_Sd:         values.Get("net.sd"),
 		Sb:             values.Get("sb"),
+
+		IP: event.RemoteAddr,
 	}
 }
 
+func cleanupHeaderValue(hVal string) string {
+	hVal = strings.TrimSpace(hVal)
+	hVal = strings.TrimPrefix(hVal, "\"")
+	hVal = strings.TrimSuffix(hVal, "\"")
+	hVal = strings.TrimSpace(hVal)
+	return hVal
+}
+
 // ConvertToRumEvent convert Beacon request to Rum Event
-func ConvertToRumEvent(b Beacon, userAgentParser *uaparser.Parser) RumEvent {
+func ConvertToRumEvent(b Beacon, userAgentParser *uaparser.Parser, geoIPService geoip.Service) RumEvent {
 	userAgentClient := userAgentParser.Parse(b.UserAgent)
 
 	deviceType := getDeviceType(b.UserAgent)
@@ -282,6 +290,9 @@ func ConvertToRumEvent(b Beacon, userAgentParser *uaparser.Parser) RumEvent {
 
 	hostname := urlValue.Hostname()
 
+	if geoIPService != nil && b.H_CF_IPCountry == "" && b.H_CF_IPCity == "" {
+		b.H_CF_IPCountry, b.H_CF_IPCountry, _ = geoIPService.CountryAndCity(b.IP)
+	}
 	return RumEvent{
 		Created_At:               b.CreatedAt,
 		Hostname:                 hostname,

@@ -22,7 +22,7 @@ func TestBasic(t *testing.T) {
 		panic(err)
 	}
 
-	rE := ConvertToRumEvent(b, uaP)
+	rE := ConvertToRumEvent(b, uaP, nil)
 
 	if rE.Connect_Duration != "74" {
 		t.Errorf("Error")

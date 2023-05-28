@@ -1,7 +1,6 @@
 package maxmind
 
 import (
-	"net/http"
 	"testing"
 )
 
@@ -37,8 +36,7 @@ func TestService_CountryAndCity(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := New()
-			header := http.Header{}
-			got, got1, err := s.CountryAndCity(header, tt.args.ipString)
+			got, got1, err := s.CountryAndCity(tt.args.ipString)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Service.CountryAndCity() error = %v, wantErr %v", err, tt.wantErr)
 				return

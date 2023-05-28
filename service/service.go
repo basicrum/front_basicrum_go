@@ -48,8 +48,8 @@ func (s *Service) Run() {
 		if event == nil {
 			continue
 		}
-		beaconEvent := beacon.FromEvent(event, s.geoIPService)
-		rumEvent := beacon.ConvertToRumEvent(beaconEvent, s.userAgentParser)
+		beaconEvent := beacon.FromEvent(event)
+		rumEvent := beacon.ConvertToRumEvent(beaconEvent, s.userAgentParser, s.geoIPService)
 		jsonValue, err := json.Marshal(rumEvent)
 		if err != nil {
 			log.Printf("json parsing error: %+v", err)
