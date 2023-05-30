@@ -1,33 +1,42 @@
-package maxmind
+package cloudflare
 
 import (
+	"net/http"
 	"testing"
 )
 
+func makeTestHeader(country, city string) http.Header {
+	header1 := http.Header{}
+	header1.Set("CF-IPCountry", country)
+	header1.Set("CF-IPCity", city)
+	return header1
+}
+
 func TestService_CountryAndCity(t *testing.T) {
+
 	type args struct {
-		ipString string
+		header http.Header
 	}
 	tests := []struct {
 		name    string
+		s       *Service
 		args    args
 		want    string
 		want1   string
 		wantErr bool
 	}{
-
 		{
-			name: "Country GB without City",
+			name: "ok",
 			args: args{
-				ipString: "81.2.69.142",
+				header: makeTestHeader("BG", "Sofia"),
 			},
-			want:  "GB",
-			want1: "",
+			want:  "BG",
+			want1: "Sofia",
 		},
 		{
-			name: "City Sofia Bulgaria",
+			name: "ok - trim, quote, trim",
 			args: args{
-				ipString: "212.5.142.168",
+				header: makeTestHeader(" \" BG \" ", " \" Sofia \" "),
 			},
 			want:  "BG",
 			want1: "Sofia",
@@ -36,7 +45,7 @@ func TestService_CountryAndCity(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := New()
-			got, got1, err := s.CountryAndCity(nil, tt.args.ipString)
+			got, got1, err := s.CountryAndCity(tt.args.header, "")
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Service.CountryAndCity() error = %v, wantErr %v", err, tt.wantErr)
 				return

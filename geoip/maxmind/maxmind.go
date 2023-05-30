@@ -3,6 +3,7 @@ package maxmind
 import (
 	"fmt"
 	"net"
+	"net/http"
 
 	_ "embed"
 
@@ -23,7 +24,7 @@ func New() *Service {
 
 // CountryAndCity return country and city by http headers and remote ip address
 // nolint: revive
-func (s *Service) CountryAndCity(ipString string) (string, string, error) {
+func (s *Service) CountryAndCity(_ http.Header, ipString string) (string, string, error) {
 	db, err := geoip2.FromBytes(geoLite2City)
 	if err != nil {
 		return "", "", err

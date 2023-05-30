@@ -14,6 +14,8 @@ import (
 	"github.com/basicrum/front_basicrum_go/backup"
 	"github.com/basicrum/front_basicrum_go/config"
 	"github.com/basicrum/front_basicrum_go/dao"
+	"github.com/basicrum/front_basicrum_go/geoip"
+	"github.com/basicrum/front_basicrum_go/geoip/cloudflare"
 	"github.com/basicrum/front_basicrum_go/geoip/maxmind"
 	"github.com/basicrum/front_basicrum_go/server"
 	"github.com/basicrum/front_basicrum_go/service"
@@ -48,7 +50,10 @@ func main() {
 		log.Fatalf("migrate database ERROR: %+v", err)
 	}
 
-	geopIPService := maxmind.New()
+	geopIPService := geoip.NewComposite(
+		cloudflare.New(),
+		maxmind.New(),
+	)
 
 	backupInterval := time.Duration(sConf.Backup.IntervalSeconds) * time.Second
 	backupService := backup.New(sConf.Backup.Enabled, backupInterval, sConf.Backup.Directory)
