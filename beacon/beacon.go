@@ -255,14 +255,6 @@ func FromEvent(event *types.Event) Beacon {
 	}
 }
 
-func cleanupHeaderValue(hVal string) string {
-	hVal = strings.TrimSpace(hVal)
-	hVal = strings.TrimPrefix(hVal, "\"")
-	hVal = strings.TrimSuffix(hVal, "\"")
-	hVal = strings.TrimSpace(hVal)
-	return hVal
-}
-
 // ConvertToRumEvent convert Beacon request to Rum Event
 func ConvertToRumEvent(b Beacon, event *types.Event, userAgentParser *uaparser.Parser, geoIPService geoip.Service) RumEvent {
 	userAgent := event.UserAgent

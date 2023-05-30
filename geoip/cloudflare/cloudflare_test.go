@@ -13,7 +13,6 @@ func makeTestHeader(country, city string) http.Header {
 }
 
 func TestService_CountryAndCity(t *testing.T) {
-
 	type args struct {
 		header http.Header
 	}
