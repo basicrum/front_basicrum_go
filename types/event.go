@@ -10,9 +10,10 @@ type Event struct {
 	RequestParameters url.Values
 	Headers           http.Header
 	UserAgent         string
+	RemoteAddr        string
 }
 
 // NewEvent creates a new event to be stored
-func NewEvent(requestParameters url.Values, headers http.Header, userAgent string) *Event {
-	return &Event{requestParameters, headers, userAgent}
+func NewEvent(requestParameters url.Values, headers http.Header, userAgent, remoteAddr string) *Event {
+	return &Event{requestParameters, headers, userAgent, remoteAddr}
 }

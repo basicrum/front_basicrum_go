@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/basicrum/front_basicrum_go/geoip"
 	"github.com/basicrum/front_basicrum_go/types"
 	ua "github.com/mileusna/useragent"
 	"github.com/ua-parser/uap-go/uaparser"
@@ -64,7 +65,6 @@ type Beacon struct {
 	T_Page         string
 	T_Done         string
 	T_Other        string
-	UserAgent      string
 	V              string
 	Restiming      string
 	CreatedAt      string
@@ -75,8 +75,6 @@ type Beacon struct {
 	Ua_Vnd         string
 	Pid            string
 	N              string
-	H_CF_IPCountry string
-	H_CF_IPCity    string
 	Http_Initiator string
 
 	// Navigation Timing
@@ -139,8 +137,6 @@ type Beacon struct {
 // nolint: funlen
 func FromEvent(event *types.Event) Beacon {
 	values := event.RequestParameters
-	userAgent := event.UserAgent
-	header := event.Headers
 	return Beacon{
 		// Used constructing event date
 		CreatedAt: values.Get("created_at"),
@@ -187,9 +183,6 @@ func FromEvent(event *types.Event) Beacon {
 		Ua_Vnd:         values.Get("ua.vnd"),
 		Pid:            values.Get("pid"),
 		N:              values.Get("n"),
-		UserAgent:      userAgent,
-		H_CF_IPCountry: cleanupHeaderValue(header.Get("CF-IPCountry")),
-		H_CF_IPCity:    cleanupHeaderValue(header.Get("CF-IPCity")),
 		Http_Initiator: values.Get("http_initiator"),
 
 		// Navigation Timing
@@ -263,10 +256,12 @@ func FromEvent(event *types.Event) Beacon {
 }
 
 // ConvertToRumEvent convert Beacon request to Rum Event
-func ConvertToRumEvent(b Beacon, userAgentParser *uaparser.Parser) RumEvent {
-	userAgentClient := userAgentParser.Parse(b.UserAgent)
+func ConvertToRumEvent(b Beacon, event *types.Event, userAgentParser *uaparser.Parser, geoIPService geoip.Service) RumEvent {
+	userAgent := event.UserAgent
 
-	deviceType := getDeviceType(b.UserAgent)
+	userAgentClient := userAgentParser.Parse(userAgent)
+
+	deviceType := getDeviceType(userAgent)
 
 	screenWidth, screenHeight := getScreenSize(b.Scr_Xy)
 
@@ -276,6 +271,11 @@ func ConvertToRumEvent(b Beacon, userAgentParser *uaparser.Parser) RumEvent {
 	}
 
 	hostname := urlValue.Hostname()
+
+	var country, city string
+	if geoIPService != nil {
+		country, city, _ = geoIPService.CountryAndCity(event.Headers, event.RemoteAddr)
+	}
 
 	return RumEvent{
 		Created_At:               b.CreatedAt,
@@ -300,10 +300,10 @@ func ConvertToRumEvent(b Beacon, userAgentParser *uaparser.Parser) RumEvent {
 		Event_Type:               getEventType(b.Rt_Quit, b.Http_Initiator),
 		Session_Id:               b.Rt_Si,
 		Session_Length:           b.Rt_Sl,
-		Geo_Country_Code:         getCountryCode(b.H_CF_IPCountry),
-		Geo_City_Name:            getCountryCode(b.H_CF_IPCity),
+		Geo_Country_Code:         country,
+		Geo_City_Name:            city,
 		Next_Hop_Protocol:        b.Nt_Protocol,
-		User_Agent:               b.UserAgent,
+		User_Agent:               userAgent,
 		Visibility_State:         b.Vis_St,
 		Boomerang_Version:        b.V,
 		Screen_Width:             screenWidth,
@@ -377,29 +377,6 @@ func getDeviceType(uagent string) string {
 	}
 
 	return dT
-}
-
-func cleanupHeaderValue(hVal string) string {
-	hVal = strings.TrimSpace(hVal)
-
-	// Remove leading white space
-	// nolint: revive
-	if len(hVal) > 0 && hVal[0] == '"' {
-		hVal = hVal[1:]
-	}
-
-	// Remove trailing white space
-	if len(hVal) > 0 && hVal[len(hVal)-1] == '"' {
-		hVal = hVal[:len(hVal)-1]
-	}
-
-	hVal = strings.TrimSpace(hVal)
-
-	return hVal
-}
-
-func getCountryCode(cfIPCountry string) string {
-	return cfIPCountry
 }
 
 // nolint: revive

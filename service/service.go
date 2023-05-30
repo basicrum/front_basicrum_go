@@ -6,6 +6,7 @@ import (
 
 	"github.com/basicrum/front_basicrum_go/beacon"
 	"github.com/basicrum/front_basicrum_go/dao"
+	"github.com/basicrum/front_basicrum_go/geoip"
 	"github.com/basicrum/front_basicrum_go/types"
 	"github.com/ua-parser/uap-go/uaparser"
 )
@@ -15,18 +16,21 @@ type Service struct {
 	daoService      *dao.DAO
 	userAgentParser *uaparser.Parser
 	events          chan *types.Event
+	geoIPService    geoip.Service
 }
 
 // New creates processing service
 func New(
 	daoService *dao.DAO,
 	userAgentParser *uaparser.Parser,
+	geoIPService geoip.Service,
 ) *Service {
 	events := make(chan *types.Event)
 	return &Service{
 		daoService:      daoService,
 		userAgentParser: userAgentParser,
 		events:          events,
+		geoIPService:    geoIPService,
 	}
 }
 
@@ -45,7 +49,7 @@ func (s *Service) Run() {
 			continue
 		}
 		beaconEvent := beacon.FromEvent(event)
-		rumEvent := beacon.ConvertToRumEvent(beaconEvent, s.userAgentParser)
+		rumEvent := beacon.ConvertToRumEvent(beaconEvent, event, s.userAgentParser, s.geoIPService)
 		jsonValue, err := json.Marshal(rumEvent)
 		if err != nil {
 			log.Printf("json parsing error: %+v", err)

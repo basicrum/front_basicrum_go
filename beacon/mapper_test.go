@@ -4,6 +4,7 @@ import (
 	"log"
 	"testing"
 
+	"github.com/basicrum/front_basicrum_go/types"
 	"github.com/ua-parser/uap-go/uaparser"
 )
 
@@ -13,8 +14,8 @@ func TestBasic(t *testing.T) {
 		U:          "https//:www.example.com/url",
 		Nt_Con_End: "1653989622106",
 		Nt_Con_St:  "1653989622032",
-		UserAgent:  "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.82 Safari/537.36",
 	}
+	userAgent := "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/99.0.4844.82 Safari/537.36"
 
 	// We need to ge the Regexes from here: https://github.com/ua-parser/uap-core/blob/master/regexes.yaml
 	uaP, err := uaparser.New("../assets/uaparser_regexes.yaml")
@@ -22,7 +23,8 @@ func TestBasic(t *testing.T) {
 		panic(err)
 	}
 
-	rE := ConvertToRumEvent(b, uaP)
+	event := &types.Event{UserAgent: userAgent}
+	rE := ConvertToRumEvent(b, event, uaP, nil)
 
 	if rE.Connect_Duration != "74" {
 		t.Errorf("Error")

@@ -3,6 +3,7 @@ package server
 import (
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/basicrum/front_basicrum_go/types"
@@ -36,7 +37,22 @@ func newEventFromRequest(r *http.Request) (*types.Event, error) {
 	if !form.Has("created_at") {
 		form.Set("created_at", time.Now().UTC().Format("2006-01-02 15:04:05"))
 	}
-	return types.NewEvent(form, r.Header, r.UserAgent()), nil
+	ip := getIP(r)
+	return types.NewEvent(form, r.Header, r.UserAgent(), ip), nil
+}
+
+func getIP(r *http.Request) string {
+	var result string
+	var temp string
+
+	result = r.RemoteAddr
+	temp = r.Header.Get("X-Forwarded-For")
+	if result != "" {
+		result = temp
+	}
+
+	parts := strings.Split(result, ",")
+	return parts[0]
 }
 
 func (*Server) headersNoCache(w http.ResponseWriter) {
