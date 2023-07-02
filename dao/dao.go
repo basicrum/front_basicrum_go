@@ -70,6 +70,7 @@ func New(s server, a auth, opts *opts) (*DAO, error) {
 }
 
 // Save stores data into table in clickhouse database
+// nolint: funlen
 func (p *DAO) Save(theEvent beacon.RumEvent) error {
 	query := fmt.Sprintf(
 		`INSERT INTO %s (

@@ -11,13 +11,13 @@ import (
 )
 
 // do saves parameters to a file in backup directory
-func do(params []interface{}, backupRootDir string) {
+func do(params []any, backupRootDir string) {
 	backupsList := makeBackupList(params)
 	saveBackupList(backupsList, backupRootDir)
 }
 
 // nolint: revive
-func makeBackupList(params []interface{}) map[string]string {
+func makeBackupList(params []any) map[string]string {
 	backupsList := make(map[string]string)
 	for _, p := range params {
 		v, ok := p.(url.Values)

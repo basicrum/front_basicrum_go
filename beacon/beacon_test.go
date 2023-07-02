@@ -11,13 +11,14 @@ import (
 
 type mockGeoIPService struct{}
 
-func (*mockGeoIPService) CountryAndCity(header http.Header, ipString string) (string, string, error) {
+// nolint: revive
+func (*mockGeoIPService) CountryAndCity(_ http.Header, _ string) (string, string, error) {
 	return "", "", nil
 }
 
 type mockUserAgentParser struct{}
 
-func (*mockUserAgentParser) Parse(line string) *uaparser.Client {
+func (*mockUserAgentParser) Parse(_ string) *uaparser.Client {
 	return &uaparser.Client{
 		UserAgent: &uaparser.UserAgent{},
 		Os:        &uaparser.Os{},
