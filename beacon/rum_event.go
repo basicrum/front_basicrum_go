@@ -21,7 +21,7 @@ type RumEvent struct {
 	Dns_Duration             string      `json:"dns_duration"`
 	First_Byte_Duration      string      `json:"first_byte_duration"`
 	Session_Id               string      `json:"session_id"`
-	Session_Length           string      `json:"session_length"`
+	Session_Length           json.Number `json:"session_length"`
 	Operating_System         string      `json:"operating_system"`
 	Operating_System_Version string      `json:"operating_system_version,omitempty"`
 	Browser_Name             string      `json:"browser_name"`
@@ -63,4 +63,7 @@ type RumEvent struct {
 	Ua_Vnd                   string      `json:"ua_vnd,omitempty"`
 	Ua_Plt                   string      `json:"ua_plt,omitempty"`
 	Data_Saver_On            json.Number `json:"data_saver_on,omitempty"`
+	Mob_Etype                string      `json:"mob_etype,omitempty"`
+	Mob_Dl                   json.Number `json:"mob_dl,omitempty"`
+	Mob_Rtt                  json.Number `json:"mob_rtt,omitempty"`
 }

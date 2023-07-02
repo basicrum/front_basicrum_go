@@ -255,8 +255,14 @@ func FromEvent(event *types.Event) Beacon {
 	}
 }
 
+// UserAgentParser is the expected user agent parser interface
+type UserAgentParser interface {
+	// Parse converts a user agent header to client object (UserAgent, Os, Device)
+	Parse(line string) *uaparser.Client
+}
+
 // ConvertToRumEvent convert Beacon request to Rum Event
-func ConvertToRumEvent(b Beacon, event *types.Event, userAgentParser *uaparser.Parser, geoIPService geoip.Service) RumEvent {
+func ConvertToRumEvent(b Beacon, event *types.Event, userAgentParser UserAgentParser, geoIPService geoip.Service) RumEvent {
 	userAgent := event.UserAgent
 
 	userAgentClient := userAgentParser.Parse(userAgent)
@@ -299,7 +305,7 @@ func ConvertToRumEvent(b Beacon, event *types.Event, userAgentParser *uaparser.P
 		Largest_Contentful_Paint: b.Pt_Lcp,
 		Event_Type:               getEventType(b.Rt_Quit, b.Http_Initiator),
 		Session_Id:               b.Rt_Si,
-		Session_Length:           b.Rt_Sl,
+		Session_Length:           json.Number(b.Rt_Sl),
 		Geo_Country_Code:         country,
 		Geo_City_Name:            city,
 		Next_Hop_Protocol:        b.Nt_Protocol,
@@ -333,6 +339,9 @@ func ConvertToRumEvent(b Beacon, event *types.Event, userAgentParser *uaparser.P
 		Ua_Vnd:                   b.Ua_Vnd,
 		Ua_Plt:                   b.Ua_Plt,
 		Data_Saver_On:            json.Number(b.Net_Sd),
+		Mob_Etype:                b.Mob_Etype,
+		Mob_Dl:                   json.Number(b.Mob_Dl),
+		Mob_Rtt:                  json.Number(b.Mob_Rtt),
 	}
 }
 

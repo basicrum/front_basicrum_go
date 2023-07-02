@@ -3,6 +3,8 @@ package dao
 import (
 	"bytes"
 	"context"
+	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -18,6 +20,7 @@ import (
 	"github.com/uptrace/go-clickhouse/chdebug"
 	"github.com/uptrace/go-clickhouse/chmigrate"
 
+	"github.com/basicrum/front_basicrum_go/beacon"
 	"github.com/basicrum/front_basicrum_go/templatemigrations"
 )
 
@@ -67,20 +70,210 @@ func New(s server, a auth, opts *opts) (*DAO, error) {
 }
 
 // Save stores data into table in clickhouse database
-func (p *DAO) Save(data string) error {
-	if data == "" {
-		return fmt.Errorf("clickhouse invalid data for table %s: %s", p.table, data)
-	}
+func (p *DAO) Save(theEvent beacon.RumEvent) error {
 	query := fmt.Sprintf(
-		"INSERT INTO %s SETTINGS input_format_skip_unknown_fields = true FORMAT JSONEachRow %s",
+		`INSERT INTO %s (
+			created_at,
+			hostname,
+			event_type,
+			browser_name,
+			browser_version,
+			ua_vnd,
+			ua_plt,
+			device_type,
+			device_manufacturer,
+			operating_system,
+			operating_system_version,
+			user_agent,
+			next_hop_protocol,
+			visibility_state,
+			session_id,
+			session_length,
+			url,
+			connect_duration,
+			dns_duration,
+			first_byte_duration,
+			redirect_duration,
+			redirects_count,
+			first_contentful_paint,
+			first_paint,
+			cumulative_layout_shift,
+			first_input_delay,
+			largest_contentful_paint,
+			geo_country_code,
+			geo_city_name,
+			page_id,
+			data_saver_on,
+			boomerang_version,
+			screen_width,
+			screen_height,
+			dom_res,
+			dom_doms,
+			mem_total,
+			mem_limit,
+			mem_used,
+			mem_lsln,
+			mem_ssln,
+			mem_lssz,
+			scr_bpp,
+			scr_orn,
+			cpu_cnc,
+			dom_ln,
+			dom_sz,
+			dom_ck,
+			dom_img,
+			dom_img_uniq,
+			dom_script,
+			dom_iframe,
+			dom_link,
+			dom_link_css,
+			mob_etype,
+			mob_dl,
+			mob_rtt
+		) VALUES(
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?,
+			?
+		)`,
 		p.table,
-		data,
 	)
-	err := p.conn.AsyncInsert(context.Background(), query, false)
+	err := p.conn.Exec(context.Background(), query,
+		theEvent.Created_At,
+		theEvent.Hostname,
+		theEvent.Event_Type,
+		theEvent.Browser_Name,
+		nullString(theEvent.Browser_Version),
+		nullString(theEvent.Ua_Vnd),
+		nullString(theEvent.Ua_Plt),
+		theEvent.Device_Type,
+		nullString(theEvent.Device_Manufacturer),
+		theEvent.Operating_System,
+		nullString(theEvent.Operating_System_Version),
+		nullString(theEvent.User_Agent),
+		theEvent.Next_Hop_Protocol,
+		theEvent.Visibility_State,
+		theEvent.Session_Id,
+		theEvent.Session_Length,
+		theEvent.Url,
+		nullString(theEvent.Connect_Duration),
+		nullString(theEvent.Dns_Duration),
+		nullString(theEvent.First_Byte_Duration),
+		nullString(theEvent.Redirect_Duration),
+		theEvent.Redirects_Count,
+		nullString(theEvent.First_Contentful_Paint),
+		nullString(theEvent.First_Paint),
+		nullNumber(theEvent.Cumulative_Layout_Shift),
+		nullNumber(theEvent.First_Input_Delay),
+		nullString(theEvent.Largest_Contentful_Paint),
+		theEvent.Geo_Country_Code,
+		nullString(theEvent.Geo_City_Name),
+		theEvent.Page_Id,
+		nullNumber(theEvent.Data_Saver_On),
+		theEvent.Boomerang_Version,
+		nullString(theEvent.Screen_Width),
+		nullString(theEvent.Screen_Height),
+		nullString(theEvent.Dom_Res),
+		nullString(theEvent.Dom_Doms),
+		nullString(theEvent.Mem_Total),
+		nullString(theEvent.Mem_Limit),
+		nullString(theEvent.Mem_Used),
+		nullString(theEvent.Mem_Lsln),
+		nullString(theEvent.Mem_Ssln),
+		nullString(theEvent.Mem_Lssz),
+		nullString(theEvent.Scr_Bpp),
+		nullString(theEvent.Scr_Orn),
+		nullString(theEvent.Cpu_Cnc),
+		nullString(theEvent.Dom_Ln),
+		nullString(theEvent.Dom_Sz),
+		nullString(theEvent.Dom_Ck),
+		nullString(theEvent.Dom_Img),
+		nullString(theEvent.Dom_Img_Uniq),
+		nullString(theEvent.Dom_Script),
+		nullString(theEvent.Dom_Iframe),
+		nullString(theEvent.Dom_Link),
+		nullString(theEvent.Dom_Link_Css),
+		nullString(theEvent.Mob_Etype),
+		nullNumber(theEvent.Mob_Dl),
+		nullNumber(theEvent.Mob_Rtt),
+	)
 	if err != nil {
 		return fmt.Errorf("clickhouse insert failed: %w", err)
 	}
 	return nil
+}
+
+func nullString(value string) sql.NullString {
+	if value == "" {
+		return sql.NullString{}
+	}
+	return sql.NullString{
+		String: value,
+		Valid:  true,
+	}
+}
+
+func nullNumber(value json.Number) sql.NullString {
+	if value == "" {
+		return sql.NullString{}
+	}
+	return sql.NullString{
+		String: value.String(),
+		Valid:  true,
+	}
 }
 
 // Migrate applies all pending database migrations

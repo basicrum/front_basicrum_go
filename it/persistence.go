@@ -55,8 +55,8 @@ func (p *Persistence) RecycleTables() {
 	p.server.RecycleTables(&p.conn)
 }
 
-func (p *Persistence) CountRecords(criteria string) uint64 {
-	return p.server.countRecords(&p.conn, criteria)
+func (p *Persistence) CountRecords(criteria string) int {
+	return int(p.server.countRecords(&p.conn, criteria))
 }
 
 func (p *Persistence) GetFirstRow() RumEventRow {

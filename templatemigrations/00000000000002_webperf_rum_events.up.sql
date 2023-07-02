@@ -1,0 +1,1 @@
+ALTER TABLE {prefix}webperf_rum_events ADD COLUMN mob_dl Nullable(Float32) , ADD COLUMN mob_rtt Nullable(Float32), ADD COLUMN mob_etype LowCardinality(Nullable(String))

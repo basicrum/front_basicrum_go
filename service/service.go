@@ -1,7 +1,6 @@
 package service
 
 import (
-	"encoding/json"
 	"log"
 
 	"github.com/basicrum/front_basicrum_go/beacon"
@@ -50,15 +49,9 @@ func (s *Service) Run() {
 		}
 		beaconEvent := beacon.FromEvent(event)
 		rumEvent := beacon.ConvertToRumEvent(beaconEvent, event, s.userAgentParser, s.geoIPService)
-		jsonValue, err := json.Marshal(rumEvent)
+		err := s.daoService.Save(rumEvent)
 		if err != nil {
-			log.Printf("json parsing error: %+v", err)
-			continue
-		}
-		data := string(jsonValue)
-		err = s.daoService.Save(data)
-		if err != nil {
-			log.Printf("failed to save data: %v err: %+v", data, err)
+			log.Printf("failed to save data: %+v err: %+v", rumEvent, err)
 		}
 	}
 }

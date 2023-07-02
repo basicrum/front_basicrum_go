@@ -11,9 +11,15 @@ import (
 	"testing"
 	"time"
 
+	"github.com/basicrum/front_basicrum_go/beacon"
 	"github.com/basicrum/front_basicrum_go/config"
+	"github.com/basicrum/front_basicrum_go/dao"
 	"github.com/basicrum/front_basicrum_go/it"
+	"github.com/basicrum/front_basicrum_go/types"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"github.com/ua-parser/uap-go/uaparser"
 )
 
 // Inspired by https://www.gojek.io/blog/golang-integration-testing-made-easy
@@ -21,6 +27,7 @@ type e2eTestSuite struct {
 	suite.Suite
 	p     *it.Persistence
 	sConf *config.StartupConfig
+	dao   *dao.DAO
 }
 
 func (s *e2eTestSuite) SetupTest() {
@@ -35,6 +42,14 @@ func (s *e2eTestSuite) SetupTest() {
 		it.Server(sConf.Database.Host, sConf.Database.Port, sConf.Database.DatabaseName, sConf.Database.TablePrefix),
 		it.Auth(sConf.Database.Username, sConf.Database.Password),
 		it.Opts(sConf.Database.TablePrefix),
+	)
+	if err != nil {
+		log.Fatalf("ERROR: %+v", err)
+	}
+	s.dao, err = dao.New(
+		dao.Server(sConf.Database.Host, sConf.Database.Port, sConf.Database.DatabaseName),
+		dao.Auth(sConf.Database.Username, sConf.Database.Password),
+		dao.Opts(sConf.Database.TablePrefix),
 	)
 	if err != nil {
 		log.Fatalf("ERROR: %+v", err)
@@ -72,19 +87,77 @@ func TestE2ETestSuite(t *testing.T) {
 // 	s.NoError(s.dbMigration.Down())
 // }
 
-func (s *e2eTestSuite) Test_EndToEnd_CountRecords() {
-	it.SendBeacons("./data/old_style/*.json", "./data/new_style/*.json.lines")
+func (s *e2eTestSuite) Test_EndToEnd_CountRecords1() {
+	it.SendBeacons("./data/old_style/1638405781.json", "")
 	time.Sleep(2 * time.Second)
 
-	var cntExpect uint64 = 25
-	s.Assert().Exactly(cntExpect, s.p.CountRecords(""))
+	assert.Equal(s.T(), 4, s.p.CountRecords(""))
+}
+
+type mockGeoIPService struct{}
+
+func (*mockGeoIPService) CountryAndCity(header http.Header, ipString string) (string, string, error) {
+	return "", "", nil
+}
+
+type mockUserAgentParser struct{}
+
+func (*mockUserAgentParser) Parse(line string) *uaparser.Client {
+	return &uaparser.Client{
+		UserAgent: &uaparser.UserAgent{},
+		Os:        &uaparser.Os{},
+		Device:    &uaparser.Device{},
+	}
+}
+
+func (s *e2eTestSuite) Test_DAO_Save() {
+	theBeacon := beacon.Beacon{
+		CreatedAt: "2021-12-02 00:42:27",
+		Mob_Dl:    "2.7",
+		Mob_Rtt:   "5.4",
+		Mob_Etype: "5G",
+		Rt_Sl:     "0",
+	}
+	re := beacon.ConvertToRumEvent(theBeacon, &types.Event{}, &mockUserAgentParser{}, &mockGeoIPService{})
+	err := s.dao.Save(re)
+	require.NoError(s.T(), err)
+
+	assert.Equal(s.T(), 1, s.p.CountRecords(""))
+}
+
+func (s *e2eTestSuite) Test_EndToEnd_CountRecords2() {
+	it.SendBeacons("./data/old_style/1638405962.json", "")
+	time.Sleep(2 * time.Second)
+
+	assert.Equal(s.T(), 4, s.p.CountRecords(""))
+}
+
+func (s *e2eTestSuite) Test_EndToEnd_CountRecords3() {
+	it.SendBeacons("./data/old_style/1638406081.json", "")
+	time.Sleep(2 * time.Second)
+
+	assert.Equal(s.T(), 2, s.p.CountRecords(""))
+}
+
+func (s *e2eTestSuite) Test_EndToEnd_CountRecords4() {
+	it.SendBeacons("./data/old_style/1638406141.json", "")
+	time.Sleep(2 * time.Second)
+
+	assert.Equal(s.T(), 4, s.p.CountRecords(""))
+}
+
+func (s *e2eTestSuite) Test_EndToEnd_CountRecords21() {
+	it.SendBeacons("", "./data/new_style/ab.json.lines")
+	time.Sleep(2 * time.Second)
+
+	assert.Equal(s.T(), 11, s.p.CountRecords(""))
 }
 
 func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsPersisted() {
 	it.SendBeacons("", "./data/misc/all-fields.json.lines")
 	time.Sleep(2 * time.Second)
 
-	var cntExpect uint64 = 1
+	var cntExpect int = 1
 
 	s.Assert().Exactly(cntExpect, s.p.CountRecords(""))
 
@@ -102,13 +175,16 @@ func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsPersisted() {
 	s.Assert().Exactly(cntExpect, s.p.CountRecords("where operating_system = 'Windows'"))
 	s.Assert().Exactly(cntExpect, s.p.CountRecords("where operating_system_version = '10'"))
 	s.Assert().Exactly(cntExpect, s.p.CountRecords("where device_manufacturer is NULL"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where mob_etype = '4g'"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where mob_dl = 10"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where mob_rtt = 50"))
 }
 
 func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsEmpty() {
 	it.SendBeacons("", "./data/misc/empty-fields.json.lines")
 	time.Sleep(2 * time.Second)
 
-	var cntExpect uint64 = 1
+	var cntExpect int = 1
 
 	s.Assert().Exactly(cntExpect, s.p.CountRecords(""))
 
@@ -132,7 +208,7 @@ func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsMissing() {
 	it.SendBeacons("", "./data/misc/missing-fields.json.lines")
 	time.Sleep(2 * time.Second)
 
-	var cntExpect uint64 = 1
+	var cntExpect int = 1
 
 	s.Assert().Exactly(cntExpect, s.p.CountRecords(""))
 
