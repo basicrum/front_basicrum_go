@@ -102,6 +102,9 @@ func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsPersisted() {
 	s.Assert().Exactly(cntExpect, s.p.CountRecords("where operating_system = 'Windows'"))
 	s.Assert().Exactly(cntExpect, s.p.CountRecords("where operating_system_version = '10'"))
 	s.Assert().Exactly(cntExpect, s.p.CountRecords("where device_manufacturer is NULL"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where mob_etype = '4g'"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where mob_dl = 10"))
+	s.Assert().Exactly(cntExpect, s.p.CountRecords("where mob_rtt = 50"))
 }
 
 func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsEmpty() {

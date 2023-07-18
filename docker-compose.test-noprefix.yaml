@@ -45,7 +45,7 @@ services:
       dev_clickhouse_server2:
         condition: service_healthy
   integration_test2:
-    image: golang:1.19
+    image: golang:1.19-alpine
     environment:
       - SERVER_HOST=integration_server2
       - SERVER_PORT=8087
@@ -55,6 +55,7 @@ services:
       - DATABASE_USERNAME=default
       - DATABASE_PASSWORD=
       - DATABASE_TABLE_PREFIX=
+      - CGO_ENABLED=0
     depends_on:
       integration_server2:
         condition: service_healthy
@@ -63,7 +64,9 @@ services:
     volumes:
       - .:/go/src/app/      
   unit_test:
-    image: golang:1.19
+    image: golang:1.19-alpine
+    environment:
+      - CGO_ENABLED=0
     working_dir: /go/src/app/beacon
     command: go test
     volumes:
