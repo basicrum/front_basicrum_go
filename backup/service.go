@@ -19,7 +19,7 @@ func NewFileBackup(
 	backupInterval time.Duration,
 	directory string,
 ) *FileBackup {
-	b := batcher.New(backupInterval, func(params []interface{}) error {
+	b := batcher.New(backupInterval, func(params []any) error {
 		do(params, directory)
 		return nil
 	})
