@@ -7,7 +7,7 @@ services:
       test: ["CMD", "wget", "--spider", "-q", "localhost:8123/ping"]
       interval: 30s
       timeout: 5s
-      retries: 3    
+      retries: 3
     ports:
       - 8143:8123
       - 9000:9000
@@ -17,8 +17,8 @@ services:
     ulimits:
       nproc: 65535
       nofile:
-       soft: 262144
-       hard: 262144
+        soft: 262144
+        hard: 262144
   integration_server:
     build: .
     healthcheck:
@@ -30,33 +30,33 @@ services:
     ports:
       - 8087:8087
     environment:
-      - SERVER_HOST=localhost
-      - SERVER_PORT=8087
-      - DATABASE_HOST=dev_clickhouse_server
-      - DATABASE_PORT=9000
-      - DATABASE_NAME=default
-      - DATABASE_USERNAME=default
-      - DATABASE_PASSWORD=
-      - DATABASE_TABLE_PREFIX=integration_test_
-      - PERSISTANCE_DATABASE_STRATEGY=all_in_one_db
-      - PERSISTANCE_TABLE_STRATEGY=all_in_one_table
-      - BACKUP_ENABLED=false
-      - BACKUP_DIRECTORY=/home/basicrum_archive
-      - BACKUP_INTERVAL_SECONDS=5
+      - BRUM_SERVER_HOST=localhost
+      - BRUM_SERVER_PORT=8087
+      - BRUM_DATABASE_HOST=dev_clickhouse_server
+      - BRUM_DATABASE_PORT=9000
+      - BRUM_DATABASE_NAME=default
+      - BRUM_DATABASE_USERNAME=default
+      - BRUM_DATABASE_PASSWORD=
+      - BRUM_DATABASE_TABLE_PREFIX=integration_test_
+      - BRUM_PERSISTANCE_DATABASE_STRATEGY=all_in_one_db
+      - BRUM_PERSISTANCE_TABLE_STRATEGY=all_in_one_table
+      - BRUM_BACKUP_ENABLED=false
+      - BRUM_BACKUP_DIRECTORY=/home/basicrum_archive
+      - BRUM_BACKUP_INTERVAL_SECONDS=5
     depends_on:
       dev_clickhouse_server:
         condition: service_healthy
   integration_test:
     image: golang:1.19-alpine
     environment:
-      - SERVER_HOST=integration_server
-      - SERVER_PORT=8087
-      - DATABASE_HOST=dev_clickhouse_server
-      - DATABASE_PORT=9000
-      - DATABASE_NAME=default
-      - DATABASE_USERNAME=default
-      - DATABASE_PASSWORD=
-      - DATABASE_TABLE_PREFIX=integration_test_
+      - BRUM_SERVER_HOST=integration_server
+      - BRUM_SERVER_PORT=8087
+      - BRUM_DATABASE_HOST=dev_clickhouse_server
+      - BRUM_DATABASE_PORT=9000
+      - BRUM_DATABASE_NAME=default
+      - BRUM_DATABASE_USERNAME=default
+      - BRUM_DATABASE_PASSWORD=
+      - BRUM_DATABASE_TABLE_PREFIX=integration_test_
       - CGO_ENABLED=0
     depends_on:
       integration_server:
@@ -64,7 +64,7 @@ services:
     working_dir: /go/src/app/it
     command: go test
     volumes:
-      - .:/go/src/app/      
+      - .:/go/src/app/
   unit_test:
     image: golang:1.19-alpine
     environment:
@@ -73,4 +73,3 @@ services:
     command: go test
     volumes:
       - .:/go/src/app/
-
