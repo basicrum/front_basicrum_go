@@ -34,51 +34,51 @@ make up
 
 ```
 # server
-export SERVER_HOST="localhost"
-export SERVER_PORT=8087
+export BRUM_SERVER_HOST="localhost"
+export BRUM_SERVER_PORT=8087
 
 # database
-export DATABASE_HOST="localhost"
-export DATABASE_PORT=9000
-export DATABASE_NAME="default"
-export DATABASE_USERNAME="default"
-export DATABASE_PASSWORD=""
+export BRUM_DATABASE_HOST="localhost"
+export BRUM_DATABASE_PORT=9000
+export BRUM_DATABASE_NAME="default"
+export BRUM_DATABASE_USERNAME="default"
+export BRUM_DATABASE_PASSWORD=""
 ## optional
-export DATABASE_TABLE_PREFIX=""
+export BRUM_DATABASE_TABLE_PREFIX=""
 
 # persistance
 ## optional
-PERSISTANCE_DATABASE_STRATEGY=""
+BRUM_PERSISTANCE_DATABASE_STRATEGY=""
 ## optional
-PERSISTANCE_TABLE_STRATEGY=""
+BRUM_PERSISTANCE_TABLE_STRATEGY=""
 
 # backup
 ## optional - default false
-BACKUP_ENABLED=true
+BRUM_BACKUP_ENABLED=true
 ## optional. required if BACKUP_ENABLED=true
-BACKUP_DIRECTORY=""
+BRUM_BACKUP_DIRECTORY=""
 ## optional
-BACKUP_INTERVAL_SECONDS=0
+BRUM_BACKUP_INTERVAL_SECONDS=0
 ```
 
 **2.1.1** If you want to use SSL with custom files
 
 ```
 # server
-export SERVER_SSL=true
-export SERVER_SSL_TYPE=FILE
-export SERVER_SSL_CERT_FILE=domain.crt
-export SERVER_SSL_KEY_FILE=domain.key
+export BRUM_SERVER_SSL=true
+export BRUM_SERVER_SSL_TYPE=FILE
+export BRUM_SERVER_SSL_CERT_FILE=domain.crt
+export BRUM_SERVER_SSL_KEY_FILE=domain.key
 ```
 
 **2.1.2** If you want to use SSL with Let's encrypt
 
 ```
 # server
-export SERVER_SSL=true
-export SERVER_SSL_TYPE=LETS_ENCRYPT
-export SERVER_SSL_LETS_ENCRYPT_PORT=80
-export SERVER_SSL_LETS_ENCRYPT_DOMAIN=domain.com
+export BRUM_SERVER_SSL=true
+export BRUM_SERVER_SSL_TYPE=LETS_ENCRYPT
+export BRUM_SERVER_SSL_LETS_ENCRYPT_PORT=80
+export BRUM_SERVER_SSL_LETS_ENCRYPT_DOMAIN=domain.com
 ```
 
 Note: To verify that you’re the owner of domain for which you want a certificate, Let’s Encrypt server calls back your server.
