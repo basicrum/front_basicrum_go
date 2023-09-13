@@ -80,12 +80,12 @@ func startServers(servers []*server.Server) {
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
-	for _, srv := range servers {
-		go func(srv *server.Server) {
+	for index, srv := range servers {
+		go func(srv *server.Server, index int) {
 			if err := srv.Serve(); err != nil {
-				log.Println(err)
+				log.Printf("error start server index[%v] err[%v]\n", index, err)
 			}
-		}(srv)
+		}(srv, index)
 	}
 	log.Print("Servers started")
 
