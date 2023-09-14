@@ -2,9 +2,9 @@ package server
 
 import (
 	"context"
-	"crypto/tls"
 	"errors"
 	"log"
+	"net"
 	"net/http"
 	"time"
 
@@ -18,12 +18,11 @@ type Server struct {
 	port           string
 	service        *service.Service
 	backup         backup.IBackup
-	ssl            bool
 	certFile       string
 	keyFile        string
-	tlsConfig      *tls.Config
 	handlerAdapter func(http.Handler) http.Handler
 	server         *http.Server
+	listener       net.Listener
 }
 
 // WithHandlerAdapter creates server with handler wrapper function (used by Let's encrypt certificate manager)
@@ -33,18 +32,24 @@ func WithHandlerAdapter(handlerAdapter func(http.Handler) http.Handler) func(*Se
 	}
 }
 
-// WithTLSConfig creates server with TLS configuration
-func WithTLSConfig(tlsConfig *tls.Config) func(*Server) {
+// WithListener creates server with custom listener
+func WithListener(listener net.Listener) func(*Server) {
 	return func(s *Server) {
-		s.ssl = true
-		s.tlsConfig = tlsConfig
+		s.listener = listener
 	}
 }
 
-// WithSSLFile creates server with SSL and certificate/key files
-func WithSSLFile(certFile, keyFile string) func(*Server) {
+// WithHTTP creates server with port
+func WithHTTP(port string) func(*Server) {
 	return func(s *Server) {
-		s.ssl = true
+		s.port = port
+	}
+}
+
+// WithSSL creates server with SSL port and certificate/key files
+func WithSSL(port, certFile, keyFile string) func(*Server) {
+	return func(s *Server) {
+		s.port = port
 		s.certFile = certFile
 		s.keyFile = keyFile
 	}
@@ -52,13 +57,11 @@ func WithSSLFile(certFile, keyFile string) func(*Server) {
 
 // New creates a new http or https server
 func New(
-	port string,
 	processService *service.Service,
 	backupService backup.IBackup,
 	options ...func(*Server),
 ) *Server {
 	result := &Server{
-		port:    port,
 		service: processService,
 		backup:  backupService,
 		handlerAdapter: func(h http.Handler) http.Handler {
@@ -87,11 +90,14 @@ func (s *Server) Serve() error {
 		IdleTimeout:       120 * time.Second,
 	}
 
-	if s.ssl {
+	if s.listener != nil {
+		log.Println("starting server with listener")
+		return s.server.Serve(s.listener)
+	}
+	if s.certFile != "" || s.keyFile != "" {
 		log.Printf("starting https server on port[%v] with certFile[%v] keyFile[%v]", s.port, s.certFile, s.keyFile)
 		return s.server.ListenAndServeTLS(s.certFile, s.keyFile)
 	}
-
 	log.Printf("starting http server on port[%v]", s.port)
 	return s.server.ListenAndServe()
 }

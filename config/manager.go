@@ -30,9 +30,6 @@ func GetStartupConfig() (*StartupConfig, error) {
 				return nil, fieldError(cfg.Server.SSLFile, "SSLFileKeyFile")
 			}
 		case SSLTypeLetsEncrypt:
-			if len(cfg.Server.SSLLetsEncrypt.Port) == 0 {
-				return nil, fieldError(cfg.Server.SSLLetsEncrypt, "Port")
-			}
 			if len(cfg.Server.SSLLetsEncrypt.Domain) == 0 {
 				return nil, fieldError(cfg.Server.SSLLetsEncrypt, "Domain")
 			}

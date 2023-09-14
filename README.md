@@ -65,6 +65,8 @@ BRUM_BACKUP_INTERVAL_SECONDS=0
 
 ```
 # server
+export BRUM_SERVER_HOST="localhost"
+export BRUM_SERVER_PORT=443
 export BRUM_SERVER_SSL=true
 export BRUM_SERVER_SSL_TYPE=FILE
 export BRUM_SERVER_SSL_CERT_FILE=domain.crt
@@ -73,11 +75,20 @@ export BRUM_SERVER_SSL_KEY_FILE=domain.key
 
 **2.1.2** If you want to use SSL with Let's encrypt
 
+**2.1.2.1** http server is started
+
+```
+# server
+export BRUM_SERVER_HOST="localhost"
+export BRUM_SERVER_PORT=8087
+```
+
+**2.1.2.2** https server is started (port: 443)
+
 ```
 # server
 export BRUM_SERVER_SSL=true
 export BRUM_SERVER_SSL_TYPE=LETS_ENCRYPT
-export BRUM_SERVER_SSL_LETS_ENCRYPT_PORT=80
 export BRUM_SERVER_SSL_LETS_ENCRYPT_DOMAIN=domain.com
 ```
 
