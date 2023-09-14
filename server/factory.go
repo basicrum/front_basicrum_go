@@ -60,7 +60,7 @@ func (f *Factory) Build(sConf config.StartupConfig) ([]*Server, error) {
 		httpsServer := New(
 			f.processService,
 			f.backupService,
-			WithSSL(sConf.Server.Port, sConf.Server.SSLFile.SSLFileCertFile, sConf.Server.SSLFile.SSLFileCertFile),
+			WithSSL(sConf.Server.Port, sConf.Server.SSLFile.SSLFileCertFile, sConf.Server.SSLFile.SSLFileKeyFile),
 		)
 		return []*Server{httpsServer}, nil
 	default:
