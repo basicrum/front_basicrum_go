@@ -10,6 +10,11 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 )
 
+const (
+	defaultHTTPPort  = "80"
+	defaultHTTPSPort = "443"
+)
+
 // Factory is server factory
 type Factory struct {
 	processService *service.Service
@@ -29,12 +34,15 @@ func NewFactory(
 
 // Build creates http/https server(s) based on startup configuration
 func (f *Factory) Build(sConf config.StartupConfig) ([]*Server, error) {
+	httpPort := defaultValue(sConf.Server.Port, defaultHTTPPort)
+	httpsPort := defaultValue(sConf.Server.Port, defaultHTTPSPort)
+
 	if !sConf.Server.SSL {
 		log.Println("HTTP configuration enabled")
 		httpServer := New(
 			f.processService,
 			f.backupService,
-			WithHTTP(sConf.Server.Port),
+			WithHTTP(httpPort),
 		)
 		return []*Server{httpServer}, nil
 	}
@@ -52,7 +60,7 @@ func (f *Factory) Build(sConf config.StartupConfig) ([]*Server, error) {
 		httpServer := New(
 			f.processService,
 			f.backupService,
-			WithHTTP(sConf.Server.Port),
+			WithHTTP(httpPort),
 		)
 		return []*Server{httpsServer, httpServer}, nil
 	case config.SSLTypeFile:
@@ -60,10 +68,17 @@ func (f *Factory) Build(sConf config.StartupConfig) ([]*Server, error) {
 		httpsServer := New(
 			f.processService,
 			f.backupService,
-			WithSSL(sConf.Server.Port, sConf.Server.SSLFile.SSLFileCertFile, sConf.Server.SSLFile.SSLFileKeyFile),
+			WithSSL(httpsPort, sConf.Server.SSLFile.SSLFileCertFile, sConf.Server.SSLFile.SSLFileKeyFile),
 		)
 		return []*Server{httpsServer}, nil
 	default:
 		return nil, fmt.Errorf("unsupported SSL type[%v]", sConf.Server.SSLType)
 	}
+}
+
+func defaultValue(value, defaultValue string) string {
+	if value == "" {
+		return defaultValue
+	}
+	return value
 }

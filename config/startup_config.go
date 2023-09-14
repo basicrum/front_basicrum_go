@@ -13,8 +13,7 @@ const (
 // StartupConfig contains application configuration
 type StartupConfig struct {
 	Server struct {
-		Host    string  `required:"true" envconfig:"BRUM_SERVER_HOST"`
-		Port    string  `required:"true" envconfig:"BRUM_SERVER_PORT"`
+		Port    string  `envconfig:"BRUM_SERVER_PORT"`
 		SSL     bool    `envconfig:"BRUM_SERVER_SSL" default:"false"`
 		SSLType SSLType `envconfig:"BRUM_SERVER_SSL_TYPE" default:"FILE"`
 		SSLFile struct {
