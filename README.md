@@ -83,7 +83,7 @@ export BRUM_SERVER_HOST="localhost"
 export BRUM_SERVER_PORT=8087
 ```
 
-**2.1.2.1** https server is started (port: 443)
+**2.1.2.2** https server is started (port: 443)
 
 ```
 # server
