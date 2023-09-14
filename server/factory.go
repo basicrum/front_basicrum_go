@@ -34,7 +34,7 @@ func (f *Factory) Build(sConf config.StartupConfig) ([]*Server, error) {
 		httpServer := New(
 			f.processService,
 			f.backupService,
-			WithPort(sConf.Server.Port),
+			WithHTTP(sConf.Server.Port),
 		)
 		return []*Server{httpServer}, nil
 	}
@@ -52,7 +52,7 @@ func (f *Factory) Build(sConf config.StartupConfig) ([]*Server, error) {
 		httpServer := New(
 			f.processService,
 			f.backupService,
-			WithPort(sConf.Server.Port),
+			WithHTTP(sConf.Server.Port),
 		)
 		return []*Server{httpsServer, httpServer}, nil
 	case config.SSLTypeFile:
@@ -60,8 +60,7 @@ func (f *Factory) Build(sConf config.StartupConfig) ([]*Server, error) {
 		httpsServer := New(
 			f.processService,
 			f.backupService,
-			WithPort(sConf.Server.Port),
-			WithSSLFile(sConf.Server.SSLFile.SSLFileCertFile, sConf.Server.SSLFile.SSLFileCertFile),
+			WithSSL(sConf.Server.Port, sConf.Server.SSLFile.SSLFileCertFile, sConf.Server.SSLFile.SSLFileCertFile),
 		)
 		return []*Server{httpsServer}, nil
 	default:

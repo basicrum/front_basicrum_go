@@ -34,21 +34,6 @@ func WithHandlerAdapter(handlerAdapter func(http.Handler) http.Handler) func(*Se
 	}
 }
 
-// WithTLSConfig creates server with TLS configuration
-func WithTLSConfig(tlsConfig *tls.Config) func(*Server) {
-	return func(s *Server) {
-		s.tlsConfig = tlsConfig
-	}
-}
-
-// WithSSLFile creates server with SSL and certificate/key files
-func WithSSLFile(certFile, keyFile string) func(*Server) {
-	return func(s *Server) {
-		s.certFile = certFile
-		s.keyFile = keyFile
-	}
-}
-
 // WithListener creates server with custom listener
 func WithListener(listener net.Listener) func(*Server) {
 	return func(s *Server) {
@@ -56,10 +41,19 @@ func WithListener(listener net.Listener) func(*Server) {
 	}
 }
 
-// WithPort creates server with port
-func WithPort(port string) func(*Server) {
+// WithHTTP creates server with port
+func WithHTTP(port string) func(*Server) {
 	return func(s *Server) {
 		s.port = port
+	}
+}
+
+// WithSSL creates server with SSL port and certificate/key files
+func WithSSL(port, certFile, keyFile string) func(*Server) {
+	return func(s *Server) {
+		s.port = port
+		s.certFile = certFile
+		s.keyFile = keyFile
 	}
 }
 
