@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"crypto/tls"
 	"errors"
 	"log"
 	"net"
@@ -21,7 +20,6 @@ type Server struct {
 	backup         backup.IBackup
 	certFile       string
 	keyFile        string
-	tlsConfig      *tls.Config
 	handlerAdapter func(http.Handler) http.Handler
 	server         *http.Server
 	listener       net.Listener
