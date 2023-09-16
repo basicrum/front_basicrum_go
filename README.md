@@ -32,9 +32,10 @@ make up
 
 **2.1** Set environment variables
 
+Default value for BRUM_SERVER_PORT=80
+
 ```
 # server
-export BRUM_SERVER_HOST="localhost"
 export BRUM_SERVER_PORT=8087
 
 # database
@@ -63,10 +64,10 @@ BRUM_BACKUP_INTERVAL_SECONDS=0
 
 **2.1.1** If you want to use SSL with custom files
 
+Default value for BRUM_SERVER_PORT=443
+
 ```
 # server
-export BRUM_SERVER_HOST="localhost"
-export BRUM_SERVER_PORT=443
 export BRUM_SERVER_SSL=true
 export BRUM_SERVER_SSL_TYPE=FILE
 export BRUM_SERVER_SSL_CERT_FILE=domain.crt
@@ -77,9 +78,10 @@ export BRUM_SERVER_SSL_KEY_FILE=domain.key
 
 **2.1.2.1** http server is started
 
+Default value for BRUM_SERVER_PORT=80
+
 ```
 # server
-export BRUM_SERVER_HOST="localhost"
 export BRUM_SERVER_PORT=8087
 ```
 

@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/http/cookiejar"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -170,7 +171,11 @@ func (s *e2eTestSuite) Test_EndToEnd_HealthCheck() {
 			return http.ErrUseLastResponse
 		}}
 
-	req, _ := http.NewRequest("GET", fmt.Sprintf("http://%v:%v/health", s.sConf.Server.Host, s.sConf.Server.Port), strings.NewReader(""))
+	host := os.Getenv("BRUM_SERVER_HOST")
+	if host == "" {
+		host = "localhost"
+	}
+	req, _ := http.NewRequest("GET", fmt.Sprintf("http://%v:%v/health", host, s.sConf.Server.Port), strings.NewReader(""))
 
 	resp, err := client.Do(req)
 
