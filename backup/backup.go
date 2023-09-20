@@ -2,9 +2,11 @@ package backup
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/url"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 	"time"
@@ -31,10 +33,10 @@ func backupItem(backupsList map[string]string, p any) {
 		// Can't assert, handle error.
 		return
 	}
-	appendLine(backupsList, makeKey(v), makeValue(v))
+	appendLine(backupsList, makeKeyHostname(v), makeValue(v))
 }
 
-func makeKey(v url.Values) string {
+func makeKeyHostname(v url.Values) string {
 	urlValue, parseErr := url.Parse(v.Get("u"))
 	if parseErr != nil {
 		log.Print(parseErr)
@@ -43,8 +45,10 @@ func makeKey(v url.Values) string {
 }
 
 func makeValue(v url.Values) string {
-	flatten := flattenMap(v)
+	return toJSON(flattenMap(v))
+}
 
+func toJSON(flatten any) string {
 	dataJson, reqDataErr := json.Marshal(flatten)
 	if reqDataErr != nil {
 		log.Print(reqDataErr)
@@ -68,41 +72,48 @@ func flattenMap(v url.Values) map[string]string {
 }
 
 func saveBackupList(backupsList map[string]string, backupRootDir string) {
-	// Date path
-	datePath := getDateUtcPath()
-	utcHour := getUtcHour()
 	for host, lines := range backupsList {
-		dirPath := backupRootDir + host + "/" + datePath
-
-		err := os.MkdirAll(dirPath, os.ModePerm)
-		if err != nil {
-			log.Print(err)
-		}
-
-		filename := dirPath + "/" + utcHour + ".json.lines"
-		f, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, os.ModePerm)
-		if err != nil {
-			log.Print(err)
-		}
-		// nolint: revive
-		defer f.Close()
-
-		if _, err = f.WriteString(lines); err != nil {
-			log.Print(err)
-		}
+		saveLinesToFile(backupRootDir, host, lines)
 	}
 }
 
-func getDateUtcPath() string {
-	t := time.Now().UTC()
-	utcYear := strconv.Itoa(t.Year())
-	utcMonth := strconv.Itoa(int(t.Month()))
-	utcDay := strconv.Itoa(t.Day())
+func saveLinesToFile(backupRootDir string, host string, lines string) {
+	filename := makeFilePath(backupRootDir, host)
+	f := openOrCreateFileForAppend(filename)
+	go func() {
+		if err := f.Close(); err != nil {
+			log.Print(err)
+		}
+	}()
 
-	return utcYear + "-" + utcMonth + "-" + utcDay
+	if _, err := f.WriteString(lines); err != nil {
+		log.Print(err)
+	}
 }
 
-func getUtcHour() string {
-	t := time.Now().UTC()
-	return strconv.Itoa(t.Hour())
+func openOrCreateFileForAppend(filename string) *os.File {
+	err := os.MkdirAll(path.Dir(filename), os.ModePerm)
+	if err != nil {
+		log.Print(err)
+	}
+
+	f, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, os.ModePerm)
+	if err != nil {
+		log.Print(err)
+	}
+	return f
+}
+
+func makeFilePath(backupRootDir string, host string) string {
+	return backupRootDir + host + "/" + dateUTC() + "/" + hourUTC() + ".json.lines"
+}
+
+func dateUTC() string {
+	nowUTC := time.Now().UTC()
+	return fmt.Sprintf("%v-%v-%v", nowUTC.Year(), int(nowUTC.Month()), nowUTC.Day())
+}
+
+func hourUTC() string {
+	nowUTC := time.Now().UTC()
+	return strconv.Itoa(nowUTC.Hour())
 }
