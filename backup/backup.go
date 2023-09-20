@@ -20,32 +20,43 @@ func do(params []any, backupRootDir string) {
 func makeBackupList(params []any) map[string]string {
 	backupsList := make(map[string]string)
 	for _, p := range params {
-		v, ok := p.(url.Values)
-		if !ok {
-			// Can't assert, handle error.
-			continue
-		}
-
-		flatten := flattenMap(v)
-
-		dataJson, reqDataErr := json.Marshal(flatten)
-		if reqDataErr != nil {
-			log.Print(reqDataErr)
-		}
-
-		urlValue, parseErr := url.Parse(v.Get("u"))
-		if parseErr != nil {
-			log.Print(parseErr)
-		}
-
-		hostNormalized := strings.ReplaceAll(urlValue.Hostname(), ".", "_")
-		if _, containsHost := backupsList[hostNormalized]; !containsHost {
-			backupsList[hostNormalized] = ""
-		}
-
-		backupsList[hostNormalized] += string(dataJson) + "\n"
+		backupItem(backupsList, p)
 	}
 	return backupsList
+}
+
+func backupItem(backupsList map[string]string, p any) {
+	v, ok := p.(url.Values)
+	if !ok {
+		// Can't assert, handle error.
+		return
+	}
+	appendLine(backupsList, makeKey(v), makeValue(v))
+}
+
+func makeKey(v url.Values) string {
+	urlValue, parseErr := url.Parse(v.Get("u"))
+	if parseErr != nil {
+		log.Print(parseErr)
+	}
+	return strings.ReplaceAll(urlValue.Hostname(), ".", "_")
+}
+
+func makeValue(v url.Values) string {
+	flatten := flattenMap(v)
+
+	dataJson, reqDataErr := json.Marshal(flatten)
+	if reqDataErr != nil {
+		log.Print(reqDataErr)
+	}
+	return string(dataJson)
+}
+
+func appendLine(m map[string]string, key, value string) {
+	if _, keyFound := m[key]; !keyFound {
+		m[key] = ""
+	}
+	m[key] += value + "\n"
 }
 
 func flattenMap(v url.Values) map[string]string {
@@ -60,7 +71,7 @@ func saveBackupList(backupsList map[string]string, backupRootDir string) {
 	// Date path
 	datePath := getDateUtcPath()
 	utcHour := getUtcHour()
-	for host, data := range backupsList {
+	for host, lines := range backupsList {
 		dirPath := backupRootDir + host + "/" + datePath
 
 		err := os.MkdirAll(dirPath, os.ModePerm)
@@ -76,7 +87,7 @@ func saveBackupList(backupsList map[string]string, backupRootDir string) {
 		// nolint: revive
 		defer f.Close()
 
-		if _, err = f.WriteString(data); err != nil {
+		if _, err = f.WriteString(lines); err != nil {
 			log.Print(err)
 		}
 	}
