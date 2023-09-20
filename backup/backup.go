@@ -12,7 +12,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"unsafe"
 )
 
 // do saves parameters to a file in backup directory
@@ -124,8 +123,7 @@ func writeToFile(filename string, lines string, factory CompressionWriterFactory
 }
 
 func writeString(f io.Writer, s string) error {
-	b := unsafe.Slice(unsafe.StringData(s), len(s))
-	_, err := f.Write(b)
+	_, err := f.Write([]byte(s))
 	return err
 }
 

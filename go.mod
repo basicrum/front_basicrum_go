@@ -1,6 +1,6 @@
 module github.com/basicrum/front_basicrum_go
 
-go 1.20
+go 1.19
 
 require (
 	github.com/ClickHouse/clickhouse-go/v2 v2.10.1
