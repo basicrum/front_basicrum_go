@@ -55,8 +55,12 @@ func main() {
 		maxmind.New(),
 	)
 
+	compressionFactory := backup.NewCompressionWriterFactory(sConf.Backup.Enabled, backup.Compression(sConf.Backup.CompressionType), backup.CompressionLevel(sConf.Backup.CompressionLevel))
 	backupInterval := time.Duration(sConf.Backup.IntervalSeconds) * time.Second
-	backupService := backup.New(sConf.Backup.Enabled, backupInterval, sConf.Backup.Directory)
+	backupService, err := backup.New(sConf.Backup.Enabled, backupInterval, sConf.Backup.Directory, compressionFactory)
+	if err != nil {
+		log.Fatal(err)
+	}
 	processingService := service.New(
 		daoService,
 		userAgentParser,

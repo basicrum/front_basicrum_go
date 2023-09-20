@@ -3,13 +3,16 @@ package backup
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
+	"unsafe"
 )
 
 // do saves parameters to a file in backup directory
@@ -79,6 +82,13 @@ func saveBackupList(backupsList map[string]string, backupRootDir string) {
 
 func saveLinesToFile(backupRootDir string, host string, lines string) {
 	filename := makeFilePath(backupRootDir, host)
+	err := appendToFile(filename, lines)
+	if err != nil {
+		log.Print(err)
+	}
+}
+
+func appendToFile(filename string, lines string) error {
 	f := openOrCreateFileForAppend(filename)
 	go func() {
 		if err := f.Close(); err != nil {
@@ -86,9 +96,37 @@ func saveLinesToFile(backupRootDir string, host string, lines string) {
 		}
 	}()
 
-	if _, err := f.WriteString(lines); err != nil {
-		log.Print(err)
+	_, err := f.WriteString(lines)
+	return err
+}
+
+func writeToFile(filename string, lines string, factory CompressionWriterFactory) error {
+	f, err := openFile(filename)
+	if err != nil {
+		return err
 	}
+	go func() {
+		if err := f.Close(); err != nil {
+			log.Print(err)
+		}
+	}()
+	compressionWriter, err := factory.Create(f)
+	if err != nil {
+		return err
+	}
+	go func() {
+		if err := compressionWriter.Close(); err != nil {
+			log.Print(err)
+		}
+	}()
+
+	return writeString(compressionWriter, lines)
+}
+
+func writeString(f io.Writer, s string) error {
+	b := unsafe.Slice(unsafe.StringData(s), len(s))
+	_, err := f.Write(b)
+	return err
 }
 
 func openOrCreateFileForAppend(filename string) *os.File {
@@ -104,16 +142,56 @@ func openOrCreateFileForAppend(filename string) *os.File {
 	return f
 }
 
-func makeFilePath(backupRootDir string, host string) string {
-	return backupRootDir + host + "/" + dateUTC() + "/" + hourUTC() + ".json.lines"
+func openFile(filename string) (*os.File, error) {
+	err := os.MkdirAll(path.Dir(filename), os.ModePerm)
+	if err != nil {
+		return nil, err
+	}
+
+	err = os.Remove(filename)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return nil, err
+		}
+	}
+
+	f, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY|os.O_CREATE, os.ModePerm)
+	if err != nil {
+		return nil, err
+	}
+	return f, nil
 }
 
-func dateUTC() string {
-	nowUTC := time.Now().UTC()
+func makeFilePath(backupRootDir string, host string) string {
+	now := time.Now()
+	return makeHourPath(
+		makeDayPath(backupRootDir, host, now),
+		now,
+	)
+}
+
+func makeDayPath(backupRootDir string, host string, nowUTC time.Time) string {
+	return filepath.Join(backupRootDir, host, dateUTC(nowUTC))
+}
+
+func makeArchiveDayPath(backupRootDir, host string, now time.Time) string {
+	return filepath.Join(backupRootDir, host, dateUTC(now)+".json.lines")
+}
+
+func makeArchiveDayMetaPath(backupRootDir, host string, now time.Time) string {
+	return filepath.Join(backupRootDir, host, dateUTC(now)+".meta.lines")
+}
+
+func makeHourPath(parent string, now time.Time) string {
+	return filepath.Join(parent, hourUTC(now)+".json.lines")
+}
+
+func dateUTC(now time.Time) string {
+	nowUTC := now.UTC()
 	return fmt.Sprintf("%v-%v-%v", nowUTC.Year(), int(nowUTC.Month()), nowUTC.Day())
 }
 
-func hourUTC() string {
-	nowUTC := time.Now().UTC()
+func hourUTC(now time.Time) string {
+	nowUTC := now.UTC()
 	return strconv.Itoa(nowUTC.Hour())
 }

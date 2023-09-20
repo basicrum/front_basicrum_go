@@ -46,7 +46,7 @@ services:
       dev_clickhouse_server:
         condition: service_healthy
   integration_test:
-    image: golang:1.19-alpine
+    image: golang:1.20-alpine
     environment:
       - BRUM_SERVER_HOST=integration_server
       - BRUM_SERVER_PORT=8087
@@ -65,7 +65,7 @@ services:
     volumes:
       - .:/go/src/app/
   unit_test:
-    image: golang:1.19-alpine
+    image: golang:1.20-alpine
     environment:
       - CGO_ENABLED=0
     working_dir: /go/src/app/beacon
