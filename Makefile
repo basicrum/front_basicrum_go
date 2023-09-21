@@ -51,7 +51,7 @@ docker-unit-test:
 docker-clean-test: 
 	docker-compose -f docker-compose.test.yaml down
 	docker-compose -f docker-compose.test-noprefix.yaml down
-	docker-compose -f docker-compose.test-letsencrypt.yaml
+	docker-compose -f docker-compose.test-letsencrypt.yaml down
 
 .PHONY: _docker-integration-test
 _docker-integration-test:
