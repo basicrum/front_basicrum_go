@@ -24,6 +24,7 @@ func main() {
 		}
 		log.Printf("try[%v] received status code[%v]\n", i, resp.StatusCode)
 
+		_ = resp.Body.Close()
 		if http.StatusOK == resp.StatusCode {
 			found = true
 			log.Printf("try[%v] found\n", i)
@@ -40,6 +41,7 @@ func makeHTTPClient() http.Client {
 	client := http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
+				// nolint: gosec
 				InsecureSkipVerify: true,
 			},
 		},
@@ -77,6 +79,7 @@ func appendToFile(filename string, lines string) error {
 func osGetenvRequired(name string) string {
 	value := os.Getenv(name)
 	if value == "" {
+		// nolint: revive
 		log.Fatalf("required[%v]\n", name)
 	}
 	return value
@@ -84,12 +87,7 @@ func osGetenvRequired(name string) string {
 
 func requireNoError(err error) {
 	if err != nil {
+		// nolint: revive
 		log.Fatal(err)
-	}
-}
-
-func requireEqual(expected, actual int) {
-	if expected != actual {
-		log.Fatalf("expected %v, got: %v", expected, actual)
 	}
 }

@@ -90,6 +90,7 @@ func makeLetsEncryptTLSConfig(allowedHost string) *tls.Config {
 		HostPolicy: autocert.HostWhitelist(allowedHost),
 		Client:     client,
 	}
+	// nolint: gosec
 	return &tls.Config{GetCertificate: m.GetCertificate}
 }
 
@@ -104,6 +105,7 @@ func makeACMEClient() *acme.Client {
 		HTTPClient: &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{
+					// nolint: gosec
 					InsecureSkipVerify: insecureSkipVerify,
 				},
 			},

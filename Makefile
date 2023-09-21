@@ -49,9 +49,9 @@ docker-unit-test:
 
 .PHONY: docker-clean-test
 docker-clean-test: 
-	docker-compose -f docker-compose.test.yaml down
-	docker-compose -f docker-compose.test-noprefix.yaml down
-	docker-compose -f docker-compose.test-letsencrypt.yaml down
+	docker-compose -f docker-compose.test.yaml down --remove-orphans
+	docker-compose -f docker-compose.test-noprefix.yaml down --remove-orphans
+	docker-compose -f docker-compose.test-letsencrypt.yaml down --remove-orphans
 
 .PHONY: _docker-integration-test
 _docker-integration-test:
