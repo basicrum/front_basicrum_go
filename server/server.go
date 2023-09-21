@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"log"
 	"net"
@@ -23,6 +24,7 @@ type Server struct {
 	handlerAdapter func(http.Handler) http.Handler
 	server         *http.Server
 	listener       net.Listener
+	tlsConfig      *tls.Config
 }
 
 // WithHandlerAdapter creates server with handler wrapper function (used by Let's encrypt certificate manager)
@@ -52,6 +54,14 @@ func WithSSL(port, certFile, keyFile string) func(*Server) {
 		s.port = port
 		s.certFile = certFile
 		s.keyFile = keyFile
+	}
+}
+
+// WithTLSConfig creates server with SSL port and tls config
+func WithTLSConfig(port string, tlsConfig *tls.Config) func(*Server) {
+	return func(s *Server) {
+		s.port = port
+		s.tlsConfig = tlsConfig
 	}
 }
 
@@ -88,13 +98,14 @@ func (s *Server) Serve() error {
 		ReadTimeout:       5 * time.Second,
 		WriteTimeout:      5 * time.Second,
 		IdleTimeout:       120 * time.Second,
+		TLSConfig:         s.tlsConfig,
 	}
 
 	if s.listener != nil {
 		log.Println("starting server with listener")
 		return s.server.Serve(s.listener)
 	}
-	if s.certFile != "" || s.keyFile != "" {
+	if s.certFile != "" || s.keyFile != "" || s.tlsConfig != nil {
 		log.Printf("starting https server on port[%v] with certFile[%v] keyFile[%v]", s.port, s.certFile, s.keyFile)
 		return s.server.ListenAndServeTLS(s.certFile, s.keyFile)
 	}

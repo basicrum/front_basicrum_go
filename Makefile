@@ -49,8 +49,9 @@ docker-unit-test:
 
 .PHONY: docker-clean-test
 docker-clean-test: 
-	docker-compose -f docker-compose.test.yaml down --volumes --remove-orphans
-	docker-compose -f docker-compose.test-noprefix.yaml down --volumes --remove-orphans
+	docker-compose -f docker-compose.test.yaml down --remove-orphans
+	docker-compose -f docker-compose.test-noprefix.yaml down --remove-orphans
+	docker-compose -f docker-compose.test-letsencrypt.yaml down --remove-orphans
 
 .PHONY: _docker-integration-test
 _docker-integration-test:
@@ -63,8 +64,15 @@ docker-integration-test: _docker-integration-test docker-clean-test
 _docker-integration-test-noprefix:
 	docker-compose -f docker-compose.test-noprefix.yaml up --build --exit-code-from integration_test2 integration_test2
 
+.PHONY: _docker-integration-test-letsencrypt
+_docker-integration-test-letsencrypt:
+	docker-compose -f docker-compose.test-letsencrypt.yaml up --build --exit-code-from integration_test integration_test
+
 .PHONY: docker-integration-test-noprefix
 docker-integration-test-noprefix: _docker-integration-test-noprefix docker-clean-test
+
+.PHONY: docker-integration-test-letsencrypt
+docker-integration-test-letsencrypt: _docker-integration-test-letsencrypt docker-clean-test
 
 .PHONY: docker-hub
 docker-hub:
