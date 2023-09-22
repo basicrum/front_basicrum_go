@@ -1,7 +1,6 @@
 package backup
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -42,7 +41,7 @@ func archiveHost(backupRootDir, host string, day time.Time, factory CompressionW
 		return err
 	}
 
-	err = writeHourlySummary(backupRootDir, host, day, daySummary.linesPerHour)
+	err = writeHourlySummary(backupRootDir, host, day, daySummary.summary)
 	if err != nil {
 		return err
 	}
@@ -51,30 +50,50 @@ func archiveHost(backupRootDir, host string, day time.Time, factory CompressionW
 }
 
 type daySummary struct {
-	dayContent   string
-	linesPerHour map[int]int
+	dayContent string
+	summary    string
 }
 
 func collectHours(datePath string, day time.Time) (*daySummary, error) {
 	var dayContent string
-	linesPerHour := map[int]int{}
+	var summary string
+	total := 0
 	for hour := 0; hour < 24; hour++ {
-		hourPath := makeHourPath(datePath, dayWithHour(day, hour))
-		fileContent, err := readAll(hourPath)
-		if os.IsNotExist(err) {
+		lines, err := readFileByHour(datePath, dayWithHour(day, hour))
+		if err != nil {
+			return nil, err
+		}
+		if lines == "" {
 			continue
 		}
-		if err != nil {
-			return nil, fmt.Errorf("error read file[%v] err[%w]", hourPath, err)
-		}
-		lines := string(fileContent)
+
 		dayContent += lines
-		linesPerHour[hour] = len(strings.Split(lines, "\n")) - 1
+
+		linesCount := countLines(lines)
+		summary += fmt.Sprintf("%v,%v,%v\n", hour, total+1, total+linesCount)
+		total += linesCount
 	}
 	return &daySummary{
-		dayContent:   dayContent,
-		linesPerHour: linesPerHour,
+		dayContent: dayContent,
+		summary:    summary,
 	}, nil
+}
+
+func countLines(lines string) int {
+	linesCount := len(strings.Split(lines, "\n")) - 1
+	return linesCount
+}
+
+func readFileByHour(datePath string, hour time.Time) (string, error) {
+	hourPath := makeHourPath(datePath, hour)
+	fileContent, err := readAll(hourPath)
+	if os.IsNotExist(err) {
+		return "", nil
+	}
+	if err != nil {
+		return "", fmt.Errorf("error read file[%v] err[%w]", hourPath, err)
+	}
+	return string(fileContent), nil
 }
 
 func validateDirExist(datePath string) error {
@@ -101,14 +120,9 @@ func writeDayFile(backupRootDir string, host string, day time.Time, dayContent s
 	return nil
 }
 
-func writeHourlySummary(backupRootDir string, host string, day time.Time, linesPerHour any) error {
-	hourMeta, err := json.Marshal(linesPerHour)
-	if err != nil {
-		return err
-	}
-
+func writeHourlySummary(backupRootDir string, host string, day time.Time, summary string) error {
 	archiveDayMetaPath := makeArchiveDayMetaPath(backupRootDir, host, day)
-	if err := writeToFile(archiveDayMetaPath, string(hourMeta), newNoneFactory()); err != nil {
+	if err := writeToFile(archiveDayMetaPath, summary, newNoneFactory()); err != nil {
 		return fmt.Errorf("cannot write to file[%v] err[%w]", archiveDayMetaPath, err)
 	}
 	return nil

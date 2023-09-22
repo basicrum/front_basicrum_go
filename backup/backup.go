@@ -177,7 +177,7 @@ func makeArchiveDayPath(backupRootDir, host string, now time.Time) string {
 }
 
 func makeArchiveDayMetaPath(backupRootDir, host string, now time.Time) string {
-	return filepath.Join(backupRootDir, host, dateUTC(now)+".meta.lines")
+	return filepath.Join(backupRootDir, host, dateUTC(now)+"-parts-meta.txt")
 }
 
 func makeHourPath(parent string, now time.Time) string {
