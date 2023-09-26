@@ -10,9 +10,10 @@ func New(
 	enabled bool,
 	backupInterval time.Duration,
 	directory string,
-) IBackup {
+	compressionFactory CompressionWriterFactory,
+) (IBackup, error) {
 	if !enabled {
-		return NewNullBackup()
+		return NewNullBackup(), nil
 	}
-	return NewFileBackup(backupInterval, directory)
+	return NewFileBackup(backupInterval, directory, compressionFactory)
 }

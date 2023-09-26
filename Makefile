@@ -39,6 +39,10 @@ destroy: ## Destroys thel environment
 jump_clickhouse_server: ## Jump to the clickhouse_server container
 	docker-compose -f ${dc_path} exec ${dev_clickhouse_server_container} bash
 
+.PHONY: lint/install
+lint/install:
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.54.2 
+
 .PHONY: lint
 lint: 
 	golangci-lint run

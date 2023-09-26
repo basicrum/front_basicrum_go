@@ -38,8 +38,10 @@ type StartupConfig struct {
 		TableStrategy    string `envconfig:"BRUM_PERSISTANCE_TABLE_STRATEGY"`
 	}
 	Backup struct {
-		Enabled         bool   `envconfig:"BRUM_BACKUP_ENABLED"`
-		Directory       string `envconfig:"BRUM_BACKUP_DIRECTORY"`
-		IntervalSeconds uint32 `envconfig:"BRUM_BACKUP_INTERVAL_SECONDS"`
+		Enabled          bool   `envconfig:"BRUM_BACKUP_ENABLED"`
+		Directory        string `envconfig:"BRUM_BACKUP_DIRECTORY"`
+		IntervalSeconds  uint32 `envconfig:"BRUM_BACKUP_INTERVAL_SECONDS"`
+		CompressionType  string `envconfig:"BRUM_COMPRESSION_TYPE" default:"GZIP"`
+		CompressionLevel string `envconfig:"BRUM_COMPRESSION_LEVEL"`
 	}
 }

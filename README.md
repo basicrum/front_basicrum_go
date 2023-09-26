@@ -60,6 +60,12 @@ BRUM_BACKUP_ENABLED=true
 BRUM_BACKUP_DIRECTORY=""
 ## optional
 BRUM_BACKUP_INTERVAL_SECONDS=0
+## optional. required if BACKUP_ENABLED=true
+## default GZIP values(GZIP, Zstandard)
+BRUM_COMPRESSION_TYPE=GZIP
+## optional. required if BACKUP_ENABLED=true
+## default Default values(No, BestSpeed, Default, BestCompression, HuffmanOnly - GZIP specific)
+BRUM_COMPRESSION_LEVEL=Default
 ```
 
 **2.1.1** If you want to use SSL with custom files
