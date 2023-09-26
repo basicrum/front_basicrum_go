@@ -17,7 +17,7 @@ func newZStdFactory(level CompressionLevel) zstdFactory {
 }
 
 // Create returns a compression writer
-func (f zstdFactory) Create(w io.WriteCloser) (io.WriteCloser, error) {
+func (f zstdFactory) Create(w io.Writer) (io.WriteCloser, error) {
 	return zstd.NewWriter(w, zstd.WithEncoderLevel(f.makeLevel()))
 }
 
@@ -36,4 +36,9 @@ func (f zstdFactory) makeLevel() zstd.EncoderLevel {
 	default:
 		return zstd.SpeedDefault
 	}
+}
+
+// Filename returns the new filename based on the compression
+func (zstdFactory) Filename(originalFilename string) string {
+	return originalFilename + ".zst"
 }

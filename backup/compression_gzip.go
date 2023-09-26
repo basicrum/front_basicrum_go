@@ -16,7 +16,7 @@ func newGZIPFactory(level CompressionLevel) gzipFactory {
 }
 
 // Create returns a compression writer
-func (f gzipFactory) Create(fw io.WriteCloser) (io.WriteCloser, error) {
+func (f gzipFactory) Create(fw io.Writer) (io.WriteCloser, error) {
 	return gzip.NewWriterLevel(fw, f.makeLevel())
 }
 
@@ -35,4 +35,9 @@ func (f gzipFactory) makeLevel() int {
 	default:
 		return gzip.DefaultCompression
 	}
+}
+
+// Filename returns the new filename based on the compression
+func (gzipFactory) Filename(originalFilename string) string {
+	return originalFilename + ".gz"
 }

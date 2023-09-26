@@ -86,7 +86,12 @@ func readAll(
 		return nil, err
 	}
 	defer sourceFile.Close()
-	return io.ReadAll(sourceFile)
+	reader, err := newReadCloser(filePath, sourceFile)
+	if err != nil {
+		return nil, err
+	}
+	defer reader.Close()
+	return io.ReadAll(reader)
 }
 
 // nolint: revive

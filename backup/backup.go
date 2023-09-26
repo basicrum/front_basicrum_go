@@ -100,31 +100,24 @@ func appendToFile(filename string, lines string) error {
 }
 
 func writeToFile(filename string, lines string, factory CompressionWriterFactory) error {
-	f, err := openFile(filename)
+	f, err := openFile(factory.Filename(filename))
 	if err != nil {
 		return err
 	}
-	go func() {
-		if err := f.Close(); err != nil {
-			log.Print(err)
-		}
-	}()
+	defer closeWriter(f)
 	compressionWriter, err := factory.Create(f)
 	if err != nil {
 		return err
 	}
-	go func() {
-		if err := compressionWriter.Close(); err != nil {
-			log.Print(err)
-		}
-	}()
-
-	return writeString(compressionWriter, lines)
+	_, err = compressionWriter.Write([]byte(lines))
+	closeWriter(compressionWriter)
+	return err
 }
 
-func writeString(f io.Writer, s string) error {
-	_, err := f.Write([]byte(s))
-	return err
+func closeWriter(f io.Closer) {
+	if err := f.Close(); err != nil {
+		log.Print(err)
+	}
 }
 
 func openOrCreateFileForAppend(filename string) *os.File {

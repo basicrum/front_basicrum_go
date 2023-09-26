@@ -8,6 +8,8 @@ import (
 type Compression string
 
 const (
+	// NoneCompression no compression
+	NoneCompression Compression = "NONE"
 	// GZIPCompression gzip
 	GZIPCompression Compression = "GZIP"
 	// ZStandardCompression Zstandard
@@ -33,7 +35,9 @@ const (
 // CompressionWriterFactory is factory for compression writer
 type CompressionWriterFactory interface {
 	// Create returns a compression writer
-	Create(io.WriteCloser) (io.WriteCloser, error)
+	Create(io.Writer) (io.WriteCloser, error)
+	// Filename returns the new filename based on the compression
+	Filename(originalFilename string) string
 }
 
 // NewCompressionWriterFactory constructor of CompressionWriterFactory
@@ -51,6 +55,8 @@ func NewCompressionWriterFactory(
 		return newGZIPFactory(level)
 	case ZStandardCompression:
 		return newZStdFactory(level)
+	case NoneCompression:
+		return newNoneFactory()
 	default:
 		return newNoneFactory()
 	}

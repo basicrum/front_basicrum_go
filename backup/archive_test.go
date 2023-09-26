@@ -11,22 +11,36 @@ import (
 )
 
 func Test_archiveDay(t *testing.T) {
+	testDay := day(2023, 9, 20)
 	tests := []struct {
-		name string
-		day  time.Time
+		name        string
+		day         time.Time
+		compression Compression
 	}{
 		{
-			name: "test1",
-			day:  day(2023, 9, 20),
+			name:        "none1",
+			day:         testDay,
+			compression: NoneCompression,
+		},
+		{
+			name:        "gzip1",
+			day:         testDay,
+			compression: GZIPCompression,
+		},
+		{
+			name:        "zstd1",
+			day:         testDay,
+			compression: ZStandardCompression,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// given
-			tempDir := copySourceToTempDir(t, tt)
+			tempDir := copySourceToTempDir(t, tt.name)
+			factory := NewCompressionWriterFactory(true, tt.compression, DefaultCompressionLevel)
 
 			// when
-			err := archiveDay(tempDir, tt.day, newNoneFactory())
+			err := archiveDay(tempDir, tt.day, factory)
 			require.NoError(t, err)
 
 			// then
@@ -36,13 +50,10 @@ func Test_archiveDay(t *testing.T) {
 	}
 }
 
-func copySourceToTempDir(t *testing.T, tt struct {
-	name string
-	day  time.Time
-}) string {
+func copySourceToTempDir(t *testing.T, name string) string {
 	tempDir, err := os.MkdirTemp("", "")
 	require.NoError(t, err)
-	backupRootDir := path.Join(testhelper.GetProjectRoot(), "testdata", tt.name, "source")
+	backupRootDir := path.Join(testhelper.GetProjectRoot(), "testdata", name, "source")
 	err = testhelper.CopyDir(backupRootDir, tempDir)
 	require.NoError(t, err)
 	return tempDir

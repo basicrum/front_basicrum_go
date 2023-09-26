@@ -12,6 +12,20 @@ func newNoneFactory() noneFactory {
 }
 
 // Create returns a compression writer
-func (noneFactory) Create(w io.WriteCloser) (io.WriteCloser, error) {
-	return w, nil
+func (noneFactory) Create(w io.Writer) (io.WriteCloser, error) {
+	return writerWrapper{w}, nil
+}
+
+// Filename returns the new filename based on the compression
+func (noneFactory) Filename(originalFilename string) string {
+	return originalFilename
+}
+
+type writerWrapper struct {
+	io.Writer
+}
+
+// Close implements the closer interface
+func (writerWrapper) Close() error {
+	return nil
 }
