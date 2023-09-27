@@ -3,6 +3,7 @@ package dao
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -18,11 +19,13 @@ import (
 	"github.com/uptrace/go-clickhouse/chdebug"
 	"github.com/uptrace/go-clickhouse/chmigrate"
 
+	"github.com/basicrum/front_basicrum_go/beacon"
 	"github.com/basicrum/front_basicrum_go/templatemigrations"
 )
 
 const (
 	baseTableName          = "webperf_rum_events"
+	baseHostsTableName     = "webperf_rum_hostnames"
 	tablePrefixPlaceholder = "{prefix}"
 	bufferSize             = 1024
 )
@@ -66,6 +69,11 @@ func New(s server, a auth, opts *opts) (*DAO, error) {
 	}, nil
 }
 
+// Close the clickhouse connection
+func (p *DAO) Close() error {
+	return p.conn.Close()
+}
+
 // Save stores data into table in clickhouse database
 func (p *DAO) Save(data string) error {
 	if data == "" {
@@ -77,6 +85,25 @@ func (p *DAO) Save(data string) error {
 		data,
 	)
 	err := p.conn.AsyncInsert(context.Background(), query, false)
+	if err != nil {
+		return fmt.Errorf("clickhouse insert failed: %w", err)
+	}
+	return nil
+}
+
+// SaveHost stores hostname data into table in clickhouse database
+func (p *DAO) SaveHost(event beacon.HostnameEvent) error {
+	data, err := json.Marshal(event)
+	if err != nil {
+		return err
+	}
+	query := fmt.Sprintf(
+		"INSERT INTO %s%s SETTINGS input_format_skip_unknown_fields = true FORMAT JSONEachRow %s",
+		p.prefix,
+		baseHostsTableName,
+		data,
+	)
+	err = p.conn.AsyncInsert(context.Background(), query, false)
 	if err != nil {
 		return fmt.Errorf("clickhouse insert failed: %w", err)
 	}

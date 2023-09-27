@@ -47,6 +47,58 @@ lint/install:
 lint: 
 	golangci-lint run
 
+.PHONY: test
+test:
+	BRUM_SERVER_HOST=localhost \
+	BRUM_SERVER_PORT=8087 \
+	BRUM_DATABASE_HOST=localhost \
+	BRUM_DATABASE_PORT=9000 \
+	BRUM_DATABASE_NAME=default \
+	BRUM_DATABASE_USERNAME=default \
+	BRUM_DATABASE_PASSWORD= \
+	BRUM_DATABASE_TABLE_PREFIX=integration_test_ \
+	BRUM_PERSISTANCE_DATABASE_STRATEGY=all_in_one_db \
+	BRUM_PERSISTANCE_TABLE_STRATEGY=all_in_one_table \
+	BRUM_BACKUP_ENABLED=false \
+	BRUM_BACKUP_DIRECTORY=/home/basicrum_archive \
+	BRUM_BACKUP_INTERVAL_SECONDS=5 \
+	go test --short ./... 
+
+.PHONY: integration
+integration:
+	SKIP_E2E=true \
+	BRUM_SERVER_HOST=localhost \
+	BRUM_SERVER_PORT=8087 \
+	BRUM_DATABASE_HOST=localhost \
+	BRUM_DATABASE_PORT=9000 \
+	BRUM_DATABASE_NAME=default \
+	BRUM_DATABASE_USERNAME=default \
+	BRUM_DATABASE_PASSWORD= \
+	BRUM_DATABASE_TABLE_PREFIX=integration_test_ \
+	BRUM_PERSISTANCE_DATABASE_STRATEGY=all_in_one_db \
+	BRUM_PERSISTANCE_TABLE_STRATEGY=all_in_one_table \
+	BRUM_BACKUP_ENABLED=false \
+	BRUM_BACKUP_DIRECTORY=/home/basicrum_archive \
+	BRUM_BACKUP_INTERVAL_SECONDS=5 \
+	go test ./...
+
+.PHONY: e2e
+e2e:
+	BRUM_SERVER_HOST=localhost \
+	BRUM_SERVER_PORT=8087 \
+	BRUM_DATABASE_HOST=localhost \
+	BRUM_DATABASE_PORT=9000 \
+	BRUM_DATABASE_NAME=default \
+	BRUM_DATABASE_USERNAME=default \
+	BRUM_DATABASE_PASSWORD= \
+	BRUM_DATABASE_TABLE_PREFIX=integration_test_ \
+	BRUM_PERSISTANCE_DATABASE_STRATEGY=all_in_one_db \
+	BRUM_PERSISTANCE_TABLE_STRATEGY=all_in_one_table \
+	BRUM_BACKUP_ENABLED=false \
+	BRUM_BACKUP_DIRECTORY=/home/basicrum_archive \
+	BRUM_BACKUP_INTERVAL_SECONDS=5 \
+	go test ./...
+	
 .PHONY: docker-unit-test
 docker-unit-test:
 	docker-compose -f docker-compose.test.yaml up --exit-code-from unit_test unit_test

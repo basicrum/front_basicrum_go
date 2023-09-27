@@ -48,6 +48,12 @@ func (s *e2eTestSuite) SetupTest() {
 }
 
 func TestE2ETestSuite(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test")
+	}
+	if os.Getenv("SKIP_E2E") == "true" {
+		t.Skip("skipping e2e test")
+	}
 	suite.Run(t, &e2eTestSuite{})
 }
 
