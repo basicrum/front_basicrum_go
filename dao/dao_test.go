@@ -29,6 +29,7 @@ func TestDaoTestSuite(t *testing.T) {
 }
 
 func (s *daoTestSuite) SetupTest() {
+	config.SetTestDefaultConfig()
 	sConf, err := config.GetStartupConfig()
 	s.NoError(err)
 
@@ -51,7 +52,9 @@ func (s *daoTestSuite) deleteAll() {
 }
 
 func (s *daoTestSuite) TearDownTest() {
-	_ = s.dao.Close()
+	if s.dao != nil {
+		_ = s.dao.Close()
+	}
 }
 
 func (s *daoTestSuite) Test_SaveHost() {
