@@ -8,7 +8,6 @@ import (
 // SetTestDefaultConfig sets default test configuration
 func SetTestDefaultConfig() {
 	vars := map[string]string{
-		"SKIP_E2E":                           "true",
 		"BRUM_SERVER_HOST":                   "localhost",
 		"BRUM_SERVER_PORT":                   "8087",
 		"BRUM_DATABASE_HOST":                 "localhost",
