@@ -18,7 +18,7 @@ func SetTestDefaultConfig() {
 		"BRUM_DATABASE_PASSWORD":             "",
 		"BRUM_DATABASE_TABLE_PREFIX":         "local_test_",
 		"BRUM_PERSISTANCE_DATABASE_STRATEGY": "all_in_one_db",
-		"BRUM_PERSISTANCE_TABLE_STRATEGY":    "ll_in_one_table",
+		"BRUM_PERSISTANCE_TABLE_STRATEGY":    "all_in_one_table",
 		"BRUM_BACKUP_ENABLED":                "false",
 		"BRUM_BACKUP_DIRECTORY":              "/home/basicrum_archive",
 		"BRUM_BACKUP_INTERVAL_SECONDS":       "5",
