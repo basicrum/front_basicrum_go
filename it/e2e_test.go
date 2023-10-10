@@ -1,4 +1,4 @@
-package it_test
+package it
 
 import (
 	"crypto/tls"
@@ -13,15 +13,16 @@ import (
 	"time"
 
 	"github.com/basicrum/front_basicrum_go/config"
-	"github.com/basicrum/front_basicrum_go/it"
 	"github.com/stretchr/testify/suite"
 )
 
 // Inspired by https://www.gojek.io/blog/golang-integration-testing-made-easy
 type e2eTestSuite struct {
 	suite.Suite
-	p     *it.Persistence
-	sConf *config.StartupConfig
+	p        *Persistence
+	sConf    *config.StartupConfig
+	oldStyle *oldStyleBeaconSender
+	newStyle *newStyleBeaconSender
 }
 
 func (s *e2eTestSuite) SetupTest() {
@@ -30,12 +31,23 @@ func (s *e2eTestSuite) SetupTest() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	host := os.Getenv("BRUM_SERVER_HOST")
 	sConf := s.sConf
-
-	s.p, err = it.New(
-		it.Server(sConf.Database.Host, sConf.Database.Port, sConf.Database.DatabaseName, sConf.Database.TablePrefix),
-		it.Auth(sConf.Database.Username, sConf.Database.Password),
-		it.Opts(sConf.Database.TablePrefix),
+	client := NewHttpClient()
+	s.oldStyle = newOldStyleBeaconSender(
+		client,
+		host,
+		sConf.Server.Port,
+	)
+	s.newStyle = newNewStyleBeaconSender(
+		client,
+		host,
+		sConf.Server.Port,
+	)
+	s.p, err = New(
+		Server(sConf.Database.Host, sConf.Database.Port, sConf.Database.DatabaseName, sConf.Database.TablePrefix),
+		Auth(sConf.Database.Username, sConf.Database.Password),
+		Opts(sConf.Database.TablePrefix),
 	)
 	if err != nil {
 		log.Fatalf("ERROR: %+v", err)
@@ -80,7 +92,8 @@ func TestE2ETestSuite(t *testing.T) {
 // }
 
 func (s *e2eTestSuite) Test_EndToEnd_CountRecords() {
-	it.SendBeacons("./data/old_style/*.json", "./data/new_style/*.json.lines")
+	s.oldStyle.Send("./data/old_style/*.json")
+	s.newStyle.Send("./data/new_style/*.json.lines")
 	time.Sleep(2 * time.Second)
 
 	var cntExpect uint64 = 25
@@ -88,7 +101,7 @@ func (s *e2eTestSuite) Test_EndToEnd_CountRecords() {
 }
 
 func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsPersisted() {
-	it.SendBeacons("", "./data/misc/all-fields.json.lines")
+	s.newStyle.Send("./data/misc/all-fields.json.lines")
 	time.Sleep(2 * time.Second)
 
 	var cntExpect uint64 = 1
@@ -115,7 +128,7 @@ func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsPersisted() {
 }
 
 func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsEmpty() {
-	it.SendBeacons("", "./data/misc/empty-fields.json.lines")
+	s.newStyle.Send("./data/misc/empty-fields.json.lines")
 	time.Sleep(2 * time.Second)
 
 	var cntExpect uint64 = 1
@@ -139,7 +152,7 @@ func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsEmpty() {
 }
 
 func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsMissing() {
-	it.SendBeacons("", "./data/misc/missing-fields.json.lines")
+	s.newStyle.Send("./data/misc/missing-fields.json.lines")
 	time.Sleep(2 * time.Second)
 
 	var cntExpect uint64 = 1
