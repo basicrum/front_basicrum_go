@@ -1,12 +1,10 @@
 package it
 
 import (
-	"crypto/tls"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
-	"net/http/cookiejar"
 	"os"
 	"strings"
 	"testing"
@@ -176,20 +174,7 @@ func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsMissing() {
 }
 
 func (s *e2eTestSuite) Test_EndToEnd_HealthCheck() {
-	cookieJar, _ := cookiejar.New(nil)
-	tr := &http.Transport{
-		TLSClientConfig:    &tls.Config{InsecureSkipVerify: true},
-		MaxIdleConns:       100,
-		IdleConnTimeout:    10 * time.Second,
-		DisableCompression: true,
-	}
-
-	client := &http.Client{Transport: tr,
-		Jar: cookieJar,
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			return http.ErrUseLastResponse
-		}}
-
+	client := NewHttpClient()
 	host := os.Getenv("BRUM_SERVER_HOST")
 	if host == "" {
 		host = "localhost"
@@ -197,7 +182,6 @@ func (s *e2eTestSuite) Test_EndToEnd_HealthCheck() {
 	req, _ := http.NewRequest("GET", fmt.Sprintf("http://%v:%v/health", host, s.sConf.Server.Port), strings.NewReader(""))
 
 	resp, err := client.Do(req)
-
 	if err != nil {
 		log.Println("Client err")
 		log.Printf("%s", err)
