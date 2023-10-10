@@ -1,14 +1,12 @@
 package it
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
-	"os"
 	"path/filepath"
 	"strings"
 )
@@ -57,32 +55,6 @@ func (b *newStyleBeaconSender) readFiles(path string) ([]url.Values, error) {
 			return nil, err
 		}
 		result = append(result, items...)
-	}
-	return result, nil
-}
-
-func scanFile(fileName string) ([]url.Values, error) {
-	file, err := os.Open(fileName)
-	if err != nil {
-		return nil, fmt.Errorf("unable to read file[%v]: %w", fileName, err)
-	}
-
-	defer file.Close()
-	var row map[string]string
-	scanner := bufio.NewScanner(file)
-
-	var result []url.Values
-	for scanner.Scan() {
-		err = json.Unmarshal([]byte(scanner.Text()), &row)
-		if err != nil {
-			return nil, fmt.Errorf("unable to parse json[%s]: %w", []byte(scanner.Text()), err)
-		}
-		beaconData := row
-		result = append(result, makeUrlValues(beaconData))
-	}
-
-	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("unable to scan file[%v]: %w", fileName, err)
 	}
 	return result, nil
 }
