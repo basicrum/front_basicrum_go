@@ -1,11 +1,13 @@
 package it
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -51,13 +53,83 @@ func (b *oldStyleBeaconSender) readFiles(path string) ([]url.Values, error) {
 
 	result := []url.Values{}
 	for _, file := range files {
-		items, err := processFile(file)
+		items, err := b.processFile(file)
 		if err != nil {
 			return nil, err
 		}
 		result = append(result, items...)
 	}
 	return result, nil
+}
+
+func (b *oldStyleBeaconSender) processFile(file string) ([]url.Values, error) {
+	content, err := os.ReadFile(file)
+	if err != nil {
+		return nil, fmt.Errorf("unable to read file[%v]: %w", file, err)
+	}
+
+	var rows []map[string]any
+	err = json.Unmarshal(content, &rows)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse json[%s]: %w", content, err)
+	}
+	var result []url.Values
+	for i, row := range rows {
+		beaconData, ok := row["beacon_data"].(string)
+		if !ok {
+			return nil, fmt.Errorf("unable to parse beacon data[%s], file: %s, line: %d, %w", row["beacon_data"], file, i+1, err)
+		}
+		var beaconDataMap map[string]string
+		err = json.Unmarshal([]byte(beaconData), &beaconDataMap)
+
+		if err != nil {
+			log.Printf("Bad beacon_data in file: %v", err)
+			continue
+		}
+
+		result = append(result, b.makeUrlValues(beaconDataMap))
+	}
+	return result, nil
+}
+
+func (b *oldStyleBeaconSender) makeUrlValues(beaconDataMap map[string]string) url.Values {
+	result := url.Values{}
+	for k, v := range beaconDataMap {
+		result.Set(b.mapKey(k), v)
+	}
+	return result
+}
+
+func (b *oldStyleBeaconSender) mapKey(value string) string {
+	keyPrefix := b.extractBeaconPrefix(value)
+
+	if keyPrefix == "nt_" {
+		return value
+	}
+
+	switch value {
+	case "created_at":
+		return value
+	case "t_resp":
+		return value
+	case "t_done":
+		return value
+	case "t_page":
+		return value
+	case "t_other":
+		return value
+	default:
+		return strings.ReplaceAll(value, "_", ".")
+	}
+}
+
+func (b *oldStyleBeaconSender) extractBeaconPrefix(value string) string {
+	bKey := value
+	if len(bKey) > 3 {
+		return value[0:3]
+	}
+
+	return value
 }
 
 func (b *oldStyleBeaconSender) httpPost(params url.Values) error {
