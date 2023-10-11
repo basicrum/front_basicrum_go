@@ -17,10 +17,9 @@ import (
 // Inspired by https://www.gojek.io/blog/golang-integration-testing-made-easy
 type e2eTestSuite struct {
 	suite.Suite
-	p        *Persistence
-	sConf    *config.StartupConfig
-	oldStyle *oldStyleBeaconSender
-	newStyle *newStyleBeaconSender
+	p            *Persistence
+	sConf        *config.StartupConfig
+	beaconSender *BeaconSender
 }
 
 func (s *e2eTestSuite) SetupTest() {
@@ -32,12 +31,7 @@ func (s *e2eTestSuite) SetupTest() {
 	host := os.Getenv("BRUM_SERVER_HOST")
 	sConf := s.sConf
 	client := NewHttpClient()
-	s.oldStyle = newOldStyleBeaconSender(
-		client,
-		host,
-		sConf.Server.Port,
-	)
-	s.newStyle = newNewStyleBeaconSender(
+	s.beaconSender = newBeaconSender(
 		client,
 		host,
 		sConf.Server.Port,
@@ -90,16 +84,15 @@ func TestE2ETestSuite(t *testing.T) {
 // }
 
 func (s *e2eTestSuite) Test_EndToEnd_CountRecords() {
-	s.oldStyle.Send("./data/old_style/*.json")
-	s.newStyle.Send("./data/new_style/*.json.lines")
+	s.beaconSender.Send("./data/beacon/*.json.lines")
 	time.Sleep(2 * time.Second)
 
-	var cntExpect uint64 = 25
+	var cntExpect uint64 = 11
 	s.Assert().Exactly(cntExpect, s.p.CountRecords(""))
 }
 
 func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsPersisted() {
-	s.newStyle.Send("./data/misc/all-fields.json.lines")
+	s.beaconSender.Send("./data/misc/all-fields.json.lines")
 	time.Sleep(2 * time.Second)
 
 	var cntExpect uint64 = 1
@@ -126,7 +119,7 @@ func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsPersisted() {
 }
 
 func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsEmpty() {
-	s.newStyle.Send("./data/misc/empty-fields.json.lines")
+	s.beaconSender.Send("./data/misc/empty-fields.json.lines")
 	time.Sleep(2 * time.Second)
 
 	var cntExpect uint64 = 1
@@ -150,7 +143,7 @@ func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsEmpty() {
 }
 
 func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsMissing() {
-	s.newStyle.Send("./data/misc/missing-fields.json.lines")
+	s.beaconSender.Send("./data/misc/missing-fields.json.lines")
 	time.Sleep(2 * time.Second)
 
 	var cntExpect uint64 = 1

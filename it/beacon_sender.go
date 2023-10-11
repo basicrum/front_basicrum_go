@@ -13,25 +13,25 @@ import (
 	"strings"
 )
 
-type newStyleBeaconSender struct {
+type BeaconSender struct {
 	client *http.Client
 	host   string
 	port   string
 }
 
-func newNewStyleBeaconSender(
+func newBeaconSender(
 	client *http.Client,
 	host string,
 	port string,
-) *newStyleBeaconSender {
-	return &newStyleBeaconSender{
+) *BeaconSender {
+	return &BeaconSender{
 		client: client,
 		host:   host,
 		port:   port,
 	}
 }
 
-func (b *newStyleBeaconSender) Send(path string) {
+func (b *BeaconSender) Send(path string) {
 	requests, err := b.readFiles(path)
 	if err != nil {
 		log.Fatalf("Fatal error: %v", err)
@@ -44,7 +44,7 @@ func (b *newStyleBeaconSender) Send(path string) {
 	}
 }
 
-func (b *newStyleBeaconSender) readFiles(path string) ([]url.Values, error) {
+func (b *BeaconSender) readFiles(path string) ([]url.Values, error) {
 	files, err := filepath.Glob(path)
 	if err != nil {
 		return nil, err
@@ -61,7 +61,7 @@ func (b *newStyleBeaconSender) readFiles(path string) ([]url.Values, error) {
 	return result, nil
 }
 
-func (b *newStyleBeaconSender) scanFile(fileName string) ([]url.Values, error) {
+func (b *BeaconSender) scanFile(fileName string) ([]url.Values, error) {
 	file, err := os.Open(fileName)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read file[%v]: %w", fileName, err)
@@ -87,7 +87,7 @@ func (b *newStyleBeaconSender) scanFile(fileName string) ([]url.Values, error) {
 	return result, nil
 }
 
-func (b *newStyleBeaconSender) makeUrlValues(beaconDataMap map[string]string) url.Values {
+func (b *BeaconSender) makeUrlValues(beaconDataMap map[string]string) url.Values {
 	result := url.Values{}
 	for k, v := range beaconDataMap {
 		result.Set(k, v)
@@ -95,7 +95,7 @@ func (b *newStyleBeaconSender) makeUrlValues(beaconDataMap map[string]string) ur
 	return result
 }
 
-func (b *newStyleBeaconSender) httpPost(params url.Values) error {
+func (b *BeaconSender) httpPost(params url.Values) error {
 	headers, err := b.parseHeaders(params)
 	if err != nil {
 		return fmt.Errorf("parse headers error: %w", err)
@@ -134,7 +134,7 @@ func (b *newStyleBeaconSender) httpPost(params url.Values) error {
 	return nil
 }
 
-func (b *newStyleBeaconSender) parseHeaders(params url.Values) (map[string][]string, error) {
+func (b *BeaconSender) parseHeaders(params url.Values) (map[string][]string, error) {
 	var headers map[string][]string
 
 	err := json.Unmarshal([]byte(params.Get("request_headers")), &headers)
@@ -145,12 +145,12 @@ func (b *newStyleBeaconSender) parseHeaders(params url.Values) (map[string][]str
 	return headers, nil
 }
 
-func (b *newStyleBeaconSender) makeCountryCode(headers map[string][]string) string {
+func (b *BeaconSender) makeCountryCode(headers map[string][]string) string {
 	countryCode := headers["Cf-Ipcountry"][0]
 	return countryCode
 }
 
-func (b *newStyleBeaconSender) makeCityName(headers map[string][]string) string {
+func (b *BeaconSender) makeCityName(headers map[string][]string) string {
 	countryCode := headers["Cf-Ipcity"][0]
 	return countryCode
 }
