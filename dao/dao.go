@@ -11,7 +11,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 
@@ -33,6 +32,7 @@ const (
 // DAO is data access object for clickhouse database
 type DAO struct {
 	conn               clickhouse.Conn
+	opts               opts
 	table              string
 	migrateDatabaseURL string
 	prefix             string
@@ -40,33 +40,26 @@ type DAO struct {
 
 // New creates persistance service
 // nolint: revive
-func New(s server, a auth, opts *opts) (*DAO, error) {
-	conn, err := clickhouse.Open(&clickhouse.Options{
-		Addr: []string{s.addr()},
-		Auth: clickhouse.Auth{
-			Database: s.db,
-			Username: a.user,
-			Password: a.pwd,
-		},
-		Debug:           false,
-		ConnMaxLifetime: time.Hour,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("clickhouse connection failed: %w", err)
-	}
-	migrateDatabaseURL := fmt.Sprintf("clickhouse://%v:%v@%v/%v?sslmode=disable",
+func New(conn clickhouse.Conn, url string, opts *opts) (*DAO, error) {
+	return &DAO{
+		conn:               conn,
+		table:              fullTableName(opts),
+		migrateDatabaseURL: url,
+		prefix:             opts.prefix,
+	}, nil
+}
+
+func fullTableName(opts *opts) string {
+	return opts.prefix + baseTableName
+}
+
+func MigrateDBURL(s server, a auth) string {
+	return fmt.Sprintf("clickhouse://%v:%v@%v/%v?sslmode=disable",
 		a.user,
 		a.pwd,
 		s.addr(),
 		s.db,
 	)
-	table := opts.prefix + baseTableName
-	return &DAO{
-		conn:               conn,
-		table:              table,
-		migrateDatabaseURL: migrateDatabaseURL,
-		prefix:             opts.prefix,
-	}, nil
 }
 
 // Close the clickhouse connection

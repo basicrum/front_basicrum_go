@@ -37,9 +37,25 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	daoServer := dao.Server(sConf.Database.Host, sConf.Database.Port, sConf.Database.DatabaseName)
+	daoAuth := dao.Auth(sConf.Database.Username, sConf.Database.Password)
+
+	conn, err := dao.NewConnection(
+		daoServer,
+		daoAuth,
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	url := dao.MigrateDBURL(
+		daoServer,
+		daoAuth,
+	)
 	daoService, err := dao.New(
-		dao.Server(sConf.Database.Host, sConf.Database.Port, sConf.Database.DatabaseName),
-		dao.Auth(sConf.Database.Username, sConf.Database.Password),
+		conn,
+		url,
 		dao.Opts(sConf.Database.TablePrefix),
 	)
 	if err != nil {

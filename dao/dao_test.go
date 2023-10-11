@@ -32,9 +32,23 @@ func (s *daoTestSuite) SetupTest() {
 	sConf, err := config.GetStartupConfig()
 	s.NoError(err)
 
+	daoServer := Server(sConf.Database.Host, sConf.Database.Port, sConf.Database.DatabaseName)
+	daoAuth := Auth(sConf.Database.Username, sConf.Database.Password)
+
+	conn, err := NewConnection(
+		daoServer,
+		daoAuth,
+	)
+	s.Assert().NoError(err)
+
+	url := MigrateDBURL(
+		daoServer,
+		daoAuth,
+	)
+
 	s.dao, err = New(
-		Server(sConf.Database.Host, sConf.Database.Port, sConf.Database.DatabaseName),
-		Auth(sConf.Database.Username, sConf.Database.Password),
+		conn,
+		url,
 		Opts(sConf.Database.TablePrefix),
 	)
 	s.NoError(err)
