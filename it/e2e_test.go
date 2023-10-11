@@ -32,9 +32,7 @@ func (s *e2eTestSuite) SetupTest() {
 		sConf.Server.Port,
 	)
 	s.beaconSender = newBeaconSender(
-		client,
-		host,
-		sConf.Server.Port,
+		s.httpSender,
 	)
 
 	conn, err := dao.NewConnection(

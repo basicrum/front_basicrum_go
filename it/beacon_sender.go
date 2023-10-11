@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -14,20 +13,14 @@ import (
 )
 
 type BeaconSender struct {
-	client *http.Client
-	host   string
-	port   string
+	sender *HttpSender
 }
 
 func newBeaconSender(
-	client *http.Client,
-	host string,
-	port string,
+	httpSender *HttpSender,
 ) *BeaconSender {
 	return &BeaconSender{
-		client: client,
-		host:   host,
-		port:   port,
+		httpSender,
 	}
 }
 
@@ -101,7 +94,7 @@ func (b *BeaconSender) httpPost(params url.Values) error {
 		return fmt.Errorf("parse headers error: %w", err)
 	}
 
-	req, _ := http.NewRequest("POST", fmt.Sprintf("http://%v:%v/beacon/catcher", b.host, b.port), strings.NewReader(params.Encode()))
+	req, _ := http.NewRequest("POST", b.sender.BuildUrl("/beacon/catcher"), strings.NewReader(params.Encode()))
 
 	if userAgent, ok := headers["User-Agent"]; ok {
 		req.Header.Add("User-Agent", userAgent[0])
@@ -113,24 +106,7 @@ func (b *BeaconSender) httpPost(params url.Values) error {
 	req.Header.Add("Cf-Ipcity", b.makeCityName(headers))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	resp, err := b.client.Do(req)
-
-	if err != nil {
-		return fmt.Errorf("http client error: %w", err)
-	}
-
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("body read error: %w", err)
-	}
-
-	log.Println(string(body))
-
-	if resp.StatusCode != http.StatusNoContent {
-		return fmt.Errorf("expected status: %d, received: %d", http.StatusNoContent, resp.StatusCode)
-	}
+	b.sender.Send(req, http.StatusNoContent, "")
 	return nil
 }
 
