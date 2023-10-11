@@ -5,7 +5,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"log"
-	"net"
 	"net/http"
 	"time"
 
@@ -16,29 +15,14 @@ import (
 
 // Server represents http or https server
 type Server struct {
-	port           string
-	service        *service.Service
-	backup         backup.IBackup
-	certFile       string
-	keyFile        string
-	handlerAdapter func(http.Handler) http.Handler
-	server         *http.Server
-	listener       net.Listener
-	tlsConfig      *tls.Config
-}
-
-// WithHandlerAdapter creates server with handler wrapper function (used by Let's encrypt certificate manager)
-func WithHandlerAdapter(handlerAdapter func(http.Handler) http.Handler) func(*Server) {
-	return func(s *Server) {
-		s.handlerAdapter = handlerAdapter
-	}
-}
-
-// WithListener creates server with custom listener
-func WithListener(listener net.Listener) func(*Server) {
-	return func(s *Server) {
-		s.listener = listener
-	}
+	port            string
+	service         *service.Service
+	backup          backup.IBackup
+	certFile        string
+	keyFile         string
+	server          *http.Server
+	tlsConfig       *tls.Config
+	privateAPIToken string
 }
 
 // WithHTTP creates server with port
@@ -69,14 +53,13 @@ func WithTLSConfig(port string, tlsConfig *tls.Config) func(*Server) {
 func New(
 	processService *service.Service,
 	backupService backup.IBackup,
+	privateAPIToken string,
 	options ...func(*Server),
 ) *Server {
 	result := &Server{
-		service: processService,
-		backup:  backupService,
-		handlerAdapter: func(h http.Handler) http.Handler {
-			return h
-		},
+		service:         processService,
+		backup:          backupService,
+		privateAPIToken: privateAPIToken,
 	}
 	for _, o := range options {
 		o(result)
@@ -87,23 +70,17 @@ func New(
 // Serve start http or https server and blocks
 func (s *Server) Serve() error {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/beacon/catcher", s.catcher)
-	mux.HandleFunc("/health", s.health)
+	s.setupRoutes(mux)
 	handler := cors.Default().Handler(mux)
 	s.server = &http.Server{
 		Addr:    ":" + s.port,
-		Handler: s.handlerAdapter(handler),
+		Handler: handler,
 		// https://deepsource.io/directory/analyzers/go/issues/GO-S2114
 		ReadHeaderTimeout: 3 * time.Second,
 		ReadTimeout:       5 * time.Second,
 		WriteTimeout:      5 * time.Second,
 		IdleTimeout:       120 * time.Second,
 		TLSConfig:         s.tlsConfig,
-	}
-
-	if s.listener != nil {
-		log.Println("starting server with listener")
-		return s.server.Serve(s.listener)
 	}
 	if s.certFile != "" || s.keyFile != "" || s.tlsConfig != nil {
 		log.Printf("starting https server on port[%v] with certFile[%v] keyFile[%v]", s.port, s.certFile, s.keyFile)

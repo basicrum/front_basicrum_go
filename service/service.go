@@ -59,6 +59,18 @@ func (s *Service) Run() {
 	}
 }
 
+// RegisterHostname generates new subscription
+func (s *Service) RegisterHostname(hostname, username string) error {
+	subscription := types.NewSubscription(time.Now())
+	ownerHostname := types.NewOwnerHostname(username, hostname, subscription)
+	return s.daoService.InsertOwnerHostname(ownerHostname)
+}
+
+// DeleteHostname deletes the hostname
+func (s *Service) DeleteHostname(hostname, username string) error {
+	return s.daoService.DeleteOwnerHostname(hostname, username)
+}
+
 func (s *Service) processEvent(event *types.Event) {
 	if event == nil {
 		return

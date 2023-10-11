@@ -25,6 +25,9 @@ type StartupConfig struct {
 			Domain string `envconfig:"BRUM_SERVER_SSL_LETS_ENCRYPT_DOMAIN"`
 		}
 	}
+	PrivateAPI struct {
+		Token string `envconfig:"BRUM_PRIVATE_API_TOKEN"`
+	}
 	Database struct {
 		Username     string `required:"true" envconfig:"BRUM_DATABASE_USERNAME"`
 		Password     string `required:"true" envconfig:"BRUM_DATABASE_PASSWORD"`

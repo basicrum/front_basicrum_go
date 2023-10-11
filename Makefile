@@ -138,3 +138,7 @@ docker-hub:
 .PHONY: debug-docker-integration-test
 debug-docker-integration-test:
 	docker-compose -f docker-compose.test.yaml up --build integration_server
+
+.PHONY: docker/local/build
+docker/local/build:
+	docker build -t front_basicrum_go .
