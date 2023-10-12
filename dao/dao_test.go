@@ -15,8 +15,9 @@ const sleepDuration = 2 * time.Second
 
 type daoTestSuite struct {
 	suite.Suite
-	t   *testing.T
-	dao *DAO
+	t            *testing.T
+	dao          *DAO
+	migrationDAO *MigrationDAO
 }
 
 func TestDaoTestSuite(t *testing.T) {
@@ -39,21 +40,20 @@ func (s *daoTestSuite) SetupTest() {
 		daoServer,
 		daoAuth,
 	)
-	s.Assert().NoError(err)
-
-	url := MigrateDBURL(
-		daoServer,
-		daoAuth,
-	)
-
-	s.dao, err = New(
-		conn,
-		url,
-		Opts(sConf.Database.TablePrefix),
-	)
 	s.NoError(err)
 
-	err = s.dao.Migrate()
+	s.dao = New(
+		conn,
+		Opts(sConf.Database.TablePrefix),
+	)
+
+	s.migrationDAO = NewMigrationDAO(
+		daoServer,
+		daoAuth,
+		Opts(sConf.Database.TablePrefix),
+	)
+
+	err = s.migrationDAO.Migrate()
 	s.NoError(err)
 
 	s.deleteAll()

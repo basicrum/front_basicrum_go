@@ -151,6 +151,7 @@ func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsMissing() {
 }
 
 func (s *e2eTestSuite) Test_EndToEnd_HealthCheck() {
-	req, _ := http.NewRequest("GET", s.httpSender.BuildUrl("/health"), strings.NewReader(""))
+	req, err := http.NewRequest("GET", s.httpSender.BuildUrl("/health"), strings.NewReader(""))
+	s.Assert().NoError(err)
 	s.httpSender.Send(req, http.StatusOK, "ok")
 }

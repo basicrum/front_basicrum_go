@@ -94,16 +94,14 @@ func (b *BeaconSender) httpPost(params url.Values) error {
 		return fmt.Errorf("parse headers error: %w", err)
 	}
 
-	req, _ := http.NewRequest("POST", b.sender.BuildUrl("/beacon/catcher"), strings.NewReader(params.Encode()))
-
-	if userAgent, ok := headers["User-Agent"]; ok {
-		req.Header.Add("User-Agent", userAgent[0])
-	} else {
-		req.Header.Add("User-Agent", "")
+	req, err := http.NewRequest("POST", b.sender.BuildUrl("/beacon/catcher"), strings.NewReader(params.Encode()))
+	if err != nil {
+		return fmt.Errorf("newRequest error: %w", err)
 	}
 
-	req.Header.Add("Cf-Ipcountry", b.makeCountryCode(headers))
-	req.Header.Add("Cf-Ipcity", b.makeCityName(headers))
+	req.Header.Add("User-Agent", makeUserAgent(headers))
+	req.Header.Add("Cf-Ipcountry", makeCountryCode(headers))
+	req.Header.Add("Cf-Ipcity", makeCityName(headers))
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	b.sender.Send(req, http.StatusNoContent, "")
@@ -121,12 +119,17 @@ func (b *BeaconSender) parseHeaders(params url.Values) (map[string][]string, err
 	return headers, nil
 }
 
-func (b *BeaconSender) makeCountryCode(headers map[string][]string) string {
-	countryCode := headers["Cf-Ipcountry"][0]
-	return countryCode
+func makeUserAgent(headers map[string][]string) string {
+	if userAgent, ok := headers["User-Agent"]; ok {
+		return userAgent[0]
+	}
+	return ""
 }
 
-func (b *BeaconSender) makeCityName(headers map[string][]string) string {
-	countryCode := headers["Cf-Ipcity"][0]
-	return countryCode
+func makeCountryCode(headers map[string][]string) string {
+	return headers["Cf-Ipcountry"][0]
+}
+
+func makeCityName(headers map[string][]string) string {
+	return headers["Cf-Ipcity"][0]
 }

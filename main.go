@@ -49,19 +49,18 @@ func main() {
 		log.Fatal(err)
 	}
 
-	url := dao.MigrateDBURL(
-		daoServer,
-		daoAuth,
-	)
-	daoService, err := dao.New(
+	daoService := dao.New(
 		conn,
-		url,
 		dao.Opts(sConf.Database.TablePrefix),
 	)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = daoService.Migrate()
+
+	migrateDaoService := dao.NewMigrationDAO(
+		daoServer,
+		daoAuth,
+		dao.Opts(sConf.Database.TablePrefix),
+	)
+
+	err = migrateDaoService.Migrate()
 	if err != nil {
 		log.Fatalf("migrate database ERROR: %+v", err)
 	}
