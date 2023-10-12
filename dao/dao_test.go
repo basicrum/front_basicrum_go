@@ -8,6 +8,7 @@ import (
 
 	"github.com/basicrum/front_basicrum_go/beacon"
 	"github.com/basicrum/front_basicrum_go/config"
+	"github.com/basicrum/front_basicrum_go/types"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -71,7 +72,7 @@ func (s *daoTestSuite) Test_SaveHost() {
 	sleep()
 
 	// then
-	s.Equal(1, s.countHosts())
+	s.Equal(1, s.countHosts(baseHostsTableName))
 
 	// given
 	event = beacon.NewHostnameEvent(
@@ -86,7 +87,71 @@ func (s *daoTestSuite) Test_SaveHost() {
 	sleep()
 
 	// then
-	s.Equal(1, s.countHosts())
+	s.Equal(1, s.countHosts(baseHostsTableName))
+}
+
+func (s *daoTestSuite) Test_InsertOwnerHostname() {
+	// given
+	ownerHostname := types.NewOwnerHostname(
+		"test1",
+		"hostname1",
+		types.NewSubscription(time.Now()),
+	)
+
+	// when
+	err := s.dao.InsertOwnerHostname(ownerHostname)
+	s.NoError(err)
+	// and
+	sleep()
+
+	// then
+	s.Equal(1, s.countHosts(baseOwnerHostsTableName))
+
+	// given
+	ownerHostname = types.NewOwnerHostname(
+		"test1",
+		"hostname1",
+		types.NewSubscription(time.Now().Add(time.Hour)),
+	)
+
+	// when
+	err = s.dao.InsertOwnerHostname(ownerHostname)
+	s.NoError(err)
+	// and
+	sleep()
+
+	// then
+	s.Equal(1, s.countHosts(baseOwnerHostsTableName))
+}
+
+func (s *daoTestSuite) Test_DeleteOwnerHostname() {
+	// given
+	ownerHostname := types.NewOwnerHostname(
+		"test1",
+		"hostname1",
+		types.NewSubscription(time.Now()),
+	)
+
+	// when
+	err := s.dao.InsertOwnerHostname(ownerHostname)
+	s.NoError(err)
+	// and
+	sleep()
+
+	// then
+	s.Equal(1, s.countHosts(baseOwnerHostsTableName))
+
+	// when
+	err = s.dao.DeleteOwnerHostname(
+		"hostname1",
+		"test1",
+	)
+	s.NoError(err)
+	// and
+	sleep()
+
+	// then
+	s.Equal(0, s.countHosts(baseOwnerHostsTableName))
 }
 
 func sleep() {
@@ -101,10 +166,10 @@ func (s *daoTestSuite) truncateTable(table string) {
 	s.NoError(err)
 }
 
-func (s *daoTestSuite) countHosts() int {
+func (s *daoTestSuite) countHosts(hostsTable string) int {
 	s.optimizeFinal()
 
-	query := fmt.Sprintf("SELECT count(*) FROM %v%v ", s.dao.prefix, baseHostsTableName)
+	query := fmt.Sprintf("SELECT count(*) FROM %v%v ", s.dao.prefix, hostsTable)
 	rows, err := s.dao.conn.Query(context.Background(), query)
 	s.NoError(err)
 	defer rows.Close()
