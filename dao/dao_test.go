@@ -129,7 +129,7 @@ func (s *daoTestSuite) Test_InsertOwnerHostname() {
 		s.selectColumnString("subscription_id", baseOwnerHostsTableName, whereClause),
 	)
 	s.EqualTime(
-		ownerHostname.Subscription.ExpiresAt.Truncate(time.Second),
+		ownerHostname.Subscription.ExpiresAt,
 		s.selectColumnTime("subscription_expire_at", baseOwnerHostsTableName, whereClause),
 	)
 }
