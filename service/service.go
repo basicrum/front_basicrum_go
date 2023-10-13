@@ -1,5 +1,7 @@
 package service
 
+//go:generate mockgen -source=${GOFILE} -destination=mocks/${GOFILE} -package=servicemocks
+
 import (
 	"encoding/json"
 	"log"
@@ -13,6 +15,18 @@ import (
 )
 
 const hostUpdateDuration = time.Minute
+
+// IService service interface
+type IService interface {
+	// SaveAsync saves an event asynchronously
+	Run()
+	// SaveAsync saves an event asynchronously
+	SaveAsync(event *types.Event)
+	// RegisterHostname generates new subscription
+	RegisterHostname(hostname, username string) error
+	// DeleteHostname deletes the hostname
+	DeleteHostname(hostname, username string) error
+}
 
 // Service processes events and stores them in database access object
 type Service struct {
@@ -57,6 +71,18 @@ func (s *Service) Run() {
 			s.processHosts()
 		}
 	}
+}
+
+// RegisterHostname generates new subscription
+func (s *Service) RegisterHostname(hostname, username string) error {
+	subscription := types.NewSubscription(time.Now())
+	ownerHostname := types.NewOwnerHostname(username, hostname, subscription)
+	return s.daoService.InsertOwnerHostname(ownerHostname)
+}
+
+// DeleteHostname deletes the hostname
+func (s *Service) DeleteHostname(hostname, username string) error {
+	return s.daoService.DeleteOwnerHostname(hostname, username)
 }
 
 func (s *Service) processEvent(event *types.Event) {

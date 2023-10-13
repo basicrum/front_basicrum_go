@@ -24,6 +24,10 @@ down: ## Stops the environment
 	docker-compose -f ${dc_path} down
 	env UID=${UID} docker-compose -f ${dc_grafana_path} down
 
+down/clean: down
+	rm -rf _dev/clickhouse
+	mkdir -p _dev/clickhouse
+
 restart: down up # Restart the environment
 
 rebuild: ## Rebuilds the environment from scratch
@@ -138,3 +142,23 @@ docker-hub:
 .PHONY: debug-docker-integration-test
 debug-docker-integration-test:
 	docker-compose -f docker-compose.test.yaml up --build integration_server
+
+.PHONY: docker/local/build
+docker/local/build:
+	docker build -t front_basicrum_go .
+
+.PHONY: gen
+gen:
+	go generate
+
+.PHONY: cover
+cover:
+	go test -short -cover -coverprofile cover.out ./...
+	go tool cover -func=cover.out
+	go tool cover -html=cover.out
+
+.PHONY: cover-integration
+cover-integration:
+	SKIP_E2E=true go test -count=1 -cover -coverprofile cover.out ./...
+	go tool cover -func=cover.out
+	go tool cover -html=cover.out
