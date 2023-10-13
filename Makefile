@@ -144,3 +144,19 @@ debug-docker-integration-test:
 .PHONY: docker/local/build
 docker/local/build:
 	docker build -t front_basicrum_go .
+
+.PHONY: gen
+gen:
+	go generate
+
+.PHONY: cover
+cover:
+	go test -short -cover -coverprofile cover.out ./...
+	go tool cover -func=cover.out
+	go tool cover -html=cover.out
+
+.PHONY: cover-integration
+cover-integration:
+	SKIP_E2E=true go test -count=1 -cover -coverprofile cover.out ./...
+	go tool cover -func=cover.out
+	go tool cover -html=cover.out

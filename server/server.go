@@ -16,7 +16,7 @@ import (
 // Server represents http or https server
 type Server struct {
 	port            string
-	service         *service.Service
+	service         service.IService
 	backup          backup.IBackup
 	certFile        string
 	keyFile         string
@@ -51,7 +51,7 @@ func WithTLSConfig(port string, tlsConfig *tls.Config) func(*Server) {
 
 // New creates a new http or https server
 func New(
-	processService *service.Service,
+	processService service.IService,
 	backupService backup.IBackup,
 	privateAPIToken string,
 	options ...func(*Server),

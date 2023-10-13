@@ -103,7 +103,7 @@ func (r *DeleteHostnameRequest) Validate() error {
 }
 
 func (s *Server) deleteHostname(w http.ResponseWriter, r *http.Request) {
-	var request CreateHostnameRequest
+	var request DeleteHostnameRequest
 	if err := s.parseRequest(r, &request); err != nil {
 		s.responseError(w, err)
 		return

@@ -1,5 +1,7 @@
 package service
 
+//go:generate mockgen -source=${GOFILE} -destination=mocks/${GOFILE} -package=servicemocks
+
 import (
 	"encoding/json"
 	"log"
@@ -13,6 +15,18 @@ import (
 )
 
 const hostUpdateDuration = time.Minute
+
+// IService service interface
+type IService interface {
+	// SaveAsync saves an event asynchronously
+	Run()
+	// SaveAsync saves an event asynchronously
+	SaveAsync(event *types.Event)
+	// RegisterHostname generates new subscription
+	RegisterHostname(hostname, username string) error
+	// DeleteHostname deletes the hostname
+	DeleteHostname(hostname, username string) error
+}
 
 // Service processes events and stores them in database access object
 type Service struct {
