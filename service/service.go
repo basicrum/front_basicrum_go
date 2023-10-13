@@ -91,6 +91,13 @@ func (s *Service) processEvent(event *types.Event) {
 	}
 	beaconEvent := beacon.FromEvent(event)
 	rumEvent := beacon.ConvertToRumEvent(beaconEvent, event, s.userAgentParser, s.geoIPService)
+	// TODO: call subscription service
+	// TODO: call IBackup.SaveUnknown or SaveExpired if needed
+	// if subscription found then call processRumEvent
+	s.processRumEvent(rumEvent)
+}
+
+func (s *Service) processRumEvent(rumEvent beacon.RumEvent) {
 	jsonValue, err := json.Marshal(rumEvent)
 	if err != nil {
 		log.Printf("json parsing error: %+v", err)
