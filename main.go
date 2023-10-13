@@ -37,15 +37,30 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	daoService, err := dao.New(
-		dao.Server(sConf.Database.Host, sConf.Database.Port, sConf.Database.DatabaseName),
-		dao.Auth(sConf.Database.Username, sConf.Database.Password),
-		dao.Opts(sConf.Database.TablePrefix),
+
+	daoServer := dao.Server(sConf.Database.Host, sConf.Database.Port, sConf.Database.DatabaseName)
+	daoAuth := dao.Auth(sConf.Database.Username, sConf.Database.Password)
+
+	conn, err := dao.NewConnection(
+		daoServer,
+		daoAuth,
 	)
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = daoService.Migrate()
+
+	daoService := dao.New(
+		conn,
+		dao.Opts(sConf.Database.TablePrefix),
+	)
+
+	migrateDaoService := dao.NewMigrationDAO(
+		daoServer,
+		daoAuth,
+		dao.Opts(sConf.Database.TablePrefix),
+	)
+
+	err = migrateDaoService.Migrate()
 	if err != nil {
 		log.Fatalf("migrate database ERROR: %+v", err)
 	}

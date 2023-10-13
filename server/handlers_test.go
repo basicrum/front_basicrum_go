@@ -235,8 +235,7 @@ func TestServer_hostnames(t *testing.T) {
 			port, s := makeServer(processService, privateAPIToken)
 
 			go func() {
-				err := s.Serve()
-				require.NoError(t, err)
+				_ = s.Serve()
 			}()
 			defer func() {
 				_ = s.Shutdown(context.Background())

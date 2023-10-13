@@ -16,8 +16,9 @@ const sleepDuration = 2 * time.Second
 
 type daoTestSuite struct {
 	suite.Suite
-	t   *testing.T
-	dao *DAO
+	t            *testing.T
+	dao          *DAO
+	migrationDAO *MigrationDAO
 }
 
 func TestDaoTestSuite(t *testing.T) {
@@ -34,14 +35,27 @@ func (s *daoTestSuite) SetupTest() {
 	sConf, err := config.GetStartupConfig()
 	s.NoError(err)
 
-	s.dao, err = New(
-		Server(sConf.Database.Host, sConf.Database.Port, sConf.Database.DatabaseName),
-		Auth(sConf.Database.Username, sConf.Database.Password),
-		Opts(sConf.Database.TablePrefix),
+	daoServer := Server(sConf.Database.Host, sConf.Database.Port, sConf.Database.DatabaseName)
+	daoAuth := Auth(sConf.Database.Username, sConf.Database.Password)
+
+	conn, err := NewConnection(
+		daoServer,
+		daoAuth,
 	)
 	s.NoError(err)
 
-	err = s.dao.Migrate()
+	s.dao = New(
+		conn,
+		Opts(sConf.Database.TablePrefix),
+	)
+
+	s.migrationDAO = NewMigrationDAO(
+		daoServer,
+		daoAuth,
+		Opts(sConf.Database.TablePrefix),
+	)
+
+	err = s.migrationDAO.Migrate()
 	s.NoError(err)
 
 	s.deleteAll()
