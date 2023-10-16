@@ -26,8 +26,7 @@ type StartupConfig struct {
 		}
 	}
 	PrivateAPI struct {
-		Token             string `envconfig:"BRUM_PRIVATE_API_TOKEN"`
-		CheckSubscription bool   `envconfig:"BRUM_CHECK_SUBSCRIPTION" default:"true"`
+		Token string `envconfig:"BRUM_PRIVATE_API_TOKEN"`
 	}
 	Subscription struct {
 		Enabled bool `envconfig:"BRUM_CHECK_SUBSCRIPTION" default:"true"`

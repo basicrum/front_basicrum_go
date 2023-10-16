@@ -72,6 +72,11 @@ func (b *FileBackup) compressDay() {
 }
 
 // SaveAsync saves an event asynchronously
+// func (b *FileBackup) SaveAsync(event *types.Event) {
+// 	b.doSaveAsync(event, "DEFAULT")
+// }
+
+// func (b *FileBackup) doSaveAsync(event *types.Event, batcherInstance string) {
 func (b *FileBackup) SaveAsync(event *types.Event, batcherInstance string) {
 	go func() {
 		forArchiving := event.RequestParameters
