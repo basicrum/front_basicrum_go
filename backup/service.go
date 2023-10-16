@@ -10,11 +10,19 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
+const BATCHER_BACKUP = "batcher_backup"
+const BATCHER_EXPIRED = "batcher_expired"
+const BATCHER_UNKNOWN = "batcher_unknown"
+
 // FileBackup saves the events on the file system
 type FileBackup struct {
-	batcher            *batcher.Batcher
+	batcherBackup      *batcher.Batcher
+	batcherExpired     *batcher.Batcher
+	batcherUnknown     *batcher.Batcher
 	cron               *cron.Cron
 	directory          string
+	expiredDirectory   string
+	unknownDirectory   string
 	compressionFactory CompressionWriterFactory
 }
 
@@ -22,17 +30,31 @@ type FileBackup struct {
 func NewFileBackup(
 	backupInterval time.Duration,
 	directory string,
+	expiredDirectory string,
+	unknownDirectory string,
 	compressionFactory CompressionWriterFactory,
 ) (*FileBackup, error) {
-	b := batcher.New(backupInterval, func(params []any) error {
+	batcherBackup := batcher.New(backupInterval, func(params []any) error {
 		do(params, directory)
+		return nil
+	})
+	batcherExpired := batcher.New(backupInterval, func(params []any) error {
+		do(params, expiredDirectory)
+		return nil
+	})
+	batcherUnknown := batcher.New(backupInterval, func(params []any) error {
+		do(params, unknownDirectory)
 		return nil
 	})
 	c := cron.New()
 	result := &FileBackup{
-		batcher:            b,
+		batcherBackup:      batcherBackup,
+		batcherExpired:     batcherExpired,
+		batcherUnknown:     batcherUnknown,
 		cron:               c,
 		directory:          directory,
+		expiredDirectory:   expiredDirectory,
+		unknownDirectory:   unknownDirectory,
 		compressionFactory: compressionFactory,
 	}
 	// 01:00:00 each day
@@ -51,7 +73,7 @@ func (b *FileBackup) compressDay() {
 }
 
 // SaveAsync saves an event asynchronously
-func (b *FileBackup) SaveAsync(event *types.Event) {
+func (b *FileBackup) SaveAsync(event *types.Event, batcherInstance string) {
 	go func() {
 		forArchiving := event.RequestParameters
 		// Flatten headers later
@@ -60,14 +82,37 @@ func (b *FileBackup) SaveAsync(event *types.Event) {
 			log.Println(hErr)
 		}
 		forArchiving.Add("request_headers", string(h))
-		if err := b.batcher.Run(forArchiving); err != nil {
-			log.Printf("Error archiving url[%v] err[%v]", forArchiving, err)
+		switch batcherInstance {
+		case BATCHER_BACKUP:
+			if err := b.batcherBackup.Run(forArchiving); err != nil {
+				log.Printf("Error archiving url[%v] err[%v]", forArchiving, err)
+			}
+		case BATCHER_EXPIRED:
+			if err := b.batcherExpired.Run(forArchiving); err != nil {
+				log.Printf("Error archiving url[%v] err[%v]", forArchiving, err)
+			}
+		case BATCHER_UNKNOWN:
+			if err := b.batcherUnknown.Run(forArchiving); err != nil {
+				log.Printf("Error archiving url[%v] err[%v]", forArchiving, err)
+			}
 		}
 	}()
 }
 
+// SaveExpired saves an expired event asynchronously
+func (b *FileBackup) SaveExpired(event *types.Event) {
+	b.SaveAsync(event, BATCHER_EXPIRED)
+}
+
+// SaveUnknown saves an unknown event asynchronously
+func (b *FileBackup) SaveUnknown(event *types.Event) {
+	b.SaveAsync(event, BATCHER_UNKNOWN)
+}
+
 // Flush is called before shutdown to force process of the last batch
 func (b *FileBackup) Flush() {
-	b.batcher.Shutdown(true)
+	b.batcherBackup.Shutdown(true)
+	b.batcherExpired.Shutdown(true)
+	b.batcherUnknown.Shutdown(true)
 	b.cron.Stop()
 }

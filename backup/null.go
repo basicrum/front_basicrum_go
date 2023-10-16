@@ -14,5 +14,11 @@ func NewNullBackup() *NullBackup {
 // SaveAsync disabled implementation
 func (*NullBackup) SaveAsync(_ *types.Event) {}
 
+// SaveExpired disabled implementation
+func (*NullBackup) SaveExpired(_ *types.Event) {}
+
+// SaveUnknown disabled implementation
+func (*NullBackup) SaveUnknown(_ *types.Event) {}
+
 // Flush disabled implementation
 func (*NullBackup) Flush() {}

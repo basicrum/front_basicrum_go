@@ -47,6 +47,8 @@ type StartupConfig struct {
 	Backup struct {
 		Enabled          bool   `envconfig:"BRUM_BACKUP_ENABLED"`
 		Directory        string `envconfig:"BRUM_BACKUP_DIRECTORY"`
+		ExpiredDirectory string `envconfig:"BRUM_BACKUP_EXPIRED_DIRECTORY"`
+		UnknownDirectory string `envconfig:"BRUM_BACKUP_UNKNOWN_DIRECTORY"`
 		IntervalSeconds  uint32 `envconfig:"BRUM_BACKUP_INTERVAL_SECONDS"`
 		CompressionType  string `envconfig:"BRUM_COMPRESSION_TYPE" default:"GZIP"`
 		CompressionLevel string `envconfig:"BRUM_COMPRESSION_LEVEL"`

@@ -7,6 +7,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/basicrum/front_basicrum_go/backup"
 	"github.com/basicrum/front_basicrum_go/beacon"
 	"github.com/basicrum/front_basicrum_go/dao"
 	"github.com/basicrum/front_basicrum_go/geoip"
@@ -18,7 +19,7 @@ const hostUpdateDuration = time.Minute
 
 // IService service interface
 type IService interface {
-	// SaveAsync saves an event asynchronously
+	// Run runs the service
 	Run()
 	// SaveAsync saves an event asynchronously
 	SaveAsync(event *types.Event)
@@ -36,6 +37,7 @@ type Service struct {
 	geoIPService        geoip.Service
 	hosts               map[string]string
 	subscriptionService ISubscriptionService
+	backupService       backup.IBackup
 }
 
 // New creates processing service
@@ -44,6 +46,7 @@ func New(
 	userAgentParser *uaparser.Parser,
 	geoIPService geoip.Service,
 	subscriptionService ISubscriptionService,
+	backupService backup.IBackup,
 ) *Service {
 	events := make(chan *types.Event)
 	return &Service{
@@ -53,6 +56,7 @@ func New(
 		geoIPService:        geoIPService,
 		hosts:               map[string]string{},
 		subscriptionService: subscriptionService,
+		backupService:       backupService,
 	}
 }
 
@@ -104,9 +108,9 @@ func (s *Service) processEvent(event *types.Event) {
 	case FoundLookup:
 		s.processRumEvent(rumEvent)
 	case ExpiredLookup:
-		// TODO: call IBackup.SaveExpired
+		s.backupService.SaveExpired(event)
 	case NotFoundLookup:
-		// TODO: call IBackup.SaveUnknown
+		s.backupService.SaveUnknown(event)
 	default:
 		// TODO: unsupported lookup result log
 	}

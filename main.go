@@ -74,7 +74,7 @@ func main() {
 
 	compressionFactory := backup.NewCompressionWriterFactory(sConf.Backup.Enabled, backup.Compression(sConf.Backup.CompressionType), backup.CompressionLevel(sConf.Backup.CompressionLevel))
 	backupInterval := time.Duration(sConf.Backup.IntervalSeconds) * time.Second
-	backupService, err := backup.New(sConf.Backup.Enabled, backupInterval, sConf.Backup.Directory, compressionFactory)
+	backupService, err := backup.New(sConf.Backup.Enabled, backupInterval, sConf.Backup.Directory, sConf.Backup.ExpiredDirectory, sConf.Backup.UnknownDirectory, compressionFactory)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -89,6 +89,7 @@ func main() {
 		userAgentParser,
 		geopIPService,
 		subscriptionService,
+		backupService,
 	)
 	serverFactory := server.NewFactory(processingService, backupService)
 	servers, err := serverFactory.Build(*sConf)
