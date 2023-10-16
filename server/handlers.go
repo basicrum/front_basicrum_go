@@ -33,7 +33,7 @@ func (s *Server) catcher(w http.ResponseWriter, r *http.Request) {
 	s.service.SaveAsync(event)
 
 	// Archiving logic - save the event to a file
-	s.backup.SaveAsync(event, "batcher_backup")
+	s.backup.SaveAsync(event, "")
 }
 
 func (s *Server) health(w http.ResponseWriter, _ *http.Request) {

@@ -10,7 +10,6 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
-const BATCHER_BACKUP = "batcher_backup"
 const BATCHER_EXPIRED = "batcher_expired"
 const BATCHER_UNKNOWN = "batcher_unknown"
 
@@ -83,10 +82,6 @@ func (b *FileBackup) SaveAsync(event *types.Event, batcherInstance string) {
 		}
 		forArchiving.Add("request_headers", string(h))
 		switch batcherInstance {
-		case BATCHER_BACKUP:
-			if err := b.batcherBackup.Run(forArchiving); err != nil {
-				log.Printf("Error archiving url[%v] err[%v]", forArchiving, err)
-			}
 		case BATCHER_EXPIRED:
 			if err := b.batcherExpired.Run(forArchiving); err != nil {
 				log.Printf("Error archiving url[%v] err[%v]", forArchiving, err)
