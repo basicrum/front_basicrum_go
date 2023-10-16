@@ -142,9 +142,9 @@ func (p *DAO) GetSubscriptions() (map[string]*types.SubscriptionWithHostname, er
 func (p *DAO) GetSubscription(id string) (*types.SubscriptionWithHostname, error) {
 	query := fmt.Sprintf(`
 	SELECT subscription_id, subscription_expire_at, hostname 
-	FROM %v%v 
+	FROM %v%v FINAL
 	WHERE subscription_id = ?
-	FINAL`,
+	`,
 		p.prefix,
 		baseOwnerHostsTableName,
 	)
