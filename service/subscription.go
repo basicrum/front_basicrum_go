@@ -3,12 +3,18 @@ package service
 type Lookup string
 
 const (
-	FoundLookup    Lookup = "FOUND"
+	// FoundLookup found
+	FoundLookup Lookup = "FOUND"
+	// NotFoundLookup not found
 	NotFoundLookup Lookup = "NOT_FOUND"
-	ExpiredLookup  Lookup = "EXPIRED"
+	// ExpiredLookup expired
+	ExpiredLookup Lookup = "EXPIRED"
 )
 
+// ISubscriptionService subscription service
 type ISubscriptionService interface {
+	// Load initial data
 	Load() error
-	GetSubscription(id string) (Lookup, error)
+	// GetSubscription get subscription by id and hostname
+	GetSubscription(subscriptionID, hostname string) (Lookup, error)
 }

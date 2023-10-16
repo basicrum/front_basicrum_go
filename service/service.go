@@ -30,12 +30,12 @@ type IService interface {
 
 // Service processes events and stores them in database access object
 type Service struct {
-	daoService      *dao.DAO
-	userAgentParser *uaparser.Parser
-	events          chan *types.Event
-	geoIPService    geoip.Service
-	hosts           map[string]string
-	CacheSubscriptionService
+	daoService          *dao.DAO
+	userAgentParser     *uaparser.Parser
+	events              chan *types.Event
+	geoIPService        geoip.Service
+	hosts               map[string]string
+	subscriptionService ISubscriptionService
 }
 
 // New creates processing service
@@ -43,15 +43,16 @@ func New(
 	daoService *dao.DAO,
 	userAgentParser *uaparser.Parser,
 	geoIPService geoip.Service,
-	cache CacheSubscriptionService,
+	subscriptionService ISubscriptionService,
 ) *Service {
 	events := make(chan *types.Event)
 	return &Service{
-		daoService:      daoService,
-		userAgentParser: userAgentParser,
-		events:          events,
-		geoIPService:    geoIPService,
-		hosts:           map[string]string{},
+		daoService:          daoService,
+		userAgentParser:     userAgentParser,
+		events:              events,
+		geoIPService:        geoIPService,
+		hosts:               map[string]string{},
+		subscriptionService: subscriptionService,
 	}
 }
 
@@ -93,7 +94,7 @@ func (s *Service) processEvent(event *types.Event) {
 	}
 	beaconEvent := beacon.FromEvent(event)
 	rumEvent := beacon.ConvertToRumEvent(beaconEvent, event, s.userAgentParser, s.geoIPService)
-	lookup, err := s.GetSubscription(rumEvent.SubscriptionID)
+	lookup, err := s.subscriptionService.GetSubscription(rumEvent.SubscriptionID, rumEvent.Hostname)
 	if err != nil {
 		log.Printf("get subscription error: %+v", err)
 		return
@@ -106,6 +107,8 @@ func (s *Service) processEvent(event *types.Event) {
 		// TODO: call IBackup.SaveExpired
 	case NotFoundLookup:
 		// TODO: call IBackup.SaveUnknown
+	default:
+		// TODO: unsupported lookup result log
 	}
 }
 

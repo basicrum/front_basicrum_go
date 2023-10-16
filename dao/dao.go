@@ -2,7 +2,6 @@ package dao
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 
@@ -19,6 +18,17 @@ const (
 	tablePrefixPlaceholder  = "{prefix}"
 	bufferSize              = 1024
 )
+
+// IDAO is data access object inteface
+type IDAO interface {
+	Close() error
+	Save(data string) error
+	SaveHost(event beacon.HostnameEvent) error
+	InsertOwnerHostname(item types.OwnerHostname) error
+	DeleteOwnerHostname(hostname, username string) error
+	GetSubscriptions() (map[string]*types.SubscriptionWithHostname, error)
+	GetSubscription(id string) (*types.SubscriptionWithHostname, error)
+}
 
 // DAO is data access object for clickhouse database
 type DAO struct {
@@ -102,53 +112,58 @@ func (p *DAO) DeleteOwnerHostname(hostname, username string) error {
 	return p.conn.Exec(context.Background(), query, hostname, username)
 }
 
-func (p *DAO) GetSubscriptions() (map[string]types.Subscription, error) {
-	columns := "subscription_id, subscription_expire_at"
-	query := fmt.Sprintf("SELECT %v FROM %v%v", columns, p.prefix, baseOwnerHostsTableName)
+func (p *DAO) GetSubscriptions() (map[string]*types.SubscriptionWithHostname, error) {
+	query := fmt.Sprintf(
+		"SELECT subscription_id, subscription_expire_at, hostname FROM %v%v FINAL",
+		p.prefix,
+		baseOwnerHostsTableName,
+	)
 	rows, err := p.conn.Query(context.Background(), query)
 	if err != nil {
 		return nil, fmt.Errorf("get subscriptions failed: %w", err)
 	}
-	// defer rows.Close()
+	defer rows.Close()
 
-	subscriptions := make(map[string]types.Subscription)
+	result := make(map[string]*types.SubscriptionWithHostname)
 	for rows.Next() {
-		var subscription types.Subscription
-		if err := rows.Scan(&subscription.ID, &subscription.ExpiresAt); err != nil {
-			return subscriptions, err
+		var item types.SubscriptionWithHostname
+		if err := rows.Scan(&item.Subscription.ID, &item.Subscription.ExpiresAt, &item.Hostname); err != nil {
+			return result, err
 		}
-		subscriptions[subscription.ID] = subscription
+		result[item.Subscription.ID] = &item
 	}
 
 	if err = rows.Err(); err != nil {
-		return subscriptions, err
+		return result, err
 	}
-	fmt.Println(subscriptions)
-	return subscriptions, nil
+	return result, nil
 }
 
-func (p *DAO) GetSubscription(id string) (types.Subscription, error) {
-	var subscription types.Subscription
-
-	columns := "subscription_id, subscription_expire_at"
-	whereClause := "WHERE hostname='" + id + "'"
-	query := fmt.Sprintf("SELECT %v FROM %v%v %v", columns, p.prefix, baseOwnerHostsTableName, whereClause)
-	rows, err := p.conn.Query(context.Background(), query)
+func (p *DAO) GetSubscription(id string) (*types.SubscriptionWithHostname, error) {
+	query := fmt.Sprintf(`
+	SELECT subscription_id, subscription_expire_at, hostname 
+	FROM %v%v 
+	WHERE subscription_id = ?
+	FINAL`,
+		p.prefix,
+		baseOwnerHostsTableName,
+	)
+	rows, err := p.conn.Query(context.Background(), query, id)
 	if err != nil {
-		return subscription, fmt.Errorf("get subscription failed: %w", err)
+		return nil, fmt.Errorf("get subscription failed: %w", err)
 	}
-	// defer rows.Close()
+	defer rows.Close()
 
 	if !rows.Next() {
-		return subscription, nil
-	}
-	err = rows.Scan(&subscription.ID, &subscription.ExpiresAt)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return subscription, fmt.Errorf("subscription with id: %s not found", id)
-		}
-		return subscription, fmt.Errorf("get subscription failed: %w", err)
+		// nolint: nilnil
+		return nil, nil
 	}
 
-	return subscription, nil
+	var result types.SubscriptionWithHostname
+	err = rows.Scan(&result.Subscription.ID, &result.Subscription.ExpiresAt, &result.Hostname)
+	if err != nil {
+		return nil, fmt.Errorf("get subscription failed: %w", err)
+	}
+
+	return &result, nil
 }

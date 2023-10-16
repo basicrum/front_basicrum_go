@@ -64,6 +64,7 @@ func (s *daoTestSuite) SetupTest() {
 func (s *daoTestSuite) deleteAll() {
 	s.truncateTable(baseTableName)
 	s.truncateTable(baseHostsTableName)
+	s.truncateTable(baseOwnerHostsTableName)
 }
 
 func (s *daoTestSuite) TearDownTest() {
@@ -172,6 +173,65 @@ func (s *daoTestSuite) Test_DeleteOwnerHostname() {
 
 	// then
 	s.Equal(0, s.countRows(baseOwnerHostsTableName))
+}
+
+func (s *daoTestSuite) Test_GetSubscription() {
+	// given
+	hostname := "hostname1"
+	subscription := types.NewSubscription(time.Now())
+	ownerHostname := types.NewOwnerHostname(
+		"test1",
+		hostname,
+		subscription,
+	)
+
+	// when
+	err := s.dao.InsertOwnerHostname(ownerHostname)
+	s.NoError(err)
+
+	// when
+	item, err := s.dao.GetSubscription(subscription.ID)
+	s.NoError(err)
+
+	// then
+	s.Equal(subscription.ID, item.Subscription.ID)
+	s.EqualTime(subscription.ExpiresAt, item.Subscription.ExpiresAt)
+	s.Equal(hostname, item.Hostname)
+
+	// when
+	item, err = s.dao.GetSubscription("SUBSCRIPTION_ID_NOT_FOUND")
+	s.NoError(err)
+	s.Nil(item)
+}
+
+func (s *daoTestSuite) Test_GetSubscriptions() {
+	list, err := s.dao.GetSubscriptions()
+	s.NoError(err)
+	s.Equal(0, len(list))
+
+	// given
+	hostname := "hostname1"
+	subscription := types.NewSubscription(time.Now())
+	ownerHostname := types.NewOwnerHostname(
+		"test1",
+		hostname,
+		subscription,
+	)
+
+	// when
+	err = s.dao.InsertOwnerHostname(ownerHostname)
+	s.NoError(err)
+
+	// when
+	list, err = s.dao.GetSubscriptions()
+	s.NoError(err)
+	s.Equal(1, len(list))
+
+	// then
+	item := list[subscription.ID]
+	s.Equal(subscription.ID, item.Subscription.ID)
+	s.EqualTime(subscription.ExpiresAt, item.Subscription.ExpiresAt)
+	s.Equal(hostname, item.Hostname)
 }
 
 func sleep() {
