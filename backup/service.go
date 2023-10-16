@@ -95,6 +95,10 @@ func (b *FileBackup) SaveAsync(event *types.Event, batcherInstance string) {
 			if err := b.batcherUnknown.Run(forArchiving); err != nil {
 				log.Printf("Error archiving url[%v] err[%v]", forArchiving, err)
 			}
+		default:
+			if err := b.batcherBackup.Run(forArchiving); err != nil {
+				log.Printf("Error archiving url[%v] err[%v]", forArchiving, err)
+			}
 		}
 	}()
 }
