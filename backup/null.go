@@ -12,7 +12,7 @@ func NewNullBackup() *NullBackup {
 }
 
 // SaveAsync disabled implementation
-func (*NullBackup) SaveAsync(_ *types.Event) {}
+func (*NullBackup) SaveAsync(_ *types.Event, batcherInstance string) {}
 
 // SaveExpired disabled implementation
 func (*NullBackup) SaveExpired(_ *types.Event) {}

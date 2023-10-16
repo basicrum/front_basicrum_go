@@ -112,7 +112,8 @@ func (s *Service) processEvent(event *types.Event) {
 	case NotFoundLookup:
 		s.backupService.SaveUnknown(event)
 	default:
-		// TODO: unsupported lookup result log
+		log.Printf("unsupported lookup result: %s", lookup)
+		return
 	}
 }
 

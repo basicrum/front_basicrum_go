@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/basicrum/front_basicrum_go/backup"
 	servicemocks "github.com/basicrum/front_basicrum_go/service/mocks"
@@ -228,6 +229,8 @@ func TestServer_hostnames(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// add a sleep of one second between spawning servers to avoid connection refused on slower cpus
+			time.Sleep(time.Second)
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
