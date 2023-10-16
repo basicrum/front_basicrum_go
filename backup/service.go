@@ -84,11 +84,11 @@ func (b *FileBackup) SaveAsync(event *types.Event, batcherInstance string) {
 		switch batcherInstance {
 		case BATCHER_EXPIRED:
 			if err := b.batcherExpired.Run(forArchiving); err != nil {
-				log.Printf("Error archiving url[%v] err[%v]", forArchiving, err)
+				log.Printf("Error archiving expired url[%v] err[%v]", forArchiving, err)
 			}
 		case BATCHER_UNKNOWN:
 			if err := b.batcherUnknown.Run(forArchiving); err != nil {
-				log.Printf("Error archiving url[%v] err[%v]", forArchiving, err)
+				log.Printf("Error archiving unknown url[%v] err[%v]", forArchiving, err)
 			}
 		default:
 			if err := b.batcherBackup.Run(forArchiving); err != nil {
