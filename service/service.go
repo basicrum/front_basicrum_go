@@ -35,6 +35,7 @@ type Service struct {
 	events          chan *types.Event
 	geoIPService    geoip.Service
 	hosts           map[string]string
+	CacheSubscriptionService
 }
 
 // New creates processing service
@@ -42,6 +43,7 @@ func New(
 	daoService *dao.DAO,
 	userAgentParser *uaparser.Parser,
 	geoIPService geoip.Service,
+	cache CacheSubscriptionService,
 ) *Service {
 	events := make(chan *types.Event)
 	return &Service{
@@ -91,10 +93,20 @@ func (s *Service) processEvent(event *types.Event) {
 	}
 	beaconEvent := beacon.FromEvent(event)
 	rumEvent := beacon.ConvertToRumEvent(beaconEvent, event, s.userAgentParser, s.geoIPService)
-	// TODO: call subscription service
-	// TODO: call IBackup.SaveUnknown or SaveExpired if needed
-	// if subscription found then call processRumEvent
-	s.processRumEvent(rumEvent)
+	lookup, err := s.GetSubscription(rumEvent.SubscriptionID)
+	if err != nil {
+		log.Printf("get subscription error: %+v", err)
+		return
+	}
+
+	switch lookup {
+	case FoundLookup:
+		s.processRumEvent(rumEvent)
+	case ExpiredLookup:
+		// TODO: call IBackup.SaveExpired
+	case NotFoundLookup:
+		// TODO: call IBackup.SaveUnknown
+	}
 }
 
 func (s *Service) processRumEvent(rumEvent beacon.RumEvent) {

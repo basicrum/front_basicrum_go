@@ -76,10 +76,17 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	cacheService := service.NewCacheSubscriptionService(*daoService)
+	err = cacheService.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
 	processingService := service.New(
 		daoService,
 		userAgentParser,
 		geopIPService,
+		*cacheService,
 	)
 	serverFactory := server.NewFactory(processingService, backupService)
 	servers, err := serverFactory.Build(*sConf)

@@ -2,6 +2,7 @@ package dao
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 
@@ -99,4 +100,55 @@ func (p *DAO) DeleteOwnerHostname(hostname, username string) error {
 		baseOwnerHostsTableName,
 	)
 	return p.conn.Exec(context.Background(), query, hostname, username)
+}
+
+func (p *DAO) GetSubscriptions() (map[string]types.Subscription, error) {
+	columns := "subscription_id, subscription_expire_at"
+	query := fmt.Sprintf("SELECT %v FROM %v%v", columns, p.prefix, baseOwnerHostsTableName)
+	rows, err := p.conn.Query(context.Background(), query)
+	if err != nil {
+		return nil, fmt.Errorf("get subscriptions failed: %w", err)
+	}
+	// defer rows.Close()
+
+	subscriptions := make(map[string]types.Subscription)
+	for rows.Next() {
+		var subscription types.Subscription
+		if err := rows.Scan(&subscription.ID, &subscription.ExpiresAt); err != nil {
+			return subscriptions, err
+		}
+		subscriptions[subscription.ID] = subscription
+	}
+
+	if err = rows.Err(); err != nil {
+		return subscriptions, err
+	}
+	fmt.Println(subscriptions)
+	return subscriptions, nil
+}
+
+func (p *DAO) GetSubscription(id string) (types.Subscription, error) {
+	var subscription types.Subscription
+
+	columns := "subscription_id, subscription_expire_at"
+	whereClause := "WHERE hostname='" + id + "'"
+	query := fmt.Sprintf("SELECT %v FROM %v%v %v", columns, p.prefix, baseOwnerHostsTableName, whereClause)
+	rows, err := p.conn.Query(context.Background(), query)
+	if err != nil {
+		return subscription, fmt.Errorf("get subscription failed: %w", err)
+	}
+	// defer rows.Close()
+
+	if !rows.Next() {
+		return subscription, nil
+	}
+	err = rows.Scan(&subscription.ID, &subscription.ExpiresAt)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return subscription, fmt.Errorf("subscription with id: %s not found", id)
+		}
+		return subscription, fmt.Errorf("get subscription failed: %w", err)
+	}
+
+	return subscription, nil
 }
