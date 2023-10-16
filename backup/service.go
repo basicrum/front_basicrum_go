@@ -10,8 +10,13 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
+// BATCHER_DEFAULT is the default batcher for general archiving
 const BATCHER_DEFAULT = "batcher_archive"
+
+// BATCHER_EXPIRED is the batcher for expired subscription events
 const BATCHER_EXPIRED = "batcher_expired"
+
+// BATCHER_UNKNOWN is the batcher for unknown subscription events
 const BATCHER_UNKNOWN = "batcher_unknown"
 
 // FileBackup saves the events on the file system
@@ -27,6 +32,7 @@ type FileBackup struct {
 }
 
 // NewFileBackup creates file system backup service
+// lint revive
 func NewFileBackup(
 	backupInterval time.Duration,
 	directory string,
@@ -72,10 +78,12 @@ func (b *FileBackup) compressDay() {
 	}
 }
 
+// SaveAsync saves an event with default batcher
 func (b *FileBackup) SaveAsync(event *types.Event) {
 	b.doSaveAsync(event, BATCHER_DEFAULT)
 }
 
+// lint revive
 func (b *FileBackup) doSaveAsync(event *types.Event, batcherInstance string) {
 	go func() {
 		forArchiving := event.RequestParameters

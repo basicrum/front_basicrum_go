@@ -33,6 +33,7 @@ func NewSubscription(now time.Time) Subscription {
 	}
 }
 
+// Expired checks if subscription has expired
 func (s Subscription) Expired() bool {
 	return time.Now().Before(s.ExpiresAt)
 }

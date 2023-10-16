@@ -112,6 +112,7 @@ func (p *DAO) DeleteOwnerHostname(hostname, username string) error {
 	return p.conn.Exec(context.Background(), query, hostname, username)
 }
 
+// GetSubscriptions gets all subscriptions
 func (p *DAO) GetSubscriptions() (map[string]*types.SubscriptionWithHostname, error) {
 	query := fmt.Sprintf(
 		"SELECT subscription_id, subscription_expire_at, hostname FROM %v%v FINAL",
@@ -139,6 +140,7 @@ func (p *DAO) GetSubscriptions() (map[string]*types.SubscriptionWithHostname, er
 	return result, nil
 }
 
+// GetSubscription gets subscription by id
 func (p *DAO) GetSubscription(id string) (*types.SubscriptionWithHostname, error) {
 	query := fmt.Sprintf(`
 	SELECT subscription_id, subscription_expire_at, hostname 

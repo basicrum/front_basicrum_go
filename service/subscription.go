@@ -1,5 +1,6 @@
 package service
 
+// Lookup describes subscription lookup statuses
 type Lookup string
 
 const (
