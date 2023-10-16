@@ -3,7 +3,6 @@ package server
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -317,41 +316,41 @@ func randomPort() string {
 	return srv.URL[pos+1:]
 }
 
-func TestServer_catcher(t *testing.T) {
-	type fields struct {
-		port            string
-		service         service.IService
-		backup          backup.IBackup
-		certFile        string
-		keyFile         string
-		server          *http.Server
-		tlsConfig       *tls.Config
-		privateAPIToken string
-	}
-	type args struct {
-		w http.ResponseWriter
-		r *http.Request
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			s := &Server{
-				port:            tt.fields.port,
-				service:         tt.fields.service,
-				backup:          tt.fields.backup,
-				certFile:        tt.fields.certFile,
-				keyFile:         tt.fields.keyFile,
-				server:          tt.fields.server,
-				tlsConfig:       tt.fields.tlsConfig,
-				privateAPIToken: tt.fields.privateAPIToken,
-			}
-			s.catcher(tt.args.w, tt.args.r)
-		})
-	}
-}
+// func TestServer_catcher(t *testing.T) {
+// 	type fields struct {
+// 		port            string
+// 		service         service.IService
+// 		backup          backup.IBackup
+// 		certFile        string
+// 		keyFile         string
+// 		server          *http.Server
+// 		tlsConfig       *tls.Config
+// 		privateAPIToken string
+// 	}
+// 	type args struct {
+// 		w http.ResponseWriter
+// 		r *http.Request
+// 	}
+// 	tests := []struct {
+// 		name   string
+// 		fields fields
+// 		args   args
+// 	}{
+// 		// TODO: Add test cases.
+// 	}
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			s := &Server{
+// 				port:            tt.fields.port,
+// 				service:         tt.fields.service,
+// 				backup:          tt.fields.backup,
+// 				certFile:        tt.fields.certFile,
+// 				keyFile:         tt.fields.keyFile,
+// 				server:          tt.fields.server,
+// 				tlsConfig:       tt.fields.tlsConfig,
+// 				privateAPIToken: tt.fields.privateAPIToken,
+// 			}
+// 			s.catcher(tt.args.w, tt.args.r)
+// 		})
+// 	}
+// }

@@ -10,6 +10,7 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
+const BATCHER_DEFAULT = "batcher_archive"
 const BATCHER_EXPIRED = "batcher_expired"
 const BATCHER_UNKNOWN = "batcher_unknown"
 
@@ -71,13 +72,11 @@ func (b *FileBackup) compressDay() {
 	}
 }
 
-// SaveAsync saves an event asynchronously
-// func (b *FileBackup) SaveAsync(event *types.Event) {
-// 	b.doSaveAsync(event, "DEFAULT")
-// }
+func (b *FileBackup) SaveAsync(event *types.Event) {
+	b.doSaveAsync(event, BATCHER_DEFAULT)
+}
 
-// func (b *FileBackup) doSaveAsync(event *types.Event, batcherInstance string) {
-func (b *FileBackup) SaveAsync(event *types.Event, batcherInstance string) {
+func (b *FileBackup) doSaveAsync(event *types.Event, batcherInstance string) {
 	go func() {
 		forArchiving := event.RequestParameters
 		// Flatten headers later
@@ -95,22 +94,24 @@ func (b *FileBackup) SaveAsync(event *types.Event, batcherInstance string) {
 			if err := b.batcherUnknown.Run(forArchiving); err != nil {
 				log.Printf("Error archiving unknown url[%v] err[%v]", forArchiving, err)
 			}
-		default:
-			if err := b.batcherBackup.Run(forArchiving); err != nil {
-				log.Printf("Error archiving url[%v] err[%v]", forArchiving, err)
+		case BATCHER_DEFAULT:
+			if err := b.batcherUnknown.Run(forArchiving); err != nil {
+				log.Printf("Error archiving unknown url[%v] err[%v]", forArchiving, err)
 			}
+		default:
+			log.Printf("Error batcher instance unknown: %s", batcherInstance)
 		}
 	}()
 }
 
 // SaveExpired saves an expired event asynchronously
 func (b *FileBackup) SaveExpired(event *types.Event) {
-	b.SaveAsync(event, BATCHER_EXPIRED)
+	b.doSaveAsync(event, BATCHER_EXPIRED)
 }
 
 // SaveUnknown saves an unknown event asynchronously
 func (b *FileBackup) SaveUnknown(event *types.Event) {
-	b.SaveAsync(event, BATCHER_UNKNOWN)
+	b.doSaveAsync(event, BATCHER_UNKNOWN)
 }
 
 // Flush is called before shutdown to force process of the last batch
