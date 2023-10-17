@@ -81,3 +81,62 @@ func (mr *MockIBackupMockRecorder) SaveUnknown(event interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveUnknown", reflect.TypeOf((*MockIBackup)(nil).SaveUnknown), event)
 }
+
+// MockIBackupSingle is a mock of IBackupSingle interface.
+type MockIBackupSingle struct {
+	ctrl     *gomock.Controller
+	recorder *MockIBackupSingleMockRecorder
+}
+
+// MockIBackupSingleMockRecorder is the mock recorder for MockIBackupSingle.
+type MockIBackupSingleMockRecorder struct {
+	mock *MockIBackupSingle
+}
+
+// NewMockIBackupSingle creates a new mock instance.
+func NewMockIBackupSingle(ctrl *gomock.Controller) *MockIBackupSingle {
+	mock := &MockIBackupSingle{ctrl: ctrl}
+	mock.recorder = &MockIBackupSingleMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockIBackupSingle) EXPECT() *MockIBackupSingleMockRecorder {
+	return m.recorder
+}
+
+// Compress mocks base method.
+func (m *MockIBackupSingle) Compress() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Compress")
+}
+
+// Compress indicates an expected call of Compress.
+func (mr *MockIBackupSingleMockRecorder) Compress() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Compress", reflect.TypeOf((*MockIBackupSingle)(nil).Compress))
+}
+
+// Flush mocks base method.
+func (m *MockIBackupSingle) Flush() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Flush")
+}
+
+// Flush indicates an expected call of Flush.
+func (mr *MockIBackupSingleMockRecorder) Flush() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Flush", reflect.TypeOf((*MockIBackupSingle)(nil).Flush))
+}
+
+// SaveAsync mocks base method.
+func (m *MockIBackupSingle) SaveAsync(event *types.Event) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SaveAsync", event)
+}
+
+// SaveAsync indicates an expected call of SaveAsync.
+func (mr *MockIBackupSingleMockRecorder) SaveAsync(event interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveAsync", reflect.TypeOf((*MockIBackupSingle)(nil).SaveAsync), event)
+}
