@@ -59,14 +59,17 @@ services:
       - BRUM_PERSISTANCE_DATABASE_STRATEGY=all_in_one_db
       - BRUM_PERSISTANCE_TABLE_STRATEGY=all_in_one_table
       - BRUM_BACKUP_ENABLED=false
+<<<<<<< HEAD
       - BRUM_BACKUP_DIRECTORY=/home/basicrum_backup/archive
       - BRUM_BACKUP_EXPIRED_DIRECTORY=/home/basicrum_backup/expired
       - BRUM_BACKUP_UNKNOWN_DIRECTORY=/home/basicrum_backup/unknown
+=======
+      - BRUM_BACKUP_DIRECTORY=/home/basicrum_backup
+>>>>>>> 2f22dc0 (apply review comments)
       - BRUM_BACKUP_INTERVAL_SECONDS=5
       - BRUM_SERVER_SSL=true
       - BRUM_SERVER_SSL_TYPE=LETS_ENCRYPT
       - BRUM_SERVER_SSL_LETS_ENCRYPT_DOMAIN=your-domain.com
-      - BRUM_CHECK_SUBSCRIPTION=false
       - TEST_DIRECTORY_URL=https://10.30.50.2:14000/dir
       - TEST_INSECURE_SKIP_VERIFYy=true
     depends_on:

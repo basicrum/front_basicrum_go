@@ -21,34 +21,27 @@ type StartupConfig struct {
 			SSLFileKeyFile  string `envconfig:"BRUM_SERVER_SSL_KEY_FILE"`
 		}
 		SSLLetsEncrypt struct {
-			Port   string `envconfig:"BRUM_SERVER_SSL_LETS_ENCRYPT_PORT" default:"80"`
 			Domain string `envconfig:"BRUM_SERVER_SSL_LETS_ENCRYPT_DOMAIN"`
 		}
+	}
+	Subscription struct {
+		Enabled bool `envconfig:"BRUM_SUBSCRIPTION_ENABLED" default:"false"`
 	}
 	PrivateAPI struct {
 		Token string `envconfig:"BRUM_PRIVATE_API_TOKEN"`
 	}
-	Subscription struct {
-		Enabled bool `envconfig:"BRUM_CHECK_SUBSCRIPTION" default:"true"`
-	}
 	Database struct {
-		Username     string `required:"true" envconfig:"BRUM_DATABASE_USERNAME"`
-		Password     string `required:"true" envconfig:"BRUM_DATABASE_PASSWORD"`
-		DatabaseName string `required:"true" envconfig:"BRUM_DATABASE_NAME"`
 		Host         string `required:"true" envconfig:"BRUM_DATABASE_HOST"`
-		Port         int16  `required:"true" envconfig:"BRUM_DATABASE_PORT"`
+		Port         int16  `required:"true" envconfig:"BRUM_DATABASE_PORT" default:"9000"`
+		Username     string `required:"true" envconfig:"BRUM_DATABASE_USERNAME" default:"default"`
+		Password     string `required:"true" envconfig:"BRUM_DATABASE_PASSWORD"`
+		DatabaseName string `required:"true" envconfig:"BRUM_DATABASE_NAME" default:"default"`
 		TablePrefix  string `envconfig:"BRUM_DATABASE_TABLE_PREFIX"`
 	}
-	Persistance struct {
-		DatabaseStrategy string `envconfig:"BRUM_PERSISTANCE_DATABASE_STRATEGY"`
-		TableStrategy    string `envconfig:"BRUM_PERSISTANCE_TABLE_STRATEGY"`
-	}
 	Backup struct {
-		Enabled          bool   `envconfig:"BRUM_BACKUP_ENABLED"`
+		Enabled          bool   `envconfig:"BRUM_BACKUP_ENABLED" default:"false"`
 		Directory        string `envconfig:"BRUM_BACKUP_DIRECTORY"`
-		ExpiredDirectory string `envconfig:"BRUM_BACKUP_EXPIRED_DIRECTORY"`
-		UnknownDirectory string `envconfig:"BRUM_BACKUP_UNKNOWN_DIRECTORY"`
-		IntervalSeconds  uint32 `envconfig:"BRUM_BACKUP_INTERVAL_SECONDS"`
+		IntervalSeconds  uint32 `envconfig:"BRUM_BACKUP_INTERVAL_SECONDS" default:"5"`
 		CompressionType  string `envconfig:"BRUM_COMPRESSION_TYPE" default:"GZIP"`
 		CompressionLevel string `envconfig:"BRUM_COMPRESSION_LEVEL"`
 	}

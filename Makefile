@@ -4,13 +4,21 @@ SHELL=bash
 
 UID := $(shell id -u)
 
-dc_path=./docker-compose.yaml
+dc_path=./docker-compose.dev.yaml
 dc_grafana_path=./docker-compose.grafana.yaml
 dev_clickhouse_server_container=dev_clickhouse_server
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 up: ## Starts the environment
+	docker-compose build
+	docker-compose up -d
+
+down: ## Stops the environment
+	docker-compose down
+	env UID=${UID} docker-compose down
+
+devup: ## Starts the environment
 	docker-compose -f ${dc_path} build
 	docker-compose -f ${dc_path} up -d
 
@@ -20,7 +28,7 @@ up_with_grafana: ## Starts the environment with Grafana
 	docker-compose -f ${dc_grafana_path} build
 	env UID=${UID} docker-compose -f ${dc_grafana_path} up
 
-down: ## Stops the environment
+devdown: ## Stops the environment
 	docker-compose -f ${dc_path} down
 	env UID=${UID} docker-compose -f ${dc_grafana_path} down
 
