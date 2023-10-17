@@ -35,11 +35,12 @@ func (s *SubscriptionService) GetSubscription(subscriptionID, hostname string) (
 		return s.makeLookupResult(item, hostname)
 	}
 
-	subscriptionFromDB, err := s.dao.GetSubscription(subscriptionID)
+	var err error
+	item, err = s.dao.GetSubscription(subscriptionID)
 	if err != nil {
 		return service.NotFoundLookup, err
 	}
-	if subscriptionFromDB == nil {
+	if item == nil {
 		return service.NotFoundLookup, nil
 	}
 

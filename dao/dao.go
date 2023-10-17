@@ -1,5 +1,7 @@
 package dao
 
+//go:generate mockgen -source=${GOFILE} -destination=mocks/${GOFILE} -package=daomocks
+
 import (
 	"context"
 	"encoding/json"

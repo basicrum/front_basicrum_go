@@ -35,7 +35,7 @@ func NewSubscription(now time.Time) Subscription {
 
 // Expired checks if subscription has expired
 func (s Subscription) Expired() bool {
-	return time.Now().Before(s.ExpiresAt)
+	return time.Now().After(s.ExpiresAt)
 }
 
 func generateSubscriptionID(expiresAt time.Time) string {
