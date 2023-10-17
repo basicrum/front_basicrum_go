@@ -80,8 +80,6 @@ test:
 	BRUM_PERSISTANCE_TABLE_STRATEGY=all_in_one_table \
 	BRUM_BACKUP_ENABLED=false \
 	BRUM_BACKUP_DIRECTORY=/home/basicrum_backup/archive \
-	BRUM_BACKUP_EXPIRED_DIRECTORY=/home/basicrum_backup/expired \
-	BRUM_BACKUP_UNKNOWN_DIRECTORY=/home/basicrum_backup/unknown \
 	BRUM_BACKUP_INTERVAL_SECONDS=5 \
 	go test --short ./... 
 
@@ -100,8 +98,6 @@ integration:
 	BRUM_PERSISTANCE_TABLE_STRATEGY=all_in_one_table \
 	BRUM_BACKUP_ENABLED=false \
 	BRUM_BACKUP_DIRECTORY=/home/basicrum_backup/archive \
-	BRUM_BACKUP_EXPIRED_DIRECTORY=/home/basicrum_backup/expired \
-	BRUM_BACKUP_UNKNOWN_DIRECTORY=/home/basicrum_backup/unknown \
 	BRUM_BACKUP_INTERVAL_SECONDS=5 \
 	go test ./...
 
@@ -119,8 +115,6 @@ e2e:
 	BRUM_PERSISTANCE_TABLE_STRATEGY=all_in_one_table \
 	BRUM_BACKUP_ENABLED=false \
 	BRUM_BACKUP_DIRECTORY=/home/basicrum_backup/archive \
-	BRUM_BACKUP_EXPIRED_DIRECTORY=/home/basicrum_backup/expired \
-	BRUM_BACKUP_UNKNOWN_DIRECTORY=/home/basicrum_backup/unknown \
 	BRUM_BACKUP_INTERVAL_SECONDS=5 \
 	go test ./...
 	
