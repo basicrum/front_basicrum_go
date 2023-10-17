@@ -61,7 +61,7 @@ services:
       - BRUM_BACKUP_ENABLED=false
       - BRUM_BACKUP_DIRECTORY=/home/basicrum_archive
       - BRUM_BACKUP_EXPIRED_DIRECTORY=/home/basicrum_expired
-	    - BRUM_BACKUP_UNKNOWN_DIRECTORY=/home/basicrum_unknown
+      - BRUM_BACKUP_UNKNOWN_DIRECTORY=/home/basicrum_unknown
       - BRUM_BACKUP_INTERVAL_SECONDS=5
       - BRUM_SERVER_SSL=true
       - BRUM_SERVER_SSL_TYPE=LETS_ENCRYPT
