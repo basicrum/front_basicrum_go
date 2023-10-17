@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -331,7 +332,44 @@ func randomPort() string {
 	return srv.URL[pos+1:]
 }
 
+type eventMatcher struct {
+	x *types.Event
+}
+
+func (e eventMatcher) Matches(x any) bool {
+	arg, ok := x.(*types.Event)
+	if !ok {
+		return false
+	}
+	result := reflect.DeepEqual(e.x.RequestParameters, arg.RequestParameters)
+	if !result {
+		panic(fmt.Sprintf("expected[%v] got[%v]", e.x.RequestParameters, arg.RequestParameters))
+	}
+	return result
+}
+
+func (e eventMatcher) String() string {
+	return fmt.Sprintf("is equal to %v", e.x)
+}
+
+func eqEvent(arg *types.Event) gomock.Matcher {
+	return eventMatcher{arg}
+}
+
 func TestServer_catcher(t *testing.T) {
+	requestForm := map[string]string{
+		"hostname":        "hostname1",
+		"subscription_id": "subscription_id1",
+		"created_at":      "created_at1",
+	}
+	expectedEvent := &types.Event{
+		RequestParameters: url.Values{
+			"hostname":        []string{"hostname1"},
+			"subscription_id": []string{"subscription_id1"},
+			"created_at":      []string{"created_at1"},
+		},
+		UserAgent: "Go-http-client/1.1",
+	}
 	type args struct {
 		form map[string]string
 	}
@@ -351,14 +389,13 @@ func TestServer_catcher(t *testing.T) {
 		{
 			name: "Success",
 			args: args{
-				form: map[string]string{
-					"hostname":        "test1",
-					"subscription_id": "1",
-				},
+				form: requestForm,
 			},
 			expects: expects{
-				SaveAsync:        true,
-				SaveAsyncRequest: &types.Event{},
+				SaveAsync:              true,
+				SaveAsyncRequest:       expectedEvent,
+				BackupSaveAsync:        true,
+				BackupSaveAsyncRequest: expectedEvent,
 			},
 			want:     "",
 			wantCode: http.StatusNoContent,
@@ -380,10 +417,10 @@ func TestServer_catcher(t *testing.T) {
 				_ = s.Shutdown(context.Background())
 			}()
 			if tt.expects.SaveAsync {
-				processService.EXPECT().SaveAsync(tt.expects.SaveAsyncRequest)
+				processService.EXPECT().SaveAsync(eqEvent(tt.expects.SaveAsyncRequest))
 			}
 			if tt.expects.BackupSaveAsync {
-				processService.EXPECT().SaveAsync(tt.expects.BackupSaveAsyncRequest)
+				backupService.EXPECT().SaveAsync(eqEvent(tt.expects.BackupSaveAsyncRequest))
 			}
 			address := makeURL(port, "/beacon/catcher")
 			r := makeFormRequest(t, address, tt.args.form)
