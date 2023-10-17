@@ -37,11 +37,11 @@ func New(
 	if err != nil {
 		return nil, err
 	}
-	unknownackup, err := makeSingle(unknown, backupInterval, baseDirectory, compressionFactory)
+	unknownBackup, err := makeSingle(unknown, backupInterval, baseDirectory, compressionFactory)
 	if err != nil {
 		return nil, err
 	}
-	return NewFileBackup(archiveBackup, expiredBackup, unknownackup)
+	return NewFileBackup(archiveBackup, expiredBackup, unknownBackup)
 }
 
 func makeSingle(singleBackupType backupType,
