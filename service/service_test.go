@@ -9,8 +9,6 @@ import (
 	"github.com/basicrum/front_basicrum_go/geoip"
 	"github.com/basicrum/front_basicrum_go/types"
 	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/ua-parser/uap-go/uaparser"
 )
 
@@ -23,10 +21,13 @@ func TestService_processEvent(t *testing.T) {
 		subscriptionService ISubscriptionService
 	}
 	type args struct {
-		lookup Lookup
+		subscriptionID string
+		hostname       string
+		lookup         Lookup
 	}
 	type expects struct {
 		GetSubscription  bool
+		lookup           Lookup
 		processRumEvent  bool
 		rumEvent         beacon.RumEvent
 		SaveExpired      bool
@@ -44,18 +45,54 @@ func TestService_processEvent(t *testing.T) {
 		{
 			name: "Lookup subscription found",
 			args: args{
+				subscriptionID: "1",
+				hostname:       "host1",
+			},
+			expects: expects{
+				GetSubscription: true,
+				lookup:          FoundLookup,
+			},
+			want: string(FoundLookup),
+		},
+		{
+			name: "Lookup subscription expired",
+			args: args{
+				subscriptionID: "1",
+				hostname:       "host1",
+			},
+			expects: expects{
+				GetSubscription: true,
+				lookup:          ExpiredLookup,
+			},
+			want: string(ExpiredLookup),
+		},
+		{
+			name: "Lookup subscription not found",
+			args: args{
+				subscriptionID: "1",
+				hostname:       "host1",
+			},
+			expects: expects{
+				GetSubscription: true,
+				lookup:          NotFoundLookup,
+			},
+			want: string(NotFoundLookup),
+		},
+		{
+			name: "Process found event",
+			args: args{
 				lookup: FoundLookup,
 			},
 			expects: expects{
 				processRumEvent: true,
 				rumEvent:        beacon.RumEvent{},
 			},
-			want: string(ExpiredLookup),
+			want: string(FoundLookup),
 		},
 		{
 			name: "Lookup subscription expired",
 			args: args{
-				lookup: FoundLookup,
+				lookup: ExpiredLookup,
 			},
 			expects: expects{
 				SaveExpired:      true,
@@ -66,7 +103,7 @@ func TestService_processEvent(t *testing.T) {
 		{
 			name: "Lookup subscription not found",
 			args: args{
-				lookup: ExpiredLookup,
+				lookup: NotFoundLookup,
 			},
 			expects: expects{
 				SaveUnknown:      true,
@@ -109,11 +146,7 @@ func TestService_processEvent(t *testing.T) {
 							tt.expects.SaveUnknownEvent,
 						)
 				}
-				b := beacon.FromEvent(e)
-				re := beacon.ConvertToRumEvent(b, e, tt.fields.userAgentParser, tt.fields.geoIPService)
-				lk, err := s.subscriptionService.GetSubscription(re.SubscriptionID, re.Hostname)
-				require.NoError(t, err)
-				assert.Equal(t, tt.want, lk)
+				s.SaveAsync(e)
 			}
 		})
 	}
