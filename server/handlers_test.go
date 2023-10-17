@@ -3,20 +3,21 @@ package server
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/basicrum/front_basicrum_go/backup"
-	"github.com/basicrum/front_basicrum_go/service"
+	backupmocks "github.com/basicrum/front_basicrum_go/backup/mocks"
 	servicemocks "github.com/basicrum/front_basicrum_go/service/mocks"
+	"github.com/basicrum/front_basicrum_go/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
@@ -237,7 +238,8 @@ func TestServer_hostnames(t *testing.T) {
 			defer ctrl.Finish()
 
 			processService := servicemocks.NewMockIService(ctrl)
-			port, s := makeServer(processService, privateAPIToken)
+			backupService := backup.NewNullBackup()
+			port, s := makeServer(processService, backupService, privateAPIToken)
 
 			go func() {
 				_ = s.Serve()
@@ -264,7 +266,6 @@ func TestServer_hostnames(t *testing.T) {
 			r := makeRequest(t, tt.args.method, address, tt.args.request, tt.args.headers)
 
 			response := executeRequest(r, t)
-
 			assertResponse(t, response, tt.want, tt.wantCode)
 		})
 	}
@@ -289,6 +290,22 @@ func makeRequest(t *testing.T, method, address string, request any, headers map[
 	return r
 }
 
+func makeUrlValues(beaconDataMap map[string]string) url.Values {
+	result := url.Values{}
+	for k, v := range beaconDataMap {
+		result.Set(k, v)
+	}
+	return result
+}
+
+func makeFormRequest(t *testing.T, address string, pairs map[string]string) *http.Request {
+	params := makeUrlValues(pairs)
+	req, err := http.NewRequest(http.MethodPost, address, strings.NewReader(params.Encode()))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	return req
+}
+
 func executeRequest(r *http.Request, t *testing.T) *http.Response {
 	response, err := http.DefaultClient.Do(r)
 	require.NoError(t, err)
@@ -304,8 +321,7 @@ func assertResponse(t *testing.T, response *http.Response, want string, wantCode
 	require.Equal(t, wantCode, response.StatusCode)
 }
 
-func makeServer(processService *servicemocks.MockIService, privateAPIToken string) (string, *Server) {
-	backupService := backup.NewNullBackup()
+func makeServer(processService *servicemocks.MockIService, backupService backup.IBackup, privateAPIToken string) (string, *Server) {
 	port := randomPort()
 	s := New(processService, backupService, privateAPIToken, WithHTTP(port))
 	return port, s
@@ -319,40 +335,64 @@ func randomPort() string {
 }
 
 func TestServer_catcher(t *testing.T) {
-	type fields struct {
-		port            string
-		service         service.IService
-		backup          backup.IBackup
-		certFile        string
-		keyFile         string
-		server          *http.Server
-		tlsConfig       *tls.Config
-		privateAPIToken string
-	}
 	type args struct {
-		w http.ResponseWriter
-		r *http.Request
+		form map[string]string
+	}
+	type expects struct {
+		SaveAsync              bool
+		SaveAsyncRequest       *types.Event
+		BackupSaveAsync        bool
+		BackupSaveAsyncRequest *types.Event
 	}
 	tests := []struct {
-		name   string
-		fields fields
-		args   args
+		name     string
+		args     args
+		expects  expects
+		want     string
+		wantCode int
 	}{
-		// TODO: Add test cases.
+		{
+			name: "Success",
+			args: args{
+				form: map[string]string{
+					"hostname":        "test1",
+					"subscription_id": "1",
+				},
+			},
+			expects: expects{
+				SaveAsync:        true,
+				SaveAsyncRequest: &types.Event{},
+			},
+			want:     "",
+			wantCode: http.StatusNoContent,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := &Server{
-				port:            tt.fields.port,
-				service:         tt.fields.service,
-				backup:          tt.fields.backup,
-				certFile:        tt.fields.certFile,
-				keyFile:         tt.fields.keyFile,
-				server:          tt.fields.server,
-				tlsConfig:       tt.fields.tlsConfig,
-				privateAPIToken: tt.fields.privateAPIToken,
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			processService := servicemocks.NewMockIService(ctrl)
+			backupService := backupmocks.NewMockIBackup(ctrl)
+			port, s := makeServer(processService, backupService, "")
+
+			go func() {
+				_ = s.Serve()
+			}()
+			defer func() {
+				_ = s.Shutdown(context.Background())
+			}()
+			if tt.expects.SaveAsync {
+				processService.EXPECT().SaveAsync(tt.expects.SaveAsyncRequest)
 			}
-			s.catcher(tt.args.w, tt.args.r)
+			if tt.expects.BackupSaveAsync {
+				processService.EXPECT().SaveAsync(tt.expects.BackupSaveAsyncRequest)
+			}
+			address := makeURL(port, "/beacon/catcher")
+			r := makeFormRequest(t, address, tt.args.form)
+			response := executeRequest(r, t)
+
+			assertResponse(t, response, tt.want, tt.wantCode)
 		})
 	}
 }

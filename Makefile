@@ -51,6 +51,13 @@ lint/install:
 lint: 
 	golangci-lint run
 
+.PHONY: mockgen/install
+mockgen/install:
+	go install github.com/golang/mock/mockgen@v1.6.0
+
+.PHONY: tools/install
+tools/install: lint/install mockgen/install
+
 .PHONY: test
 test:
 	BRUM_SERVER_HOST=localhost \

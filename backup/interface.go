@@ -1,5 +1,7 @@
 package backup
 
+//go:generate mockgen -source=${GOFILE} -destination=mocks/${GOFILE} -package=backupmocks
+
 import "github.com/basicrum/front_basicrum_go/types"
 
 // IBackup interface for backup service
