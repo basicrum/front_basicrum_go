@@ -368,7 +368,6 @@ func TestServer_catcher(t *testing.T) {
 			"subscription_id": []string{"subscription_id1"},
 			"created_at":      []string{"created_at1"},
 		},
-		UserAgent: "Go-http-client/1.1",
 	}
 	type args struct {
 		form map[string]string
