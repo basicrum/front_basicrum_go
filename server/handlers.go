@@ -10,7 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/basicrum/front_basicrum_go/config"
 	"github.com/basicrum/front_basicrum_go/types"
 )
 
@@ -20,10 +19,6 @@ const (
 )
 
 func (s *Server) catcher(w http.ResponseWriter, r *http.Request) {
-	sConf, err := config.GetStartupConfig()
-	if err != nil {
-		log.Printf("failed to parse config %+v", err)
-	}
 	// return no cache headers
 	s.responseNoContent(w)
 
@@ -37,10 +32,8 @@ func (s *Server) catcher(w http.ResponseWriter, r *http.Request) {
 	// Persist Event async in ClickHouse
 	s.service.SaveAsync(event)
 
-	if sConf.Backup.Enabled {
-		// Archiving logic - save the event to a file
-		s.backup.SaveAsync(event)
-	}
+	// Archiving logic - save the event to a file
+	s.backup.SaveAsync(event)
 }
 
 func (s *Server) health(w http.ResponseWriter, _ *http.Request) {
