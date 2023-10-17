@@ -20,8 +20,8 @@ type SubscriptionWithHostname struct {
 
 // Subscription represents when the trial for hostname is active
 type Subscription struct {
-	ID        string    `ch:"subscription_id"`
-	ExpiresAt time.Time `ch:"subscription_expire_at"`
+	ID        string
+	ExpiresAt time.Time
 }
 
 // NewSubscription creates Subscription
