@@ -23,8 +23,7 @@ func TestService_processEvent(t *testing.T) {
 		subscriptionService ISubscriptionService
 	}
 	type args struct {
-		rumEvent beacon.RumEvent
-		lookup   Lookup
+		lookup Lookup
 	}
 	type expects struct {
 		GetSubscription  bool
@@ -42,17 +41,6 @@ func TestService_processEvent(t *testing.T) {
 		expects expects
 		want    string
 	}{
-		{
-			name: "Lookup subscription",
-			args: args{
-				rumEvent: beacon.RumEvent{},
-			},
-			expects: expects{
-				GetSubscription: true,
-				rumEvent:        beacon.RumEvent{},
-			},
-			want: string(FoundLookup),
-		},
 		{
 			name: "Lookup subscription found",
 			args: args{
