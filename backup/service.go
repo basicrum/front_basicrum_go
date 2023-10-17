@@ -32,7 +32,7 @@ type FileBackup struct {
 }
 
 // NewFileBackup creates file system backup service
-// lint revive
+// nolint: revive
 func NewFileBackup(
 	backupInterval time.Duration,
 	directory string,
@@ -83,7 +83,7 @@ func (b *FileBackup) SaveAsync(event *types.Event) {
 	b.doSaveAsync(event, BATCHER_DEFAULT)
 }
 
-// lint revive
+// nolint: revive
 func (b *FileBackup) doSaveAsync(event *types.Event, batcherInstance string) {
 	go func() {
 		forArchiving := event.RequestParameters

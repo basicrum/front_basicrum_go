@@ -41,7 +41,7 @@ type Service struct {
 }
 
 // New creates processing service
-// lint revive
+// nolint: revive
 func New(
 	daoService *dao.DAO,
 	userAgentParser *uaparser.Parser,

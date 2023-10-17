@@ -28,7 +28,7 @@ import (
 //go:embed assets/uaparser_regexes.yaml
 var userAgentRegularExpressions []byte
 
-// lint revive
+// nolint: revive
 func main() {
 	sConf, err := config.GetStartupConfig()
 	if err != nil {
