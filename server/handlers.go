@@ -22,7 +22,7 @@ const (
 func (s *Server) catcher(w http.ResponseWriter, r *http.Request) {
 	sConf, err := config.GetStartupConfig()
 	if err != nil {
-		log.Fatal(err)
+		log.Printf("failed to parse config %+v", err)
 	}
 	// return no cache headers
 	s.responseNoContent(w)
