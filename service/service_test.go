@@ -2,7 +2,6 @@ package service
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
 	"io"
 	"net/url"
@@ -139,7 +138,7 @@ func TestService_processEvent(t *testing.T) {
 			// Read the file into a byte slice
 			userAgentRegularExpressions := make([]byte, stat.Size())
 			_, err = bufio.NewReader(file).Read(userAgentRegularExpressions)
-			if err != nil && errors.Is(err, io.EOF) {
+			if err != nil && err != io.EOF {
 				fmt.Println(err)
 				return
 			}

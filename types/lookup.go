@@ -3,7 +3,6 @@ package types
 // Lookup describes subscription lookup statuses
 type Lookup string
 
-// LookupStruct contains the Lookup value
 type LookupStruct struct {
 	Value *Lookup
 }
@@ -33,7 +32,7 @@ func NewExpiredLookup() LookupStruct {
 	}
 }
 
-// NewNotFoundLookup returns NotFoundLookup
+// NewOwnerHostname creates OwnerHostname
 func NewNotFoundLookup() LookupStruct {
 	v := NotFoundLookup
 	return LookupStruct{
