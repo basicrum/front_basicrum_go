@@ -31,7 +31,7 @@ type IService interface {
 
 // Service processes events and stores them in database access object
 type Service struct {
-	daoService          *dao.DAO
+	daoService          dao.IDAO
 	userAgentParser     *uaparser.Parser
 	events              chan *types.Event
 	geoIPService        geoip.Service
@@ -43,7 +43,7 @@ type Service struct {
 // New creates processing service
 // nolint: revive
 func New(
-	daoService *dao.DAO,
+	daoService dao.IDAO,
 	userAgentParser *uaparser.Parser,
 	geoIPService geoip.Service,
 	subscriptionService ISubscriptionService,
@@ -106,14 +106,14 @@ func (s *Service) processEvent(event *types.Event) {
 	}
 
 	switch lookup {
-	case FoundLookup:
+	case types.NewFoundLookup().Value:
 		s.processRumEvent(rumEvent)
-	case ExpiredLookup:
+	case types.NewExpiredLookup().Value:
 		s.backupService.SaveExpired(event)
-	case NotFoundLookup:
+	case types.NewNotFoundLookup().Value:
 		s.backupService.SaveUnknown(event)
 	default:
-		log.Printf("unsupported lookup result: %s", lookup)
+		log.Printf("unsupported lookup result: %v", lookup)
 		return
 	}
 }

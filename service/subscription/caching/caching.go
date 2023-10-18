@@ -2,7 +2,6 @@ package caching
 
 import (
 	"github.com/basicrum/front_basicrum_go/dao"
-	"github.com/basicrum/front_basicrum_go/service"
 	"github.com/basicrum/front_basicrum_go/types"
 )
 
@@ -29,7 +28,7 @@ func (s *SubscriptionService) Load() error {
 
 // GetSubscription attempts to get subscription from cache
 // If not successful it attempts to load from dao and updates cache
-func (s *SubscriptionService) GetSubscription(subscriptionID, hostname string) (service.Lookup, error) {
+func (s *SubscriptionService) GetSubscription(subscriptionID, hostname string) (*types.Lookup, error) {
 	item := s.cache[subscriptionID]
 	if item != nil {
 		return s.makeLookupResult(item, hostname)
@@ -38,22 +37,22 @@ func (s *SubscriptionService) GetSubscription(subscriptionID, hostname string) (
 	var err error
 	item, err = s.dao.GetSubscription(subscriptionID)
 	if err != nil {
-		return service.NotFoundLookup, err
+		return types.NewNotFoundLookup().Value, err
 	}
 	if item == nil {
-		return service.NotFoundLookup, nil
+		return types.NewNotFoundLookup().Value, nil
 	}
 
 	s.cache[subscriptionID] = item
 	return s.makeLookupResult(item, hostname)
 }
 
-func (*SubscriptionService) makeLookupResult(item *types.SubscriptionWithHostname, hostname string) (service.Lookup, error) {
+func (*SubscriptionService) makeLookupResult(item *types.SubscriptionWithHostname, hostname string) (*types.Lookup, error) {
 	if item.Subscription.Expired() {
-		return service.ExpiredLookup, nil
+		return types.NewExpiredLookup().Value, nil
 	}
 	if item.Hostname != hostname {
-		return service.NotFoundLookup, nil
+		return types.NewNotFoundLookup().Value, nil
 	}
-	return service.FoundLookup, nil
+	return types.NewFoundLookup().Value, nil
 }

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	daomocks "github.com/basicrum/front_basicrum_go/dao/mocks"
-	"github.com/basicrum/front_basicrum_go/service"
 	"github.com/basicrum/front_basicrum_go/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
@@ -32,7 +31,7 @@ func TestCacheSubscriptionService_GetSubscription(t *testing.T) {
 		name                    string
 		args                    args
 		expects                 expects
-		want                    service.Lookup
+		want                    *types.Lookup
 		wantGetSubscriptionsErr bool
 		wantErr                 bool
 	}{
@@ -53,7 +52,7 @@ func TestCacheSubscriptionService_GetSubscription(t *testing.T) {
 					},
 				},
 			},
-			want: service.FoundLookup,
+			want: types.NewFoundLookup().Value,
 		},
 		{
 			name: "when subscription id is found in the cache with different hostname then expected NotFound",
@@ -72,7 +71,7 @@ func TestCacheSubscriptionService_GetSubscription(t *testing.T) {
 					},
 				},
 			},
-			want: service.NotFoundLookup,
+			want: types.NewNotFoundLookup().Value,
 		},
 		{
 			name: "when subscription id is not found in the cache then load from dao expected Found",
@@ -92,7 +91,7 @@ func TestCacheSubscriptionService_GetSubscription(t *testing.T) {
 					Hostname: "hostname1",
 				},
 			},
-			want: service.FoundLookup,
+			want: types.NewFoundLookup().Value,
 		},
 		{
 			name: "when subscription id is found expired in the cache then load from dao expected Expired",
@@ -112,7 +111,7 @@ func TestCacheSubscriptionService_GetSubscription(t *testing.T) {
 					Hostname: "hostname1",
 				},
 			},
-			want: service.ExpiredLookup,
+			want: types.NewExpiredLookup().Value,
 		},
 		{
 			name: "when subscription id is not found in the cache then load from dao with different hostname expected NotFound",
@@ -132,7 +131,7 @@ func TestCacheSubscriptionService_GetSubscription(t *testing.T) {
 					Hostname: "otherHostname",
 				},
 			},
-			want: service.NotFoundLookup,
+			want: types.NewNotFoundLookup().Value,
 		},
 		{
 			name: "when subscription id is not found in the cache then load from dao expired expected Expired",
@@ -152,7 +151,7 @@ func TestCacheSubscriptionService_GetSubscription(t *testing.T) {
 					Hostname: "hostname1",
 				},
 			},
-			want: service.ExpiredLookup,
+			want: types.NewExpiredLookup().Value,
 		},
 		{
 			name: "when subscription id is not found in the cache then not found in dao expected NotFound",
@@ -167,7 +166,7 @@ func TestCacheSubscriptionService_GetSubscription(t *testing.T) {
 				GetSubscriptionRequest: "subscriptionID1",
 				GetSubscriptionReturn:  nil,
 			},
-			want: service.NotFoundLookup,
+			want: types.NewNotFoundLookup().Value,
 		},
 		{
 			name: "when dao return error expected error",
@@ -182,7 +181,7 @@ func TestCacheSubscriptionService_GetSubscription(t *testing.T) {
 				GetSubscriptionRequest: "subscriptionID1",
 				GetSubscriptionError:   errors.New("error1"),
 			},
-			want:    service.NotFoundLookup,
+			want:    types.NewNotFoundLookup().Value,
 			wantErr: true,
 		},
 	}
@@ -209,7 +208,7 @@ func TestCacheSubscriptionService_GetSubscription(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			var got service.Lookup
+			var got *types.Lookup
 			got, err = s.GetSubscription(tt.args.subscriptionID, tt.args.hostname)
 			if tt.wantErr {
 				require.Error(t, err)
