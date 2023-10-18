@@ -103,12 +103,17 @@ func TestService_processEvent(t *testing.T) {
 			backupService := backupmocks.NewMockIBackup(ctrl)
 			s := New(tt.fields.daoService, tt.fields.userAgentParser, tt.fields.geoIPService, tt.fields.subscriptionService, backupService)
 			for e := range tt.fields.events {
-				// if tt.expects.processRumEvent {
-				// 	s.processRumEvent.EXPECT().
-				// 		processRumEvent(
-				// 			tt.expects.rumEvent,
-				// 		)
-				// }
+				b := beacon.FromEvent(e)
+				re := beacon.ConvertToRumEvent(b, e, tt.fields.userAgentParser, tt.fields.geoIPService)
+				lk, err := s.subscriptionService.GetSubscription(re.SubscriptionID, re.Hostname)
+				require.NoError(t, err)
+				assert.Equal(t, tt.want, lk)
+				if tt.expects.processRumEvent {
+					s.processRumEvent.EXPECT().
+						processRumEvent(
+							tt.expects.rumEvent,
+						)
+				}
 				if tt.expects.SaveExpired {
 					backupService.EXPECT().
 						SaveExpired(
@@ -121,11 +126,6 @@ func TestService_processEvent(t *testing.T) {
 							tt.expects.SaveUnknownEvent,
 						)
 				}
-				b := beacon.FromEvent(e)
-				re := beacon.ConvertToRumEvent(b, e, tt.fields.userAgentParser, tt.fields.geoIPService)
-				lk, err := s.subscriptionService.GetSubscription(re.SubscriptionID, re.Hostname)
-				require.NoError(t, err)
-				assert.Equal(t, tt.want, lk)
 			}
 		})
 	}
