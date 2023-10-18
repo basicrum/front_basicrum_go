@@ -108,17 +108,17 @@ func (mr *MockIDAOMockRecorder) InsertOwnerHostname(item interface{}) *gomock.Ca
 }
 
 // Save mocks base method.
-func (m *MockIDAO) Save(data string) error {
+func (m *MockIDAO) Save(rumEvent beacon.RumEvent) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Save", data)
+	ret := m.ctrl.Call(m, "Save", rumEvent)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Save indicates an expected call of Save.
-func (mr *MockIDAOMockRecorder) Save(data interface{}) *gomock.Call {
+func (mr *MockIDAOMockRecorder) Save(rumEvent interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Save", reflect.TypeOf((*MockIDAO)(nil).Save), data)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Save", reflect.TypeOf((*MockIDAO)(nil).Save), rumEvent)
 }
 
 // SaveHost mocks base method.

@@ -1,5 +1,7 @@
 package service
 
+//go:generate mockgen -source=${GOFILE} -destination=mock_${GOFILE} -package=service
+
 // Lookup describes subscription lookup statuses
 type Lookup string
 

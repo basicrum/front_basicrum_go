@@ -24,7 +24,7 @@ const (
 // IDAO is data access object inteface
 type IDAO interface {
 	Close() error
-	Save(data string) error
+	Save(rumEvent beacon.RumEvent) error
 	SaveHost(event beacon.HostnameEvent) error
 	InsertOwnerHostname(item types.OwnerHostname) error
 	DeleteOwnerHostname(hostname, username string) error
@@ -59,16 +59,18 @@ func (p *DAO) Close() error {
 }
 
 // Save stores data into table in clickhouse database
-func (p *DAO) Save(data string) error {
-	if data == "" {
-		return fmt.Errorf("clickhouse invalid data for table %s: %s", p.table, data)
+func (p *DAO) Save(rumEvent beacon.RumEvent) error {
+	jsonValue, err := json.Marshal(rumEvent)
+	if err != nil {
+		return fmt.Errorf("json[%+v] parsing error: %w", rumEvent, err)
 	}
+	data := string(jsonValue)
 	query := fmt.Sprintf(
 		"INSERT INTO %s SETTINGS input_format_skip_unknown_fields = true FORMAT JSONEachRow %s",
 		p.table,
 		data,
 	)
-	err := p.conn.AsyncInsert(context.Background(), query, false)
+	err = p.conn.AsyncInsert(context.Background(), query, false)
 	if err != nil {
 		return fmt.Errorf("clickhouse insert failed: %w", err)
 	}

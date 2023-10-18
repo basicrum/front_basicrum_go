@@ -85,10 +85,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	rumEventFactory := service.NewRumEventFactory(userAgentParser, geopIPService)
 	processingService := service.New(
+		rumEventFactory,
 		daoService,
-		userAgentParser,
-		geopIPService,
 		subscriptionService,
 		backupService,
 	)
