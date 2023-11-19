@@ -3,22 +3,20 @@ package service
 //go:generate mockgen -source=${GOFILE} -destination=mocks/${GOFILE} -package=servicemocks
 
 import (
-	"encoding/json"
 	"log"
 	"time"
 
+	"github.com/basicrum/front_basicrum_go/backup"
 	"github.com/basicrum/front_basicrum_go/beacon"
 	"github.com/basicrum/front_basicrum_go/dao"
-	"github.com/basicrum/front_basicrum_go/geoip"
 	"github.com/basicrum/front_basicrum_go/types"
-	"github.com/ua-parser/uap-go/uaparser"
 )
 
 const hostUpdateDuration = time.Minute
 
 // IService service interface
 type IService interface {
-	// SaveAsync saves an event asynchronously
+	// Run runs the service
 	Run()
 	// SaveAsync saves an event asynchronously
 	SaveAsync(event *types.Event)
@@ -30,26 +28,30 @@ type IService interface {
 
 // Service processes events and stores them in database access object
 type Service struct {
-	daoService      *dao.DAO
-	userAgentParser *uaparser.Parser
-	events          chan *types.Event
-	geoIPService    geoip.Service
-	hosts           map[string]string
+	rumEventFactory     IRumEventFactory
+	daoService          dao.IDAO
+	events              chan *types.Event
+	hosts               map[string]string
+	subscriptionService ISubscriptionService
+	backupService       backup.IBackup
 }
 
 // New creates processing service
+// nolint: revive
 func New(
-	daoService *dao.DAO,
-	userAgentParser *uaparser.Parser,
-	geoIPService geoip.Service,
+	rumEventFactory IRumEventFactory,
+	daoService dao.IDAO,
+	subscriptionService ISubscriptionService,
+	backupService backup.IBackup,
 ) *Service {
 	events := make(chan *types.Event)
 	return &Service{
-		daoService:      daoService,
-		userAgentParser: userAgentParser,
-		events:          events,
-		geoIPService:    geoIPService,
-		hosts:           map[string]string{},
+		rumEventFactory:     rumEventFactory,
+		daoService:          daoService,
+		events:              events,
+		hosts:               map[string]string{},
+		subscriptionService: subscriptionService,
+		backupService:       backupService,
 	}
 }
 
@@ -89,17 +91,30 @@ func (s *Service) processEvent(event *types.Event) {
 	if event == nil {
 		return
 	}
-	beaconEvent := beacon.FromEvent(event)
-	rumEvent := beacon.ConvertToRumEvent(beaconEvent, event, s.userAgentParser, s.geoIPService)
-	jsonValue, err := json.Marshal(rumEvent)
+	rumEvent := s.rumEventFactory.Create(event)
+	lookup, err := s.subscriptionService.GetSubscription(rumEvent.SubscriptionID, rumEvent.Hostname)
 	if err != nil {
-		log.Printf("json parsing error: %+v", err)
+		log.Printf("get subscription error: %+v", err)
 		return
 	}
-	data := string(jsonValue)
-	err = s.daoService.Save(data)
+
+	switch lookup {
+	case FoundLookup:
+		s.processRumEvent(rumEvent)
+	case ExpiredLookup:
+		s.backupService.SaveExpired(event)
+	case NotFoundLookup:
+		s.backupService.SaveUnknown(event)
+	default:
+		log.Printf("unsupported lookup result: %s", lookup)
+		return
+	}
+}
+
+func (s *Service) processRumEvent(rumEvent beacon.RumEvent) {
+	err := s.daoService.Save(rumEvent)
 	if err != nil {
-		log.Printf("failed to save data: %v err: %+v", data, err)
+		log.Printf("failed to save data: %+v err: %+v", rumEvent, err)
 	}
 	s.hosts[rumEvent.Hostname] = rumEvent.Created_At
 }

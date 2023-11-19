@@ -1,5 +1,7 @@
 package dao
 
+//go:generate mockgen -source=${GOFILE} -destination=mocks/${GOFILE} -package=daomocks
+
 import (
 	"context"
 	"encoding/json"
@@ -18,6 +20,17 @@ const (
 	tablePrefixPlaceholder  = "{prefix}"
 	bufferSize              = 1024
 )
+
+// IDAO is data access object inteface
+type IDAO interface {
+	Close() error
+	Save(rumEvent beacon.RumEvent) error
+	SaveHost(event beacon.HostnameEvent) error
+	InsertOwnerHostname(item types.OwnerHostname) error
+	DeleteOwnerHostname(hostname, username string) error
+	GetSubscriptions() (map[string]*types.SubscriptionWithHostname, error)
+	GetSubscription(id string) (*types.SubscriptionWithHostname, error)
+}
 
 // DAO is data access object for clickhouse database
 type DAO struct {
@@ -46,16 +59,18 @@ func (p *DAO) Close() error {
 }
 
 // Save stores data into table in clickhouse database
-func (p *DAO) Save(data string) error {
-	if data == "" {
-		return fmt.Errorf("clickhouse invalid data for table %s: %s", p.table, data)
+func (p *DAO) Save(rumEvent beacon.RumEvent) error {
+	jsonValue, err := json.Marshal(rumEvent)
+	if err != nil {
+		return fmt.Errorf("json[%+v] parsing error: %w", rumEvent, err)
 	}
+	data := string(jsonValue)
 	query := fmt.Sprintf(
 		"INSERT INTO %s SETTINGS input_format_skip_unknown_fields = true FORMAT JSONEachRow %s",
 		p.table,
 		data,
 	)
-	err := p.conn.AsyncInsert(context.Background(), query, false)
+	err = p.conn.AsyncInsert(context.Background(), query, false)
 	if err != nil {
 		return fmt.Errorf("clickhouse insert failed: %w", err)
 	}
@@ -99,4 +114,62 @@ func (p *DAO) DeleteOwnerHostname(hostname, username string) error {
 		baseOwnerHostsTableName,
 	)
 	return p.conn.Exec(context.Background(), query, hostname, username)
+}
+
+// GetSubscriptions gets all subscriptions
+func (p *DAO) GetSubscriptions() (map[string]*types.SubscriptionWithHostname, error) {
+	query := fmt.Sprintf(
+		"SELECT subscription_id, subscription_expire_at, hostname FROM %v%v FINAL",
+		p.prefix,
+		baseOwnerHostsTableName,
+	)
+	rows, err := p.conn.Query(context.Background(), query)
+	if err != nil {
+		return nil, fmt.Errorf("get subscriptions failed: %w", err)
+	}
+	defer rows.Close()
+
+	result := make(map[string]*types.SubscriptionWithHostname)
+	for rows.Next() {
+		var item types.SubscriptionWithHostname
+		if err := rows.Scan(&item.Subscription.ID, &item.Subscription.ExpiresAt, &item.Hostname); err != nil {
+			return result, err
+		}
+		result[item.Subscription.ID] = &item
+	}
+
+	if err = rows.Err(); err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
+// GetSubscription gets subscription by id
+func (p *DAO) GetSubscription(id string) (*types.SubscriptionWithHostname, error) {
+	query := fmt.Sprintf(`
+	SELECT subscription_id, subscription_expire_at, hostname 
+	FROM %v%v FINAL
+	WHERE subscription_id = ?
+	`,
+		p.prefix,
+		baseOwnerHostsTableName,
+	)
+	rows, err := p.conn.Query(context.Background(), query, id)
+	if err != nil {
+		return nil, fmt.Errorf("get subscription failed: %w", err)
+	}
+	defer rows.Close()
+
+	if !rows.Next() {
+		// nolint: nilnil
+		return nil, nil
+	}
+
+	var result types.SubscriptionWithHostname
+	err = rows.Scan(&result.Subscription.ID, &result.Subscription.ExpiresAt, &result.Hostname)
+	if err != nil {
+		return nil, fmt.Errorf("get subscription failed: %w", err)
+	}
+
+	return &result, nil
 }

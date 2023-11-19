@@ -4,13 +4,21 @@ SHELL=bash
 
 UID := $(shell id -u)
 
-dc_path=./docker-compose.yaml
+dc_path=./docker-compose.dev.yaml
 dc_grafana_path=./docker-compose.grafana.yaml
 dev_clickhouse_server_container=dev_clickhouse_server
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
 up: ## Starts the environment
+	docker-compose build
+	docker-compose up -d
+
+down: ## Stops the environment
+	docker-compose down
+	env UID=${UID} docker-compose down
+
+devup: ## Starts the environment
 	docker-compose -f ${dc_path} build
 	docker-compose -f ${dc_path} up -d
 
@@ -20,7 +28,7 @@ up_with_grafana: ## Starts the environment with Grafana
 	docker-compose -f ${dc_grafana_path} build
 	env UID=${UID} docker-compose -f ${dc_grafana_path} up
 
-down: ## Stops the environment
+devdown: ## Stops the environment
 	docker-compose -f ${dc_path} down
 	env UID=${UID} docker-compose -f ${dc_grafana_path} down
 
@@ -51,6 +59,13 @@ lint/install:
 lint: 
 	golangci-lint run
 
+.PHONY: mockgen/install
+mockgen/install:
+	go install github.com/golang/mock/mockgen@v1.6.0
+
+.PHONY: tools/install
+tools/install: lint/install mockgen/install
+
 .PHONY: test
 test:
 	BRUM_SERVER_HOST=localhost \
@@ -64,7 +79,7 @@ test:
 	BRUM_PERSISTANCE_DATABASE_STRATEGY=all_in_one_db \
 	BRUM_PERSISTANCE_TABLE_STRATEGY=all_in_one_table \
 	BRUM_BACKUP_ENABLED=false \
-	BRUM_BACKUP_DIRECTORY=/home/basicrum_archive \
+	BRUM_BACKUP_DIRECTORY=/home/basicrum_backup \
 	BRUM_BACKUP_INTERVAL_SECONDS=5 \
 	go test --short ./... 
 
@@ -82,7 +97,7 @@ integration:
 	BRUM_PERSISTANCE_DATABASE_STRATEGY=all_in_one_db \
 	BRUM_PERSISTANCE_TABLE_STRATEGY=all_in_one_table \
 	BRUM_BACKUP_ENABLED=false \
-	BRUM_BACKUP_DIRECTORY=/home/basicrum_archive \
+	BRUM_BACKUP_DIRECTORY=/home/basicrum_backup \
 	BRUM_BACKUP_INTERVAL_SECONDS=5 \
 	go test ./...
 
@@ -99,7 +114,7 @@ e2e:
 	BRUM_PERSISTANCE_DATABASE_STRATEGY=all_in_one_db \
 	BRUM_PERSISTANCE_TABLE_STRATEGY=all_in_one_table \
 	BRUM_BACKUP_ENABLED=false \
-	BRUM_BACKUP_DIRECTORY=/home/basicrum_archive \
+	BRUM_BACKUP_DIRECTORY=/home/basicrum_backup \
 	BRUM_BACKUP_INTERVAL_SECONDS=5 \
 	go test ./...
 	

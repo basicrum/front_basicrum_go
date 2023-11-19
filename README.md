@@ -18,6 +18,109 @@ This project focuses on the component Basic RUM GO but this is how the data flow
 
 3. Charts and other visualizations are being created while Grafana is querying ClickHouse.
 
+## Quick start
+
+The quick start docker compose file is `docker-compose.yaml`
+
+### start
+
+Run:
+```
+make up
+```
+
+this is shortcut for:
+```
+docker-compose build
+docker-compose up -d
+```
+
+### down
+Run:
+
+```
+make down
+```
+
+this is shortcut for:
+```
+docker-compose down
+```
+
+## Environment variables
+
+| Name | Default Value | Description |
+|------|---------------|------------ |
+| BRUM_SERVER_PORT | 80/443 | HTTP Server port. If `BRUM_SERVER_SSL`=true then default value is 443, otherwise 80. |
+| BRUM_SERVER_SSL | false | Use SSL flag. If `true` value is used then starts HTTPS Server, otherwise starts HTTP server. See `BRUM_SERVER_SSL_TYPE` for more configurations. |
+| BRUM_SERVER_SSL_TYPE | FILE | When `BRUM_SERVER_SSL`=`true`. HTTPS type flag (`FILE` or `LETS_ENCRYPT`). If FILE value is provided then starts HTTPS Server on port `BRUM_SERVER_PORT` with custom certificate files. See `BRUM_SERVER_SSL_CERT_FILE` and `BRUM_SERVER_SSL_KEY_FILE`. If `LETS_ENCRYPT` value is provided then start HTTPS Server on port 443 with auto configured certification from Let's encrypt and also HTTP Server on port `BRUM_SERVER_PORT` |
+| BRUM_SERVER_SSL_LETS_ENCRYPT_DOMAIN | | When `BRUM_SERVER_SSL_TYPE`=`LETS_ENCRYPT`. The Let's encrypt domain for HTTPS Server certificate. Example: `example.com` |
+| BRUM_SUBSCRIPTION_ENABLED | false | If request `subscription_id` and `hostname` needs to be validated in table `webperf_rum_own_hostnames`. Managed by BasicRUM Dashboard |
+| BRUM_PRIVATE_API_TOKEN | | When `BRUM_SUBSCRIPTION_ENABLED`=`true. Authentication value for `X-Token` received by BasicRUM Dashboard |
+| BRUM_DATABASE_HOST | | The ClickHouse database host |
+| BRUM_DATABASE_PORT | 9000 | The ClickHouse database port |
+| BRUM_DATABASE_USERNAME | default | The ClickHouse database username |
+| BRUM_DATABASE_PASSWORD | | The ClickHouse database password |
+| BRUM_DATABASE_NAME | default | The ClickHouse database name |
+| BRUM_DATABASE_TABLE_PREFIX | | The ClickHouse table prefix |
+| BRUM_BACKUP_ENABLED | false | Flag if request log is created |
+| BRUM_BACKUP_DIRECTORY | | The request log output directory. Sub-directories are created: archive (request log), expired (if subscription_id is expired) and unknown (if subscription_id and hostname is not found) |
+| BRUM_BACKUP_INTERVAL_SECONDS | 5 | The request logs are batched for specified interval and flushed in file. The directory structure is <hostname>/yyyy-m-d/h.json.lines (UTC time zone) |
+| BRUM_COMPRESSION_TYPE | GZIP | (GZIP, Zstandard, NONE) Day compression type. After the day is completed the request logs are archived in format: <hostname>/yyyy-m-d-parts.meta.txt (metadata hour|start lines|end lines) and <hostname>/yyyy-m-d.json.lines[.ext] (for GZIP .gz, for Zstandard .zst and for NONE no extension) |
+| BRUM_COMPRESSION_LEVEL | Default | (No, BestSpeed, Default, BestCompression, HuffmanOnly) The compression level. The HuffmanOnly is GZIP specific only. No value means no compression.
+
+
+## API
+
+| Method | Path | Description |
+| ------ | ---- | ----------- |
+| POST | /beacon/catcher | Catch beacon events and store them in ClickHouse table `webperf_rum_events` |
+| GET | /health | Docker compose health check endpoint |
+| POST | /private/hostnames | BasicRUM Dashboard private REST API to register hostname and generate subscription |
+| DELETE | /private/hostnames | BasicRUM Dashboard private REST API to delete hostname |
+
+
+## ClichHouse schema
+
+Open http://localhost:8143/play` in your browser
+
+### Tables
+
+Run the following query:
+
+```sql
+SHOW TABLES
+```
+
+To see the create schema run:
+```sql
+SHOW CREATE TABLE <tablename>
+```
+
+| Table | Description |
+| ----- | ----------- |
+| webperf_rum_events | Contains the captured beacon events |
+| webperf_rum_hostnames | Contains the unique hostname values from webperf_rum_events |
+| webperf_rum_own_hostnames | Contains the owners hostname/subscription pairs. Used for filtering in BasicRUM Dashboard |
+| webperf_rum_grant_hostnames | Contains the granted hostname to other users by the hostname owner. Used for filtering in BasicRUM Dashboard |
+
+### Views
+
+Run the following query:
+
+```sql
+SHOW VIEWS
+```
+
+To see the create schema run:
+```sql
+SHOW CREATE VIEW <viewname>
+```
+
+| View | Description |
+| ---- | ----------- |
+| webperf_rum_view_hostnames | Contains union of owner hostnames and granted hostnames. Used for filtering in BasicRUM Dashboard |
+
 ## How to start dev environment
 
 ### 1. Start ClickHouse
@@ -25,7 +128,7 @@ This project focuses on the component Basic RUM GO but this is how the data flow
 Run:
 
 ```
-make up
+make devup
 ```
 
 ### 2. Start Front Basic RUM GO
@@ -109,13 +212,13 @@ For that to work, DNS name must resolve to the IP address of your server.
 go run main.go
 ```
 
-**2.3** Application creates table on startup with following structure### 3.
+**2.3** Application creates table on startup with following structure
 
 ### 3. Table is automatically created in ClickHouse
 
 You can check that the table is created with required structure by following the steps below.
 
-**3.1** Load http://localhost:8143/ in your browser
+**3.1** Load http://localhost:8143/play in your browser
 
 **3.2** Check a table is created:
 
@@ -214,11 +317,19 @@ curl 'http://127.0.0.1:8087/beacon/catcher' \
 
 **5.1** Load the ClickHouse dev user interface
 
-Load http://localhost:8143/ in your browser
+Load http://localhost:8143/play in your browser
+
+**5.2** Show all tables
+
+Run the following query:
+
+```sql
+SHOW TABLES
+```
 
 **5.2** Query the data
 
-Run the follwoing query:
+Run the following query:
 
 ```sql
 SELECT * from webperf_rum_events
