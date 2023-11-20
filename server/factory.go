@@ -80,7 +80,13 @@ func (f *Factory) Build(sConf config.StartupConfig) ([]*Server, error) {
 			sConf.PrivateAPI.Token,
 			WithSSL(httpsPort, sConf.Server.SSLFile.SSLFileCertFile, sConf.Server.SSLFile.SSLFileKeyFile),
 		)
-		return []*Server{httpsServer}, nil
+		httpServer := New(
+			f.processService,
+			f.backupService,
+			sConf.PrivateAPI.Token,
+			WithHTTP(httpPort),
+		)
+		return []*Server{httpsServer, httpServer}, nil
 	default:
 		return nil, fmt.Errorf("unsupported SSL type[%v]", sConf.Server.SSLType)
 	}
