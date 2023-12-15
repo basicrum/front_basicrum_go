@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"log"
+	"net"
 	"net/http"
 	"time"
 
@@ -23,6 +24,14 @@ type Server struct {
 	server          *http.Server
 	tlsConfig       *tls.Config
 	privateAPIToken string
+	listener        net.Listener
+}
+
+// WithListener creates server with custom listener
+func WithListener(listener net.Listener) func(*Server) {
+	return func(s *Server) {
+		s.listener = listener
+	}
 }
 
 // WithHTTP creates server with port
@@ -81,6 +90,10 @@ func (s *Server) Serve() error {
 		WriteTimeout:      5 * time.Second,
 		IdleTimeout:       120 * time.Second,
 		TLSConfig:         s.tlsConfig,
+	}
+	if s.listener != nil {
+		log.Println("starting server with listener")
+		return s.server.Serve(s.listener)
 	}
 	if s.certFile != "" || s.keyFile != "" || s.tlsConfig != nil {
 		log.Printf("starting https server on port[%v] with certFile[%v] keyFile[%v]", s.port, s.certFile, s.keyFile)

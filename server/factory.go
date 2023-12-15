@@ -1,16 +1,12 @@
 package server
 
 import (
-	"crypto/tls"
 	"fmt"
 	"log"
-	"net/http"
-	"os"
 
 	"github.com/basicrum/front_basicrum_go/backup"
 	"github.com/basicrum/front_basicrum_go/config"
 	"github.com/basicrum/front_basicrum_go/service"
-	"golang.org/x/crypto/acme"
 	"golang.org/x/crypto/acme/autocert"
 )
 
@@ -58,12 +54,11 @@ func (f *Factory) Build(sConf config.StartupConfig) ([]*Server, error) {
 	case config.SSLTypeLetsEncrypt:
 		allowedHost := sConf.Server.SSLLetsEncrypt.Domain
 		log.Printf("SSL Let's Encrypt allowedHost[%v]\n", allowedHost)
-		tlsConfig := makeLetsEncryptTLSConfig(allowedHost)
 		httpsServer := New(
 			f.processService,
 			f.backupService,
 			sConf.PrivateAPI.Token,
-			WithTLSConfig(defaultHTTPSPort, tlsConfig),
+			WithListener(autocert.NewListener(allowedHost)),
 		)
 		httpServer := New(
 			f.processService,
@@ -89,37 +84,6 @@ func (f *Factory) Build(sConf config.StartupConfig) ([]*Server, error) {
 		return []*Server{httpsServer, httpServer}, nil
 	default:
 		return nil, fmt.Errorf("unsupported SSL type[%v]", sConf.Server.SSLType)
-	}
-}
-
-func makeLetsEncryptTLSConfig(allowedHost string) *tls.Config {
-	client := makeACMEClient()
-	m := &autocert.Manager{
-		Cache:      autocert.DirCache(cacheDirPath),
-		Prompt:     autocert.AcceptTOS,
-		HostPolicy: autocert.HostWhitelist(allowedHost),
-		Client:     client,
-	}
-	// nolint: gosec
-	return &tls.Config{GetCertificate: m.GetCertificate}
-}
-
-func makeACMEClient() *acme.Client {
-	directoryURL := os.Getenv("TEST_DIRECTORY_URL")
-	if directoryURL == "" {
-		return nil
-	}
-	insecureSkipVerify := os.Getenv("TEST_INSECURE_SKIP_VERIFYy") == "true"
-	return &acme.Client{
-		DirectoryURL: directoryURL,
-		HTTPClient: &http.Client{
-			Transport: &http.Transport{
-				TLSClientConfig: &tls.Config{
-					// nolint: gosec
-					InsecureSkipVerify: insecureSkipVerify,
-				},
-			},
-		},
 	}
 }
 
