@@ -28,12 +28,11 @@ type IService interface {
 
 // Service processes events and stores them in database access object
 type Service struct {
-	rumEventFactory     IRumEventFactory
-	daoService          dao.IDAO
-	events              chan *types.Event
-	hosts               map[string]string
-	subscriptionService ISubscriptionService
-	backupService       backup.IBackup
+	rumEventFactory IRumEventFactory
+	daoService      dao.IDAO
+	events          chan *types.Event
+	hosts           map[string]string
+	backupService   backup.IBackup
 }
 
 // New creates processing service
@@ -41,17 +40,15 @@ type Service struct {
 func New(
 	rumEventFactory IRumEventFactory,
 	daoService dao.IDAO,
-	subscriptionService ISubscriptionService,
 	backupService backup.IBackup,
 ) *Service {
 	events := make(chan *types.Event)
 	return &Service{
-		rumEventFactory:     rumEventFactory,
-		daoService:          daoService,
-		events:              events,
-		hosts:               map[string]string{},
-		subscriptionService: subscriptionService,
-		backupService:       backupService,
+		rumEventFactory: rumEventFactory,
+		daoService:      daoService,
+		events:          events,
+		hosts:           map[string]string{},
+		backupService:   backupService,
 	}
 }
 
@@ -92,23 +89,7 @@ func (s *Service) processEvent(event *types.Event) {
 		return
 	}
 	rumEvent := s.rumEventFactory.Create(event)
-	lookup, err := s.subscriptionService.GetSubscription(rumEvent.SubscriptionID, rumEvent.Hostname)
-	if err != nil {
-		log.Printf("get subscription error: %+v", err)
-		return
-	}
-
-	switch lookup {
-	case FoundLookup:
-		s.processRumEvent(rumEvent)
-	case ExpiredLookup:
-		s.backupService.SaveExpired(event)
-	case NotFoundLookup:
-		s.backupService.SaveUnknown(event)
-	default:
-		log.Printf("unsupported lookup result: %s", lookup)
-		return
-	}
+	s.processRumEvent(rumEvent)
 }
 
 func (s *Service) processRumEvent(rumEvent beacon.RumEvent) {

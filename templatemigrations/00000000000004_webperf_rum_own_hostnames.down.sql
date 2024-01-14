@@ -1,1 +1,0 @@
-DROP TABLE IF EXISTS {prefix}webperf_rum_own_hostnames

@@ -7,8 +7,6 @@ import "github.com/basicrum/front_basicrum_go/types"
 // IBackup interface for all backup sub directories
 type IBackup interface {
 	SaveAsync(event *types.Event)
-	SaveUnknown(event *types.Event)
-	SaveExpired(event *types.Event)
 	Flush()
 }
 

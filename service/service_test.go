@@ -1,7 +1,6 @@
 package service
 
 import (
-	"errors"
 	"net/url"
 	"testing"
 
@@ -15,14 +14,9 @@ import (
 
 func TestService_processEvent(t *testing.T) {
 	type expects struct {
-		Create                bool
-		GetSubscription       bool
-		GetSubscriptionReturn Lookup
-		GetSubscriptionError  error
-		Save                  bool
-		SaveError             error
-		SaveExpired           bool
-		SaveUnknown           bool
+		Create    bool
+		Save      bool
+		SaveError error
 	}
 	type args struct {
 		nilEvent bool
@@ -39,40 +33,10 @@ func TestService_processEvent(t *testing.T) {
 			},
 		},
 		{
-			name: "when GetSubscription return FoundLookup should save the event into database",
+			name: "should save the event into database",
 			expects: expects{
-				Create:                true,
-				GetSubscription:       true,
-				GetSubscriptionReturn: FoundLookup,
-				Save:                  true,
-			},
-		},
-		{
-			name: "when GetSubscription return FoundLookup and save database return error should ignore the error",
-			expects: expects{
-				Create:                true,
-				GetSubscription:       true,
-				GetSubscriptionReturn: FoundLookup,
-				Save:                  true,
-				SaveError:             errors.New("error1"),
-			},
-		},
-		{
-			name: "when GetSubscription return ExpiredLookup should call backup SaveExpired",
-			expects: expects{
-				Create:                true,
-				GetSubscription:       true,
-				GetSubscriptionReturn: ExpiredLookup,
-				SaveExpired:           true,
-			},
-		},
-		{
-			name: "when GetSubscription return NotFoundLookup should call backup SaveUnknown",
-			expects: expects{
-				Create:                true,
-				GetSubscription:       true,
-				GetSubscriptionReturn: NotFoundLookup,
-				SaveUnknown:           true,
+				Create: true,
+				Save:   true,
 			},
 		},
 	}
@@ -84,13 +48,11 @@ func TestService_processEvent(t *testing.T) {
 
 			daoService := daomocks.NewMockIDAO(ctrl)
 			rumEventFactory := servicemocks.NewMockIRumEventFactory(ctrl)
-			subscriptionService := NewMockISubscriptionService(ctrl)
 			backupService := backupmocks.NewMockIBackup(ctrl)
 
 			s := New(
 				rumEventFactory,
 				daoService,
-				subscriptionService,
 				backupService,
 			)
 
@@ -105,27 +67,16 @@ func TestService_processEvent(t *testing.T) {
 				inputEvent = testEvent
 			}
 			hostname := "hostname1"
-			subscriptionID := "subscriptionID1"
 
 			// expects
 			rumEvent := beacon.RumEvent{
-				Hostname:       hostname,
-				SubscriptionID: subscriptionID,
+				Hostname: hostname,
 			}
 			if tt.expects.Create {
 				rumEventFactory.EXPECT().Create(testEvent).Return(rumEvent)
 			}
-			if tt.expects.GetSubscription {
-				subscriptionService.EXPECT().GetSubscription(subscriptionID, hostname).Return(tt.expects.GetSubscriptionReturn, tt.expects.GetSubscriptionError)
-			}
 			if tt.expects.Save {
 				daoService.EXPECT().Save(rumEvent).Return(tt.expects.SaveError)
-			}
-			if tt.expects.SaveExpired {
-				backupService.EXPECT().SaveExpired(testEvent)
-			}
-			if tt.expects.SaveUnknown {
-				backupService.EXPECT().SaveUnknown(testEvent)
 			}
 
 			// when

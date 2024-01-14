@@ -12,10 +12,6 @@ type backupType string
 const (
 	// archive is the default batcher for general request archiving
 	archive backupType = "archive"
-	// expired is the batcher for expired subscription events
-	expired backupType = "expired"
-	// unknown is the batcher for unknown subscription events
-	unknown backupType = "unknown"
 )
 
 // New is factory for backup service
@@ -33,15 +29,7 @@ func New(
 	if err != nil {
 		return nil, err
 	}
-	expiredBackup, err := makeSingle(expired, backupInterval, baseDirectory, compressionFactory)
-	if err != nil {
-		return nil, err
-	}
-	unknownBackup, err := makeSingle(unknown, backupInterval, baseDirectory, compressionFactory)
-	if err != nil {
-		return nil, err
-	}
-	return NewFileBackup(archiveBackup, expiredBackup, unknownBackup)
+	return NewFileBackup(archiveBackup)
 }
 
 func makeSingle(singleBackupType backupType,

@@ -15,14 +15,13 @@ import (
 
 // Server represents http or https server
 type Server struct {
-	port            string
-	service         service.IService
-	backup          backup.IBackup
-	certFile        string
-	keyFile         string
-	server          *http.Server
-	tlsConfig       *tls.Config
-	privateAPIToken string
+	port      string
+	service   service.IService
+	backup    backup.IBackup
+	certFile  string
+	keyFile   string
+	server    *http.Server
+	tlsConfig *tls.Config
 }
 
 // WithHTTP creates server with port
@@ -53,13 +52,11 @@ func WithTLSConfig(port string, tlsConfig *tls.Config) func(*Server) {
 func New(
 	processService service.IService,
 	backupService backup.IBackup,
-	privateAPIToken string,
 	options ...func(*Server),
 ) *Server {
 	result := &Server{
-		service:         processService,
-		backup:          backupService,
-		privateAPIToken: privateAPIToken,
+		service: processService,
+		backup:  backupService,
 	}
 	for _, o := range options {
 		o(result)

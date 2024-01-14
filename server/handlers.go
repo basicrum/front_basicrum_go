@@ -1,9 +1,6 @@
 package server
 
 import (
-	"encoding/json"
-	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -11,11 +8,6 @@ import (
 	"time"
 
 	"github.com/basicrum/front_basicrum_go/types"
-)
-
-const (
-	grafanaUserHeader  = "X-Grafana-User"
-	privateTokenHeader = "X-Token"
 )
 
 func (s *Server) catcher(w http.ResponseWriter, r *http.Request) {
@@ -37,88 +29,6 @@ func (s *Server) catcher(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) health(w http.ResponseWriter, _ *http.Request) {
-	s.responseOK(w)
-}
-
-func (s *Server) hostnames(w http.ResponseWriter, r *http.Request) {
-	token := r.Header.Get(privateTokenHeader)
-	if token != s.privateAPIToken {
-		s.responseError(w, fmt.Errorf("wrong header[%v]", privateTokenHeader))
-		return
-	}
-	switch r.Method {
-	case http.MethodPost:
-		s.createHostname(w, r)
-	case http.MethodDelete:
-		s.deleteHostname(w, r)
-	default:
-		s.responseError(w, fmt.Errorf("unsupported method[%v]", r.Method))
-	}
-}
-
-// CreateHostnameRequest is create hostname request
-type CreateHostnameRequest struct {
-	Hostname string `json:"hostname"`
-}
-
-// Validate create hostname request
-func (r *CreateHostnameRequest) Validate() error {
-	if r.Hostname == "" {
-		return errors.New("hostname is required")
-	}
-	return nil
-}
-
-func (s *Server) createHostname(w http.ResponseWriter, r *http.Request) {
-	var request CreateHostnameRequest
-	if err := s.parseRequest(r, &request); err != nil {
-		s.responseError(w, err)
-		return
-	}
-	username, err := s.parseGrafanaUser(r)
-	if err != nil {
-		s.responseError(w, err)
-		return
-	}
-	// nolint: contextcheck
-	err = s.service.RegisterHostname(request.Hostname, username)
-	if err != nil {
-		s.responseError(w, err)
-		return
-	}
-	s.responseOK(w)
-}
-
-// DeleteHostnameRequest is delete hostname request
-type DeleteHostnameRequest struct {
-	Hostname string `json:"hostname"`
-}
-
-// Validate delete hostname request
-func (r *DeleteHostnameRequest) Validate() error {
-	if r.Hostname == "" {
-		return errors.New("hostname is required")
-	}
-	return nil
-}
-
-func (s *Server) deleteHostname(w http.ResponseWriter, r *http.Request) {
-	var request DeleteHostnameRequest
-	if err := s.parseRequest(r, &request); err != nil {
-		s.responseError(w, err)
-		return
-	}
-	username, err := s.parseGrafanaUser(r)
-	if err != nil {
-		s.responseError(w, err)
-		return
-	}
-	// nolint: contextcheck
-	err = s.service.DeleteHostname(request.Hostname, username)
-	if err != nil {
-		s.responseError(w, err)
-		return
-	}
 	s.responseOK(w)
 }
 
@@ -161,21 +71,6 @@ func getIP(r *http.Request) string {
 	return parts[0]
 }
 
-func (*Server) parseRequest(r *http.Request, request Validator) error {
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		return err
-	}
-	return request.Validate()
-}
-
-func (*Server) parseGrafanaUser(r *http.Request) (string, error) {
-	result := r.Header.Get(grafanaUserHeader)
-	if result == "" {
-		return "", fmt.Errorf("required header[%v]", grafanaUserHeader)
-	}
-	return result, nil
-}
-
 func (s *Server) responseNoContent(w http.ResponseWriter) {
 	s.headersNoCache(w, http.StatusNoContent)
 }
@@ -183,11 +78,6 @@ func (s *Server) responseNoContent(w http.ResponseWriter) {
 func (s *Server) responseOK(w http.ResponseWriter) {
 	s.headersNoCache(w, http.StatusOK)
 	_, _ = w.Write([]byte("ok"))
-}
-
-func (s *Server) responseError(w http.ResponseWriter, err error) {
-	s.headersNoCache(w, http.StatusBadRequest)
-	_, _ = w.Write([]byte(err.Error()))
 }
 
 func (*Server) headersNoCache(w http.ResponseWriter, statusCode int) {
