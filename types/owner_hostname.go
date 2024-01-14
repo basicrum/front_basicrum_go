@@ -12,12 +12,6 @@ const (
 	yearMonthDayFormat      = "2006-01-02"
 )
 
-// SubscriptionWithHostname subsciption with hostname
-type SubscriptionWithHostname struct {
-	Subscription Subscription
-	Hostname     string
-}
-
 // Subscription represents when the trial for hostname is active
 type Subscription struct {
 	ID        string
@@ -31,11 +25,6 @@ func NewSubscription(now time.Time) Subscription {
 		ID:        generateSubscriptionID(expiresAt),
 		ExpiresAt: expiresAt,
 	}
-}
-
-// Expired checks if subscription has expired
-func (s Subscription) Expired() bool {
-	return time.Now().After(s.ExpiresAt)
 }
 
 func generateSubscriptionID(expiresAt time.Time) string {

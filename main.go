@@ -19,8 +19,6 @@ import (
 	"github.com/basicrum/front_basicrum_go/geoip/maxmind"
 	"github.com/basicrum/front_basicrum_go/server"
 	"github.com/basicrum/front_basicrum_go/service"
-	"github.com/basicrum/front_basicrum_go/service/subscription/caching"
-	"github.com/basicrum/front_basicrum_go/service/subscription/disabled"
 	"github.com/ua-parser/uap-go/uaparser"
 	"golang.org/x/sync/errgroup"
 )
@@ -28,7 +26,6 @@ import (
 //go:embed assets/uaparser_regexes.yaml
 var userAgentRegularExpressions []byte
 
-// nolint: revive
 func main() {
 	sConf, err := config.GetStartupConfig()
 	if err != nil {
@@ -79,18 +76,10 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	subscriptionService := makeSubscriptionService(sConf, daoService)
-	err = subscriptionService.Load()
-	if err != nil {
-		log.Fatal(err)
-	}
-	rumEventFactory := service.NewRumEventFactory(userAgentParser, geopIPService)
 	processingService := service.New(
-		rumEventFactory,
 		daoService,
-		subscriptionService,
-		backupService,
+		userAgentParser,
+		geopIPService,
 	)
 	serverFactory := server.NewFactory(processingService, backupService)
 	servers, err := serverFactory.Build(*sConf)
@@ -104,13 +93,6 @@ func main() {
 		log.Fatalf("Shutdown Failed:%+v", err)
 	}
 	log.Print("Servers exited properly")
-}
-
-func makeSubscriptionService(conf *config.StartupConfig, daoService *dao.DAO) service.ISubscriptionService {
-	if !conf.Subscription.Enabled {
-		return disabled.New()
-	}
-	return caching.New(daoService)
 }
 
 func startServers(servers []*server.Server) {
