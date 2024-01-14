@@ -47,7 +47,6 @@ func (f *Factory) Build(sConf config.StartupConfig) ([]*Server, error) {
 		httpServer := New(
 			f.processService,
 			f.backupService,
-			sConf.PrivateAPI.Token,
 			WithHTTP(httpPort),
 		)
 		return []*Server{httpServer}, nil
@@ -62,13 +61,11 @@ func (f *Factory) Build(sConf config.StartupConfig) ([]*Server, error) {
 		httpsServer := New(
 			f.processService,
 			f.backupService,
-			sConf.PrivateAPI.Token,
 			WithTLSConfig(defaultHTTPSPort, tlsConfig),
 		)
 		httpServer := New(
 			f.processService,
 			f.backupService,
-			sConf.PrivateAPI.Token,
 			WithHTTP(httpPort),
 		)
 		return []*Server{httpsServer, httpServer}, nil
@@ -77,13 +74,11 @@ func (f *Factory) Build(sConf config.StartupConfig) ([]*Server, error) {
 		httpsServer := New(
 			f.processService,
 			f.backupService,
-			sConf.PrivateAPI.Token,
 			WithSSL(httpsPort, sConf.Server.SSLFile.SSLFileCertFile, sConf.Server.SSLFile.SSLFileKeyFile),
 		)
 		httpServer := New(
 			f.processService,
 			f.backupService,
-			sConf.PrivateAPI.Token,
 			WithHTTP(httpPort),
 		)
 		return []*Server{httpsServer, httpServer}, nil

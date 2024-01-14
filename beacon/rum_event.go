@@ -6,7 +6,6 @@ import "encoding/json"
 type RumEvent struct {
 	Created_At               string      `json:"created_at"`
 	Hostname                 string      `json:"hostname"`
-	SubscriptionID           string      `json:"subscription_id"`
 	Url                      string      `json:"url"`
 	Cumulative_Layout_Shift  json.Number `json:"cumulative_layout_shift,omitempty"`
 	Geo_Country_Code         string      `json:"geo_country_code"`

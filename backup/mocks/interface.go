@@ -58,30 +58,6 @@ func (mr *MockIBackupMockRecorder) SaveAsync(event interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveAsync", reflect.TypeOf((*MockIBackup)(nil).SaveAsync), event)
 }
 
-// SaveExpired mocks base method.
-func (m *MockIBackup) SaveExpired(event *types.Event) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SaveExpired", event)
-}
-
-// SaveExpired indicates an expected call of SaveExpired.
-func (mr *MockIBackupMockRecorder) SaveExpired(event interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveExpired", reflect.TypeOf((*MockIBackup)(nil).SaveExpired), event)
-}
-
-// SaveUnknown mocks base method.
-func (m *MockIBackup) SaveUnknown(event *types.Event) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SaveUnknown", event)
-}
-
-// SaveUnknown indicates an expected call of SaveUnknown.
-func (mr *MockIBackupMockRecorder) SaveUnknown(event interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SaveUnknown", reflect.TypeOf((*MockIBackup)(nil).SaveUnknown), event)
-}
-
 // MockIBackupSingle is a mock of IBackupSingle interface.
 type MockIBackupSingle struct {
 	ctrl     *gomock.Controller
