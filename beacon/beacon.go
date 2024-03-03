@@ -335,12 +335,12 @@ func ConvertToRumEvent(b Beacon, event *types.Event, userAgentParser *uaparser.P
 		Ua_Plt:                   b.Ua_Plt,
 		Data_Saver_On:            json.Number(b.Net_Sd),
 		Mob_Etype:                b.Mob_Etype,
-		Mob_Dl:                   json.Number(roundFloatParam(b.Mob_Dl)),
+		Mob_Dl:                   json.Number(RoundFloatParam(b.Mob_Dl)),
 		Mob_Rtt:                  json.Number(b.Mob_Rtt),
 	}
 }
 
-func roundFloatParam(p string) string {
+func RoundFloatParam(p string) string {
 	if p == "" {
 		return ""
 	}
