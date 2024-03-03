@@ -340,6 +340,7 @@ func ConvertToRumEvent(b Beacon, event *types.Event, userAgentParser *uaparser.P
 	}
 }
 
+// nolint: revive
 func RoundFloatParam(p string) string {
 	if p == "" {
 		return ""
