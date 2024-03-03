@@ -3,6 +3,7 @@ package beacon
 import (
 	"encoding/json"
 	"log"
+	"math"
 	"net/url"
 	"strconv"
 	"strings"
@@ -334,9 +335,26 @@ func ConvertToRumEvent(b Beacon, event *types.Event, userAgentParser *uaparser.P
 		Ua_Plt:                   b.Ua_Plt,
 		Data_Saver_On:            json.Number(b.Net_Sd),
 		Mob_Etype:                b.Mob_Etype,
-		Mob_Dl:                   json.Number(b.Mob_Dl),
+		Mob_Dl:                   json.Number(RoundFloatParam(b.Mob_Dl)),
 		Mob_Rtt:                  json.Number(b.Mob_Rtt),
 	}
+}
+
+// nolint: revive
+func RoundFloatParam(p string) string {
+	if p == "" {
+		return ""
+	}
+
+	v, err := strconv.ParseFloat(p, 32)
+
+	if err != nil {
+		return ""
+	}
+
+	vi := int(math.Round(v))
+
+	return strconv.Itoa(vi)
 }
 
 func calculateDelta(p1 string, p2 string) string {
