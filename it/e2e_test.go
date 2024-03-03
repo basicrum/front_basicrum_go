@@ -150,6 +150,18 @@ func (s *e2eTestSuite) Test_EndToEnd_BeaconFieldsMissing() {
 	s.Assert().Exactly(cntExpect, s.dao.CountRecords("where device_manufacturer is NULL"))
 }
 
+func (s *e2eTestSuite) Test_EndToEnd_MobDlFloat() {
+	s.beaconSender.Send("./data/misc/mob-dl-float.json.lines")
+	time.Sleep(2 * time.Second)
+
+	cntExpect := 2
+
+	s.Assert().Exactly(cntExpect, s.dao.CountRecords(""))
+
+	s.Assert().Exactly(1, s.dao.CountRecords("where mob_dl = 10"))
+	s.Assert().Exactly(1, s.dao.CountRecords("where mob_dl = 11"))
+}
+
 func (s *e2eTestSuite) Test_EndToEnd_HealthCheck() {
 	req, err := http.NewRequest("GET", s.httpSender.BuildUrl("/health"), strings.NewReader(""))
 	s.Assert().NoError(err)
